@@ -1,6 +1,6 @@
 # Arbitrator
 
-Raspberry Pi 5, planned ot act as a telemetry relay & host for my portfolio.
+Raspberry Pi 5, planned to act as a telemetry relay & host for my portfolio.
 
 ## Planned Features
 - Live 1090 MHz ADS-B air traffic capture
