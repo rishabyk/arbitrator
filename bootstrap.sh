@@ -1,18 +1,28 @@
+# System restore bootstrap script
+
 set -euo pipefail
 
-echo -e "\n\033[1;36m[+] Restoring Arbitrator\033[0m"
+echo -e "\n\033[1;36m[+] Initializing Arbitrator Node Restoration...\033[0m"
 
-# Packages & devtools
-echo -e "\033[1;33m[+] Updating packages & installing dependencies...\033[0m"
+# 1. Base packages & Dev Tools
+echo -e "\033[1;33m[+] Updating packages & installing system dependencies...\033[0m"
 sudo apt update
-sudo apt install -y git python3-pip python3-venv uhubctl rtl-sdr librtlsdr-dev
+sudo apt install -y git python3-pip python3-venv uhubctl rtl-sdr librtlsdr-dev curl wget
 
-# 2. Passwordless sudo
-echo -e "\033[1;33m[+] Adding passwordless sudo rule...\033[0m"
+# 2. Blacklist Linux TV kernel drivers (prevents RTL-SDR tuner locks)
+echo -e "\033[1;33m[+] Configuring RTL-SDR kernel driver blacklist...\033[0m"
+cat << 'EOF' | sudo tee /etc/modprobe.d/blacklist-rtl.conf > /dev/null
+blacklist dvb_usb_rtl28xxu
+blacklist rtl2832
+blacklist rtl2830
+EOF
+
+# 3. Passwordless sudo rule for headless automation
+echo -e "\033[1;33m[+] Configuring passwordless sudo rule...\033[0m"
 echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/010_"$USER"-nopasswd > /dev/null
 
-# 3. Python venv setup
-echo -e "\033[1;33m[+] Adding Python Venv...\033[0m"
+# 4. Python Virtual Environment Setup
+echo -e "\033[1;33m[+] Configuring Python virtual environment...\033[0m"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/backend"
 
@@ -20,12 +30,11 @@ if [ ! -d "venv" ]; then
     python3 -m venv venv
 fi
 
-# setup dependencies
 source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# 4. Installing Tailscale
+# 5. Tailscale Setup
 if ! command -v tailscale &> /dev/null; then
     echo -e "\033[1;33m[+] Installing Tailscale...\033[0m"
     curl -fsSL https://tailscale.com/install.sh | sh
@@ -34,5 +43,18 @@ else
     echo -e "\033[1;32m[+] Tailscale already installed.\033[0m"
 fi
 
-echo -e "\n\033[1;32m[✓] Restored Arbitrator successfully.\033[0m"
-echo -e "Run backend with: \033[1;34mcd backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000\033[0m\n"
+# 6. ADS-B Receiver Engine (readsb)
+if ! command -v readsb &> /dev/null; then
+    echo -e "\033[1;33m[+] Installing readsb ADS-B decoder daemon...\033[0m"
+    bash -c "$(wget -nv -O - https://github.com/wiedehopf/adsb-scripts/raw/master/readsb-install.sh)"
+fi
+
+# 7. Park Receiver (Standby Mode)
+echo -e "\033[1;33m[+] Parking SDR Receiver in standby mode (low power / thermal safe)...\033[0m"
+sudo systemctl disable --now readsb || true
+
+echo -e "\n\033[1;32m[✓] Arbitrator Node fully restored.\033[0m"
+echo -e "• SDR Receiver state: \033[1;33mSTANDBY (OFF)\033[0m"
+echo -e "• Turn receiver ON:    \033[1;36msudo systemctl start readsb\033[0m"
+echo -e "• Turn receiver OFF:   \033[1;36msudo systemctl stop readsb\033[0m"
+echo -e "• Run backend server:  \033[1;34mcd backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000\033[0m\n"
