@@ -1,0 +1,253 @@
+/* ==========================================================================
+   ARBITRATOR // TACTICAL TELEMETRY HUD STYLESHEET
+   ========================================================================== */
+
+:root {
+  --bg-primary: #0a0e14;
+  --bg-panel: #101721;
+  --bg-card: #151f2c;
+  --border-color: #1f2d3d;
+  --accent-cyan: #00e5ff;
+  --accent-green: #00e676;
+  --accent-amber: #ffb300;
+  --accent-red: #ff3d00;
+  --text-primary: #e6edf3;
+  --text-muted: #7d8b99;
+  --font-mono: "SF Mono", "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* --- Top Telemetry Ribbon --- */
+.hud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 1000;
+}
+
+.hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--accent-green);
+  box-shadow: 0 0 8px var(--accent-green);
+}
+
+.hud-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--accent-cyan);
+}
+
+.hud-metrics {
+  display: flex;
+  gap: 16px;
+}
+
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-card);
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  min-width: 90px;
+}
+
+.metric-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.metric-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status-badge {
+  color: var(--accent-green);
+}
+
+.status-badge.inactive {
+  color: var(--accent-amber);
+}
+
+.status-badge.error {
+  color: var(--accent-red);
+}
+
+/* --- Main Viewport: Radar Scope + Side Panel --- */
+.hud-main {
+  display: flex;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-viewport {
+  flex: 1;
+  height: 100%;
+  background-color: #05070a;
+}
+
+/* Dark mode overrides for Leaflet */
+.leaflet-container {
+  background-color: #0b0f14 !important;
+}
+
+/* --- Tactical Target Inspector Sidebar --- */
+.target-inspector {
+  width: 340px;
+  background-color: var(--bg-panel);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 14px;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.inspector-header h3 {
+  font-size: 12px;
+  letter-spacing: 1.2px;
+  color: var(--accent-cyan);
+}
+
+.target-badge {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+  color: var(--accent-amber);
+}
+
+/* Photo Container */
+.photo-container {
+  width: 100%;
+  height: 180px;
+  background-color: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.photo-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-placeholder {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.photo-credit {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 9px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 4px;
+  border-radius: 2px;
+  color: var(--text-muted);
+}
+
+/* Telemetry Field Grid */
+.inspector-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.field {
+  background-color: var(--bg-card);
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.field-label {
+  display: block;
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.field-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+}
+
+/* --- Map Marker Styling --- */
+.plane-icon-wrapper {
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease-out;
+}
+
+.plane-svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--accent-cyan);
+  filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.6));
+  transform-origin: center center;
+}
+
+.plane-svg.selected {
+  fill: var(--accent-amber);
+  filter: drop-shadow(0 0 6px rgba(255, 179, 0, 0.8));
+}
+
+/* Inverts OSM into high-contrast dark radar mode */
+.dark-tiles {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
+}

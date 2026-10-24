@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARBITRATOR // ADS-B Telemetry Node</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Telemetry Ribbon -->
+  <header class="hud-header">
+    <div class="hud-brand">
+      <span class="status-dot"></span>
+      <span class="hud-title">NODE // ARBITRATOR</span>
+    </div>
+
+    <div class="hud-metrics">
+      <div class="metric-card">
+        <span class="metric-label">CPU TEMP</span>
+        <span class="metric-val" id="cpu-temp">--.-°C</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">CPU LOAD</span>
+        <span class="metric-val" id="cpu-usage">--%</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">RAM USED</span>
+        <span class="metric-val" id="ram-usage">--%</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">RECEIVER</span>
+        <span class="metric-val status-badge" id="receiver-status">STANDBY</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Display: Split Radar Scope & Tactical Panel -->
+  <main class="hud-main">
+    
+    <!-- Radar Canvas -->
+    <section id="map" class="map-viewport"></section>
+
+    <!-- Right-Hand Target Inspector -->
+    <aside class="target-inspector" id="target-inspector">
+      <div class="inspector-header">
+        <h3>ACTIVE TARGET</h3>
+        <span class="target-badge" id="target-hex">NONE</span>
+      </div>
+
+      <!-- Aircraft Photo Placeholder -->
+      <div class="photo-container" id="photo-box">
+        <div class="photo-placeholder">AWAITING TARGET LOCK</div>
+      </div>
+
+      <!-- Telemetry Data Grid -->
+      <div class="inspector-grid">
+        <div class="field">
+          <span class="field-label">CALLSIGN</span>
+          <span class="field-val" id="target-callsign">----</span>
+        </div>
+        <div class="field">
+          <span class="field-label">ALTITUDE</span>
+          <span class="field-val" id="target-alt">---- FT</span>
+        </div>
+        <div class="field">
+          <span class="field-label">V-RATE</span>
+          <span class="field-val" id="target-vrate">---- FPM</span>
+        </div>
+        <div class="field">
+          <span class="field-label">GND SPEED</span>
+          <span class="field-val" id="target-speed">--- KT</span>
+        </div>
+        <div class="field">
+          <span class="field-label">HEADING</span>
+          <span class="field-val" id="target-track">---°</span>
+        </div>
+        <div class="field">
+          <span class="field-label">SQUAWK</span>
+          <span class="field-val" id="target-squawk">----</span>
+        </div>
+        <div class="field">
+          <span class="field-label">TARGET ALT</span>
+          <span class="field-val" id="target-sel-alt">---- FT</span>
+        </div>
+        <div class="field">
+          <span class="field-label">SIGNAL</span>
+          <span class="field-val" id="target-rssi">--.- dBFS</span>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Leaflet JS & App Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
