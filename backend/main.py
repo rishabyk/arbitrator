@@ -101,20 +101,35 @@ def get_aircraft():
             try:
                 with open(path, "r") as f:
                     data = json.load(f)
+
                     aircraft = [
-                        {
-                            "hex": a.get("hex"),
-                            "flight": a.get("flight", "").strip(),
-                            "alt_baro": a.get("alt_baro"),
-                            "speed": a.get("gs"),
-                            "track": a.get("track"),
-                            "lat": a.get("lat"),
-                            "lon": a.get("lon"),
-                            "rssi": a.get("rssi"),
-                        }
-                        for a in data.get("aircraft", [])
-                        if a.get("lat") and a.get("lon")
+                    {
+                        "hex": a.get("hex"),  # 24-bit ICAO aircraft transponder id
+                        "flight": a.get(
+                            "flight", "").strip(),  # Callsign/flight number
+                        "squawk": a.get("squawk", "----"),  # squawk
+                        "alt_baro": (
+                            0 if a.get("alt_baro") == "ground" else a.get("alt_baro")
+                        ),  # barometric altitude (ft)
+                        "vert_rate": a.get(
+                            "baro_rate", 0
+                        ),  # vertical ascend/descend rate (ft/m)
+                        "selected_alt": a.get(
+                            "nav_altitude_mcp"
+                        ),  # autopilot target altitude (ft)
+                        "speed": a.get("gs"),  # Ground speed (kts)
+                        "track": a.get("track"),  # Heading in deg (0–359.9°)
+                        "lat": a.get("lat"),  # GPS latitude coordinate
+                        "lon": a.get("lon"),  # GPS longitude coordinate
+                        "rssi": a.get("rssi"),  # RF signal strength in dBFS (closer to 0 is stronger)
+                        "seen_sec": a.get(
+                            "seen"
+                        ),  # seconds since last radio frame
+                    }
+                    for a in data.get("aircraft", [])
+                    if a.get("lat") and a.get("lon")
                     ]
+
                     response["total_tracked"] = len(aircraft)
                     response["aircraft"] = aircraft
                     return response
