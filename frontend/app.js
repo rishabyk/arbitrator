@@ -2,16 +2,16 @@ let map;
 let aircraftMarkers = {}; // hex -> { marker, data }
 let selectedHex = null;
 
-// Standard SVG airplane symbol pointing True North (0 deg)
+// SVG airplane symbol, used in createPlaneIcon()
 const PLANE_SVG = `
 <svg class="plane-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
   <path d="M12 2L9 9H3L2 11L9 13V19L7 20V22L12 21L17 22V20L15 19V13L22 11L21 9H15L12 2Z" />
 </svg>
 `;
 
-// Initialize Map
+// Initialize map
 function initMap() {
-  // Center around SF Bay Area / Northern CA by default
+  // Centering around Bay area
   map = L.map('map', {
     zoomControl: true,
     attributionControl: false
@@ -22,13 +22,12 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     className: 'dark-tiles'
   }).addTo(map);
 
-  // Deselect target if clicking open map canvas
+  // Deselects plane when clicking empty space on map
   map.on('click', () => {
-    // Optional: leave target selected or clear target on empty click
   });
 }
 
-// Generate rotated SVG Leaflet Icon
+// Rotate SVG icon according to plane
 function createPlaneIcon(heading = 0, isSelected = false) {
   const selectedClass = isSelected ? 'selected' : '';
   const html = `
@@ -46,7 +45,7 @@ function createPlaneIcon(heading = 0, isSelected = false) {
   });
 }
 
-// Update Top Node Telemetry
+// Grab telemetry from backend
 async function fetchTelemetry() {
   try {
     const res = await fetch('/api/telemetry');
@@ -61,7 +60,7 @@ async function fetchTelemetry() {
   }
 }
 
-// Update ADS-B Contacts & Markers
+// Update radio contacts & markers
 async function fetchAircraft() {
   try {
     const res = await fetch('/api/aircraft');
@@ -92,15 +91,15 @@ async function fetchAircraft() {
       const isSelected = (hex === selectedHex);
 
       if (aircraftMarkers[hex]) {
-        // Move existing marker smoothly
+        // Move marker smoothly
         const marker = aircraftMarkers[hex].marker;
         marker.setLatLng([lat, lon]);
         marker.setIcon(createPlaneIcon(track, isSelected));
         aircraftMarkers[hex].data = ac;
 
-        // If this plane is currently selected in the side panel, refresh its live numbers
+        // If this plane is currently selected in side panel, refresh its live numbers
         if (isSelected) {
-          updateInspector(ac);
+          updateSidebar(ac);
         }
       } else {
         // Create new marker
@@ -116,14 +115,14 @@ async function fetchAircraft() {
       }
     });
 
-    // Prune stale contacts that flew out of antenna range
+    // Wipe stale contacts 
     Object.keys(aircraftMarkers).forEach((hex) => {
       if (!activeHexes.has(hex)) {
         map.removeLayer(aircraftMarkers[hex].marker);
         delete aircraftMarkers[hex];
 
         if (selectedHex === hex) {
-          clearInspector();
+          clearSidebar();
         }
       }
     });
@@ -145,12 +144,12 @@ function selectTarget(hex) {
     aircraftMarkers[h].marker.setIcon(createPlaneIcon(ac.track || 0, h === selectedHex));
   });
 
-  updateInspector(target);
+  updateSidebar(target);
   fetchAircraftPhoto(hex);
 }
 
-// Populate Tactical Inspector Sidebar
-function updateInspector(ac) {
+// Populate Sidebar
+function updateSidebar(ac) {
   document.getElementById('target-hex').textContent = ac.hex.toUpperCase();
   document.getElementById('target-callsign').textContent = ac.flight || 'NO CALLSIGN';
   document.getElementById('target-alt').textContent = ac.alt_baro ? `${ac.alt_baro.toLocaleString()} FT` : '----';
@@ -166,7 +165,7 @@ function updateInspector(ac) {
   document.getElementById('target-rssi').textContent = ac.rssi ? `${ac.rssi.toFixed(1)} dBFS` : '--.-';
 }
 
-function clearInspector() {
+function clearSidebar() {
   selectedHex = null;
   document.getElementById('target-hex').textContent = 'NONE';
   document.getElementById('target-callsign').textContent = '----';
@@ -206,15 +205,15 @@ async function fetchAircraftPhoto(hex) {
   }
 }
 
-// Initialization & Recurring Timers
+// Initialize & Loop timers
 document.addEventListener('DOMContentLoaded', () => {
   initMap();
   fetchTelemetry();
   fetchAircraft();
 
-  // 2s polling for hardware metrics
+  // Setting for hardware metrics
   setInterval(fetchTelemetry, 1000);
 
-  // 1s polling for real-time radar vectors
+  // Setting for radio contact metrics
   setInterval(fetchAircraft, 1000);
 });

@@ -18,7 +18,7 @@
   <header class="hud-header">
     <div class="hud-brand">
       <span class="status-dot"></span>
-      <span class="hud-title">NODE // ARBITRATOR</span>
+      <span class="hud-title">rishabyk // ARBITRATOR</span>
     </div>
 
     <div class="hud-metrics">
@@ -41,26 +41,26 @@
     </div>
   </header>
 
-  <!-- Main Display: Split Radar Scope & Tactical Panel -->
+  <!-- Split radar & side panel -->
   <main class="hud-main">
     
-    <!-- Radar Canvas -->
+    <!-- Radar view -->
     <section id="map" class="map-viewport"></section>
 
-    <!-- Right-Hand Target Inspector -->
-    <aside class="target-inspector" id="target-inspector">
-      <div class="inspector-header">
+    <!-- Side panel -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
         <h3>ACTIVE TARGET</h3>
         <span class="target-badge" id="target-hex">NONE</span>
       </div>
 
-      <!-- Aircraft Photo Placeholder -->
+      <!-- Photo placeholder -->
       <div class="photo-container" id="photo-box">
-        <div class="photo-placeholder">AWAITING TARGET LOCK</div>
+        <div class="photo-placeholder">AWAITING IMAGE</div>
       </div>
 
-      <!-- Telemetry Data Grid -->
-      <div class="inspector-grid">
+      <!-- sidebar telemetry grid -->
+      <div class="sidebar-grid">
         <div class="field">
           <span class="field-label">CALLSIGN</span>
           <span class="field-val" id="target-callsign">----</span>
@@ -70,11 +70,11 @@
           <span class="field-val" id="target-alt">---- FT</span>
         </div>
         <div class="field">
-          <span class="field-label">V-RATE</span>
+          <span class="field-label">VERT RATE</span>
           <span class="field-val" id="target-vrate">---- FPM</span>
         </div>
         <div class="field">
-          <span class="field-label">GND SPEED</span>
+          <span class="field-label">GRND SPEED</span>
           <span class="field-val" id="target-speed">--- KT</span>
         </div>
         <div class="field">
@@ -98,7 +98,7 @@
 
   </main>
 
-  <!-- Leaflet JS & App Script -->
+  <!-- Leaflet & App script -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
 </body>
