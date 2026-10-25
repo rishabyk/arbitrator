@@ -228,12 +228,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.3s ease-out;
+  overflow: visible !important;
 }
 
 .plane-svg {
   width: 24px;
   height: 24px;
+  overflow: visible !important;
   fill: var(--accent-cyan);
   filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.6));
   transform-origin: center center;

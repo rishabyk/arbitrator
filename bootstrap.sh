@@ -53,7 +53,7 @@ fi
 echo -e "\033[1;33m[+] Setting SDR Receiver to standby mode...\033[0m"
 sudo systemctl disable --now readsb || true
 
-echo -e "\n\033[1;32m[✓] Arbitrator fully restored.\033[0m"
+echo -e "\n\033[1;32m[✓] Arbitrator restored.\033[0m"
 echo -e "• SDR Receiver state: \033[1;33mSTANDBY (OFF)\033[0m"
 echo -e "• Turn receiver ON:    \033[1;36msudo systemctl start readsb\033[0m"
 echo -e "• Turn receiver OFF:   \033[1;36msudo systemctl stop readsb\033[0m"
