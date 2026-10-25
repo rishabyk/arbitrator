@@ -62,14 +62,24 @@ async function fetchAircraft() {
     if (!res.ok) return;
     const data = await res.json();
 
-    // Update receiver status badge
+// Update receiver status badge with dedicated color classes
     const badge = document.getElementById('receiver-status');
-    badge.textContent = data.status;
+    const status = (data.status || 'UNKNOWN').toUpperCase();
+    badge.textContent = status;
     badge.className = 'metric-val status-badge';
-    if (data.status === 'INACTIVE' || data.status === 'DEGRADED') {
-      badge.classList.add('inactive');
-    } else if (data.status === 'ERROR') {
-      badge.classList.add('error');
+
+    if (status === 'ONLINE') {
+      badge.classList.add('online');
+    } else if (status === 'STANDBY') {
+      badge.classList.add('standby');
+    } else if (status === 'INITIALIZING') {
+      badge.classList.add('initializing');
+    } else if (status === 'DISCONNECTED') {
+      badge.classList.add('disconnected');
+    } else if (status === 'DEGRADED') {
+      badge.classList.add('degraded');
+    } else {
+      badge.classList.add('disconnected');
     }
 
     const currentContacts = data.aircraft || [];

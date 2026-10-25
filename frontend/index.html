@@ -17,7 +17,6 @@
   <!-- Top Telemetry Ribbon -->
   <header class="hud-header">
     <div class="hud-brand">
-      <span class="status-dot"></span>
       <span class="hud-title">rishabyk // ARBITRATOR</span>
     </div>
 
@@ -34,11 +33,44 @@
         <span class="metric-label">RAM USED</span>
         <span class="metric-val" id="ram-usage">--%</span>
       </div>
-      <div class="metric-card">
-        <span class="metric-label">RECEIVER</span>
+
+      <div class="metric-card receiver-metric">
+        <div class="metric-label-row">
+          <span class="metric-label">RECEIVER</span>
+          <span class="help-trigger" tabindex="0">?
+            <div class="status-legend-popover">
+              <div class="legend-title">RECEIVER STATES</div>
+              <div class="legend-item">
+                <span class="legend-dot dot-online"></span>
+                <span class="legend-name">ONLINE</span>
+                <span class="legend-desc">Decoder & antenna healthy, latest update &lt;5s ago</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot dot-standby"></span>
+                <span class="legend-name">STANDBY</span>
+                <span class="legend-desc">Decoder & antenna detected, decoder parked due to thermal load</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot dot-init"></span>
+                <span class="legend-name">INITIALIZING</span>
+                <span class="legend-desc">Decoder & antenna detected, software initializing & attempting lock</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot dot-disc"></span>
+                <span class="legend-name">DISCONNECTED</span>
+                <span class="legend-desc">Decoder & antenna not physically connected, likely under maintenance</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot dot-degraded"></span>
+                <span class="legend-name">DEGRADED</span>
+                <span class="legend-desc">Decoder & antenna detected & alive but latest update &gt;5s ago</span>
+              </div>
+            </div>
+          </span>
+        </div>
         <span class="metric-val status-badge" id="receiver-status">STANDBY</span>
       </div>
-    </div>
+
   </header>
 
   <!-- Split radar & side panel -->

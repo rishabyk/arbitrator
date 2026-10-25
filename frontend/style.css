@@ -29,29 +29,21 @@ body {
   user-select: none;
 }
 
-/* --- Top Ribbon --- */
 .hud-header {
+  position: relative;       /* enables z-index stacking context */
+  z-index: 3000;            /* Floats entire header & tooltips above all panels */
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
   background-color: var(--bg-panel);
   border-bottom: 1px solid var(--border-color);
-  z-index: 1000;
 }
 
 .hud-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: var(--accent-green);
-  box-shadow: 0 0 8px var(--accent-green);
 }
 
 .hud-title {
@@ -101,11 +93,11 @@ body {
 }
 
 
-/* --- Main viewport - Radar & side --- */
 .hud-main {
   display: flex;
   flex: 1;
   position: relative;
+  z-index: 1;               /* Keeps map and side inspector below header popovers */
   overflow: hidden;
 }
 
@@ -248,4 +240,117 @@ body {
 /* Inverts OSM into high-contrast dark radar mode */
 .dark-tiles {
   filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
+}
+
+/* ==========================================================================
+   RECEIVER STATE BADGES & STATUS LEGEND TOOLTIP
+   ========================================================================== */
+
+/* Header Card Layout */
+.receiver-metric {
+  position: relative;
+  min-width: 130px;
+}
+
+.metric-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+/* Help Trigger Button (?) */
+.help-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.help-trigger:hover,
+.help-trigger:focus {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* Hover/Focus Popover Legend */
+.status-legend-popover {
+  display: none;
+  position: absolute;
+  top: 24px;
+  right: 0;
+  width: 290px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+  border-radius: 4px;
+  padding: 12px;
+  z-index: 2000;
+  text-align: left;
+  pointer-events: none;
+}
+
+.help-trigger:hover .status-legend-popover,
+.help-trigger:focus .status-legend-popover {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent-cyan);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.legend-item {
+  display: grid;
+  grid-template-columns: 12px 90px 1fr;
+  align-items: center;
+  font-size: 9.5px;
+  line-height: 1.25;
+  gap: 6px;
+}
+
+.legend-desc {
+  color: var(--text-muted);
+}
+
+/* Color Dots */
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-online   { background-color: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.dot-standby  { background-color: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber); }
+.dot-init     { background-color: var(--accent-cyan);  box-shadow: 0 0 6px var(--accent-cyan); }
+.dot-disc     { background-color: var(--accent-red);   box-shadow: 0 0 6px var(--accent-red); }
+.dot-degraded { background-color: var(--accent-orange);box-shadow: 0 0 6px var(--accent-orange); }
+
+/* Status Badge Dynamic Text Colors */
+.status-badge.online       { color: var(--accent-green); text-shadow: 0 0 8px rgba(0, 230, 118, 0.4); }
+.status-badge.standby      { color: var(--accent-amber); }
+.status-badge.initializing { color: var(--accent-cyan);  animation: pulse-init 1.5s infinite; }
+.status-badge.disconnected  { color: var(--accent-red);   text-shadow: 0 0 8px rgba(255, 61, 0, 0.4); }
+.status-badge.degraded     { color: var(--accent-orange); }
+
+@keyframes pulse-init {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }

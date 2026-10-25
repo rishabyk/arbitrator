@@ -53,27 +53,56 @@ def get_telemetry():
     }
 
 
+def is_sdr_hardware_connected() -> bool:
+    """Checks linux USB sysfs tree for RTL2832U tuner hardware"""
+    usb_dir = "/sys/bus/usb/devices"
+    if not os.path.exists(usb_dir):
+        return False
+
+    for dev in os.listdir(usb_dir):
+        vendor_file = os.path.join(usb_dir, dev, "idVendor")
+        product_file = os.path.join(usb_dir, dev, "idProduct")
+
+        if os.path.exists(vendor_file) and os.path.exists(product_file):
+            try:
+                with open(vendor_file, "r") as vf, open(product_file, "r") as pf:
+                    vendor = vf.read().strip()
+                    product = pf.read().strip()
+                    # 0bda:2838 or 0bda:2832 represents RTL-SDR tuners
+                    if vendor == "0bda" and product in ("2838", "2832"):
+                        return True
+            except Exception:
+                continue
+    return False
+
+
 def check_receiver_status():
-    """Checks if receiver processes are running, returns receiver state, sent to get_aircraft()"""
+    """Checks if USB plugged in, daemon process state, and JSON heartbeat"""
+    hardware_present = is_sdr_hardware_connected()
     decoder_names = {"readsb", "dump1090", "dump1090-fa"}
 
-    # Check if a decoder daemon process is running
     process_running = any(
         p.info["name"] in decoder_names
         for p in psutil.process_iter(["name"])
     )
 
-    if not process_running:
-        return "INACTIVE", "RECEIVER OFFLINE // UNDER MAINTENANCE"
+    # if hardware is missing from the USB port
+    if not hardware_present:
+        return "DISCONNECTED", "RECEIVER MISSING // HARDWARE UNPLUGGED"
 
-    # Check if the output file is actively receiving updates
+    # if hardware is plugged in, but daemon service is turned off (standby mode)
+    if not process_running:
+        return "STANDBY", "RECEIVER PARKED // LOW POWER STANDBY"
+
+    # if Hardware is plugged in and daemon is running; check data heartbeat
     for path in ADSB_FILEPATHS:
         if os.path.exists(path):
             file_age_sec = time.time() - os.path.getmtime(path)
             if file_age_sec < 5:
                 return "ONLINE", "RECEIVER ACTIVE // NO ISSUES"
-            return "DEGRADED", "RECEIVER TROUBLE // NO RECENT FRAMES"
+            return "DEGRADED", "RECEIVER STALE // NO RECENT FRAMES"
 
+    # 4. Process is up and hardware is present, but buffer is still priming
     return "INITIALIZING", "RECEIVER ATTEMPTING LOCK // PLEASE WAIT"
 
 
