@@ -210,9 +210,42 @@ async function fetchAircraftPhoto(hex) {
   }
 }
 
+// Tab Switching Controller with Leaflet Size Recalculation
+function initTabNavigation() {
+  const tabs = document.querySelectorAll('.nav-tab');
+  const panes = document.querySelectorAll('.tab-pane');
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const targetId = tab.getAttribute('data-tab');
+
+      // Update button active state
+      tabs.forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      // Update tab pane visibility
+      panes.forEach((pane) => {
+        if (pane.id === targetId) {
+          pane.classList.add('active');
+        } else {
+          pane.classList.remove('active');
+        }
+      });
+
+      // If returning to Radar tab, force Leaflet to recalculate tile layout
+      if (targetId === 'tab-radar' && map) {
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 100);
+      }
+    });
+  });
+}
+
 // Initialize & Loop timers
 document.addEventListener('DOMContentLoaded', () => {
   initMap();
+  initTabNavigation();
   fetchTelemetry();
   fetchAircraft();
 
