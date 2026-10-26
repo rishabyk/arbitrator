@@ -351,7 +351,7 @@ function updateAircraftTable(aircraftList, status) {
 // Async Planespotters.net Photo Fetch
 async function fetchAircraftPhoto(hex) {
   const photoBox = document.getElementById('photo-box');
-  photoBox.innerHTML = '<div class="photo-placeholder">SCANNING PHOTO ARCHIVE...</div>';
+  photoBox.innerHTML = '<div class="photo-placeholder">SCANNING IMAGE ARCHIVE...</div>';
 
   try {
     const res = await fetch(`https://api.planespotters.net/pub/photos/hex/${hex}`);
@@ -365,10 +365,10 @@ async function fetchAircraftPhoto(hex) {
         <span class="photo-credit">© ${photo.photographer}</span>
       `;
     } else {
-      photoBox.innerHTML = '<div class="photo-placeholder">NO ARCHIVE PHOTO AVAILABLE</div>';
+      photoBox.innerHTML = '<div class="photo-placeholder">NO IMAGE AVAILABLE</div>';
     }
   } catch (err) {
-    photoBox.innerHTML = '<div class="photo-placeholder">PHOTO LOOKUP OFFLINE</div>';
+    photoBox.innerHTML = '<div class="photo-placeholder">IMAGE LOOKUP OFFLINE</div>';
   }
 }
 
@@ -426,6 +426,6 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchTelemetry();
   fetchAircraft();
 
-  setInterval(fetchTelemetry, 1000);
-  setInterval(fetchAircraft, 1000);
+  setInterval(fetchTelemetry, 1250);
+  setInterval(fetchAircraft, 1250);
 });
