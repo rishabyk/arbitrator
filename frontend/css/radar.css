@@ -158,3 +158,73 @@
   fill: var(--accent-amber);
   filter: drop-shadow(0 0 6px rgba(255, 179, 0, 0.8));
 }
+
+/* Floating Tactical Scope Control Bar */
+.radar-overlay-bar {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: rgba(16, 23, 33, 0.9);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+}
+
+.radar-stat {
+  font-size: 11px;
+  display: flex;
+  gap: 4px;
+  padding-right: 8px;
+  border-right: 1px solid var(--border-color);
+}
+
+.stat-lbl {
+  color: var(--text-muted);
+}
+
+.stat-num {
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+.radar-ctrl-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.radar-ctrl-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+}
+
+.radar-ctrl-btn.active {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+/* Crisp dark contour stroke around aircraft vector */
+.plane-svg path {
+  stroke: #0a0e14;
+  stroke-width: 1.5px;
+  stroke-linejoin: round;
+  paint-order: stroke fill;
+}
+
+.plane-svg.emergency {
+  fill: var(--accent-red);
+  filter: drop-shadow(0 0 8px rgba(255, 61, 0, 0.95));
+}

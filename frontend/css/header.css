@@ -196,3 +196,38 @@
   border-bottom: 2px solid var(--accent-cyan);
   background-color: rgba(0, 229, 255, 0.08);
 }
+
+/* Receiver Power Toggle Row & Button */
+.receiver-control-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.rx-power-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  border-radius: 3px;
+  width: 20px;
+  height: 18px;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.rx-power-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.rx-power-btn.active-rx {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  box-shadow: 0 0 6px rgba(0, 230, 118, 0.35);
+}

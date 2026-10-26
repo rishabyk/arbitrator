@@ -32,8 +32,12 @@
         <span class="metric-label">RAM USED</span>
         <span class="metric-val" id="ram-usage">--%</span>
       </div>
+      <div class="metric-card">
+        <span class="metric-label">UPTIME</span>
+        <span class="metric-val" id="node-uptime">--.-H</span>
+      </div>
 
-      <!-- Receiver Metric with State Matrix Help Tooltip -->
+      <!-- Receiver Metric with State Matrix Help Tooltip & Power Toggle -->
       <div class="metric-card receiver-metric">
         <div class="metric-label-row">
           <span class="metric-label">RECEIVER</span>
@@ -68,7 +72,10 @@
             </div>
           </span>
         </div>
-        <span class="metric-val status-badge" id="receiver-status">STANDBY</span>
+        <div class="receiver-control-row">
+          <span class="metric-val status-badge" id="receiver-status">STANDBY</span>
+          <button id="receiver-toggle-btn" class="rx-power-btn" title="Toggle SDR Receiver (Start/Stop readsb)">⏻</button>
+        </div>
       </div>
     </div>
   </header>
@@ -78,16 +85,32 @@
     <button class="nav-tab active" data-tab="tab-radar">01 // AIRSPACE RADAR</button>
     <button class="nav-tab" data-tab="tab-dossier">02 // FLIGHT DIRECTOR (RESUME)</button>
     <button class="nav-tab" data-tab="tab-specs">03 // NODE SPECIFICATIONS</button>
+    <button class="nav-tab" data-tab="tab-telemetry">04 // TELEMETRY & LOGS</button>
   </nav>
 
   <!-- Viewport Switcher Container -->
   <main class="hud-content">
     
     <!-- ========================================================
-         TAB 1: LIVE AIRSPACE RADAR
+         TAB 1: RADAR
          ======================================================== -->
     <div id="tab-radar" class="tab-pane active hud-main">
-      <section id="map" class="map-viewport"></section>
+      <section id="map" class="map-viewport">
+        <!-- Floating Tactical Scope Overlay -->
+        <div class="radar-overlay-bar">
+          <div class="radar-stat">
+            <span class="stat-lbl">TRACKED:</span>
+            <span class="stat-num" id="hud-contact-count">0</span>
+          </div>
+          <div class="radar-stat">
+            <span class="stat-lbl">MAX RNG:</span>
+            <span class="stat-num" id="hud-max-range">-- NM</span>
+          </div>
+          <button class="radar-ctrl-btn active" id="toggle-rings-btn">RINGS: ON</button>
+          <button class="radar-ctrl-btn active" id="toggle-trails-btn">TRAILS: ON</button>
+          <button class="radar-ctrl-btn" id="recenter-map-btn">⌖ CENTER</button>
+        </div>
+      </section>
 
       <!-- Sidebar -->
       <aside class="sidebar" id="sidebar">
@@ -106,6 +129,10 @@
             <span class="field-val" id="target-callsign">----</span>
           </div>
           <div class="field">
+            <span class="field-label">SQUAWK</span>
+            <span class="field-val" id="target-squawk">----</span>
+          </div>
+          <div class="field">
             <span class="field-label">ALTITUDE</span>
             <span class="field-val" id="target-alt">---- FT</span>
           </div>
@@ -122,23 +149,27 @@
             <span class="field-val" id="target-track">---°</span>
           </div>
           <div class="field">
-            <span class="field-label">SQUAWK</span>
-            <span class="field-val" id="target-squawk">----</span>
-          </div>
-          <div class="field">
             <span class="field-label">TARGET ALT</span>
             <span class="field-val" id="target-sel-alt">---- FT</span>
           </div>
           <div class="field">
+            <span class="field-label">DISTANCE</span>
+            <span class="field-val" id="target-dist">--.- NM</span>
+          </div>
+          <div class="field">
             <span class="field-label">SIGNAL</span>
             <span class="field-val" id="target-rssi">--.- dBFS</span>
+          </div>
+          <div class="field">
+            <span class="field-label">LAST SEEN</span>
+            <span class="field-val" id="target-seen">--.- S</span>
           </div>
         </div>
       </aside>
     </div>
 
     <!-- ========================================================
-         TAB 2: ENGINEERING DOSSIER / RESUME
+         TAB 2: RESUME
          ======================================================== -->
     <div id="tab-dossier" class="tab-pane dossier-container">
       <div class="dossier-wrapper">
@@ -212,7 +243,7 @@
     </div>
 
     <!-- ========================================================
-         TAB 3: NODE ARCHITECTURE & SPECIFICATIONS
+         TAB 3: NODE SPECS
          ======================================================== -->
     <div id="tab-specs" class="tab-pane specs-container">
       <div class="specs-wrapper">
@@ -269,6 +300,96 @@
               <li><span class="spec-key">DECODER ENGINE:</span><span class="spec-val">readsb v3.16 (Wiedehopf multi-threaded fork)</span></li>
               <li><span class="spec-key">STANDBY BEHAVIOR:</span><span class="spec-val">Automated software park to prevent heat creep</span></li>
             </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================
+         TAB 4: LIVE TELEMETRY & AIRSPACE LOGS
+         ======================================================== -->
+    <div id="tab-telemetry" class="tab-pane specs-container">
+      <div class="specs-wrapper">
+
+        <!-- Hardware Telemetry Deep Dive -->
+        <div class="specs-grid">
+          <!-- Per-Core Cortex-A76 Load -->
+          <div class="dossier-card">
+            <h3 class="card-heading">// CORTEX-A76 CORE UTILIZATION</h3>
+            <div id="core-bars-container" class="bars-stack">
+              <div class="bar-row">
+                <span class="bar-label">CORE 0</span>
+                <div class="bar-track"><div class="bar-fill" id="core-bar-0" style="width: 0%"></div></div>
+                <span class="bar-val" id="core-val-0">0%</span>
+              </div>
+              <div class="bar-row">
+                <span class="bar-label">CORE 1</span>
+                <div class="bar-track"><div class="bar-fill" id="core-bar-1" style="width: 0%"></div></div>
+                <span class="bar-val" id="core-val-1">0%</span>
+              </div>
+              <div class="bar-row">
+                <span class="bar-label">CORE 2</span>
+                <div class="bar-track"><div class="bar-fill" id="core-bar-2" style="width: 0%"></div></div>
+                <span class="bar-val" id="core-val-2">0%</span>
+              </div>
+              <div class="bar-row">
+                <span class="bar-label">CORE 3</span>
+                <div class="bar-track"><div class="bar-fill" id="core-bar-3" style="width: 0%"></div></div>
+                <span class="bar-val" id="core-val-3">0%</span>
+              </div>
+            </div>
+            <ul class="spec-list" style="margin-top: 14px;">
+              <li><span class="spec-key">CPU CLOCK SPEED:</span><span class="spec-val" id="telem-freq">---- MHz</span></li>
+              <li><span class="spec-key">LOAD AVERAGE (1/5/15m):</span><span class="spec-val" id="telem-load">0.00 / 0.00 / 0.00</span></li>
+              <li><span class="spec-key">ACTIVE PROCESSES:</span><span class="spec-val" id="telem-procs">---</span></li>
+            </ul>
+          </div>
+
+          <!-- Thermal History & Memory/Disk Resources -->
+          <div class="dossier-card">
+            <h3 class="card-heading">// THERMAL TRACE (60S) & RESOURCES</h3>
+            <div class="sparkline-box">
+              <svg id="temp-sparkline" viewBox="0 0 300 65" preserveAspectRatio="none">
+                <polyline id="temp-sparkline-line" fill="none" stroke="#00e5ff" stroke-width="2" points="" />
+              </svg>
+              <span class="sparkline-label" id="sparkline-current">--.-°C</span>
+            </div>
+            <ul class="spec-list" style="margin-top: 12px;">
+              <li><span class="spec-key">MEMORY ALLOCATION:</span><span class="spec-val" id="telem-mem">--- / ---- MB</span></li>
+              <li><span class="spec-key">ROOT FILESYSTEM (/):</span><span class="spec-val" id="telem-disk">--.- / --.- GB</span></li>
+              <li><span class="spec-key">NETWORK TRAFFIC (TX / RX):</span><span class="spec-val" id="telem-net">--.- MB / --.- MB</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Live Airspace Traffic Table -->
+        <div class="dossier-card">
+          <div class="table-header-row">
+            <h3 class="card-heading" style="margin-bottom: 0; border: none;">// LIVE 1090 MHz TRANSPONDER TABLE</h3>
+            <span class="target-badge" id="table-status-badge">RECEIVER STANDBY</span>
+          </div>
+          <div class="table-scroll">
+            <table class="tactical-table">
+              <thead>
+                <tr>
+                  <th>ICAO HEX</th>
+                  <th>CALLSIGN</th>
+                  <th>SQUAWK</th>
+                  <th>ALTITUDE</th>
+                  <th>V-RATE</th>
+                  <th>SPEED</th>
+                  <th>TRACK</th>
+                  <th>DIST</th>
+                  <th>SIGNAL</th>
+                </tr>
+              </thead>
+              <tbody id="aircraft-table-body">
+                <tr>
+                  <td colspan="9" class="empty-table-msg">NO ACTIVE TRANSPONDER CONTACTS IN RANGE</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
