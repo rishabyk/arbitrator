@@ -53,7 +53,7 @@ body {
   display: flex; /* Active tab visible */
 }
 
-/* Shared Tactical Buttons */
+/* Shared buttons */
 .hud-btn {
   display: inline-block;
   padding: 8px 16px;
