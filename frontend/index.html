@@ -16,7 +16,7 @@
   <!-- Top Telemetry Ribbon -->
   <header class="hud-header">
     <div class="hud-brand">
-      <span class="hud-title">NODE // ARBITRATOR</span>
+      <span class="hud-title">ARBITRATOR // rishabyk</span>
     </div>
 
     <div class="hud-metrics">
@@ -43,31 +43,31 @@
           <span class="metric-label">RECEIVER</span>
           <span class="help-trigger" tabindex="0">?
             <div class="status-legend-popover">
-              <div class="legend-title">// RECEIVER STATE MATRIX</div>
+              <div class="legend-title">// RECEIVER STATES</div>
               <div class="legend-item">
                 <span class="legend-dot dot-online"></span>
                 <span class="legend-name">ONLINE</span>
-                <span class="legend-desc">1090 MHz tuner active & stream frames updating (&lt;5s)</span>
+                <span class="legend-desc">SDR reciever & antenna active, last frame &lt; 5s ago</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-standby"></span>
                 <span class="legend-name">STANDBY</span>
-                <span class="legend-desc">Hardware detected; decoder parked to manage thermal load</span>
+                <span class="legend-desc">SDR reciever & antenna inactive due to thermals</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-init"></span>
                 <span class="legend-name">INITIALIZING</span>
-                <span class="legend-desc">Daemon starting; locking frequency & priming FIFO buffer</span>
+                <span class="legend-desc">SDR reciever & antenna active, background processes initializing / locking targets</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-disc"></span>
                 <span class="legend-name">DISCONNECTED</span>
-                <span class="legend-desc">RTL2832U SDR USB tuner not detected in system bus</span>
+                <span class="legend-desc">SDR reciever physically absent, likely due to maintenance</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-degraded"></span>
                 <span class="legend-name">DEGRADED</span>
-                <span class="legend-desc">Daemon alive but frame buffer stale (&gt;5s without frame)</span>
+                <span class="legend-desc">SDR reciever & antenna unhealthy (&gt; 5s without frame)</span>
               </div>
             </div>
           </span>
@@ -81,8 +81,8 @@
 
   <!-- Tactical Navigation Tab Bar -->
   <nav class="hud-nav">
-    <button class="nav-tab active" data-tab="tab-radar">01 // AIRSPACE RADAR</button>
-    <button class="nav-tab" data-tab="tab-dossier">02 // FLIGHT DIRECTOR (RESUME)</button>
+    <button class="nav-tab active" data-tab="tab-radar">01 // RADAR</button>
+    <button class="nav-tab" data-tab="tab-dossier">02 // PORTFOLIO & RESUME</button>
     <button class="nav-tab" data-tab="tab-specs">03 // NODE SPECIFICATIONS</button>
     <button class="nav-tab" data-tab="tab-telemetry">04 // TELEMETRY & LOGS</button>
   </nav>
@@ -98,7 +98,7 @@
         <!-- Floating Tactical Scope Overlay -->
         <div class="radar-overlay-bar">
           <div class="radar-stat">
-            <span class="stat-lbl">TRACKED:</span>
+            <span class="stat-lbl">TOTAL TRACKING:</span>
             <span class="stat-num" id="hud-contact-count">0</span>
           </div>
           <div class="radar-stat">
@@ -118,7 +118,7 @@
         </div>
 
         <div class="photo-container" id="photo-box">
-          <div class="photo-placeholder">AWAITING TARGET LOCK</div>
+          <div class="photo-placeholder">AWAITING TARGET SELECTION</div>
         </div>
 
         <div class="sidebar-grid">
@@ -135,7 +135,7 @@
             <span class="field-val" id="target-alt">---- FT</span>
           </div>
           <div class="field">
-            <span class="field-label">V-RATE</span>
+            <span class="field-label">VERT RATE</span>
             <span class="field-val" id="target-vrate">---- FPM</span>
           </div>
           <div class="field">
@@ -175,9 +175,9 @@
         <!-- Header Bio & Action Buttons -->
         <div class="dossier-card dossier-header">
           <div>
-            <h1 class="dossier-name">RISHABH Y. K.</h1>
-            <h2 class="dossier-title">Aerospace & Systems Engineer</h2>
-            <p class="dossier-sub">Autonomous Avionics // RF Telemetry // Propulsion Dynamics // Embedded Linux</p>
+            <h1 class="dossier-name">RISHAB YEKALDEVI</h1>
+            <h2 class="dossier-title">Aerospace Engineering Student @ SJSU</h2>
+            <p class="dossier-sub">Larp larp larp larp larp</p>
           </div>
           <div class="dossier-actions">
             <a href="resume.pdf" download class="hud-btn glow-btn">⬇ DOWNLOAD CV (PDF)</a>
@@ -186,7 +186,7 @@
 
         <!-- Competencies Matrix -->
         <div class="dossier-card">
-          <h3 class="card-heading">// TECHNICAL COMPETENCIES</h3>
+          <h3 class="card-heading">// TECHNICAL SKILLS</h3>
           <div class="skills-grid">
             <div class="skill-category">
               <span class="skill-group-title">AEROSPACE & FLIGHT DYNAMICS</span>
@@ -248,30 +248,30 @@
 
         <!-- Architecture Flow Banner -->
         <div class="dossier-card">
-          <h3 class="card-heading">// TELEMETRY SIGNAL PIPELINE</h3>
+          <h3 class="card-heading">// TELEMETRY PIPELINE</h3>
           <div class="pipeline-flow">
             <div class="pipeline-step">
               <span class="step-num">01</span>
-              <span class="step-title">1090 MHz RF</span>
-              <span class="step-desc">Mode-S transponder pulse reception via tuned antenna</span>
+              <span class="step-title">RF Capture</span>
+              <span class="step-desc">Mode-S transponder pulse reception w/ antenna tuned to 1090 MHz</span>
             </div>
             <span class="pipeline-arrow">➔</span>
             <div class="pipeline-step">
               <span class="step-num">02</span>
-              <span class="step-title">Nooelec SDR</span>
-              <span class="step-desc">RTL2832U baseband I/Q demodulation over USB</span>
+              <span class="step-title">Nooelec SDR </span>
+              <span class="step-desc">RTL2832U baseband I/Q demodulation via USB</span>
             </div>
             <span class="pipeline-arrow">➔</span>
             <div class="pipeline-step">
               <span class="step-num">03</span>
               <span class="step-title">readsb Daemon</span>
-              <span class="step-desc">Cyclic 1Hz message decode written directly to RAM</span>
+              <span class="step-desc">Cyclic 1Hz message decode written to RAM</span>
             </div>
             <span class="pipeline-arrow">➔</span>
             <div class="pipeline-step">
               <span class="step-num">04</span>
               <span class="step-title">FastAPI Backend</span>
-              <span class="step-desc">Telemetry aggregation & REST endpoints on :8000</span>
+              <span class="step-desc">Telemetry aggregated & REST endpoints on :8000</span>
             </div>
           </div>
         </div>
@@ -279,24 +279,24 @@
         <!-- Node Hardware Grid -->
         <div class="specs-grid">
           <div class="dossier-card">
-            <h3 class="card-heading">// COMPUTE NODE SPECS</h3>
+            <h3 class="card-heading">// NODE SPECS</h3>
             <ul class="spec-list">
-              <li><span class="spec-key">HOST PLATFORM:</span><span class="spec-val">Raspberry Pi 5 Model B (8GB)</span></li>
-              <li><span class="spec-key">PROCESSOR:</span><span class="spec-val">Broadcom BCM2712 Quad-Core Cortex-A76 @ 2.4GHz</span></li>
-              <li><span class="spec-key">OPERATING SYSTEM:</span><span class="spec-val">Debian GNU/Linux 12 (Bookworm 64-bit)</span></li>
-              <li><span class="spec-key">NETWORK TOPOLOGY:</span><span class="spec-val">Tailscale WireGuard Mesh + NetworkManager</span></li>
-              <li><span class="spec-key">THERMAL ENVELOPE:</span><span class="spec-val">Active fan curve + custom standby throttling</span></li>
+              <li><span class="spec-key">HOST PLATFORM</span><span class="spec-val">Raspberry Pi 5 Model B (8GB)</span></li>
+              <li><span class="spec-key">PROCESSOR</span><span class="spec-val">Broadcom BCM2712 Quad-Core Cortex-A76 @ 2.4GHz</span></li>
+              <li><span class="spec-key">OPERATING SYSTEM</span><span class="spec-val">Debian GNU/Linux 12 (Bookworm 64-bit)</span></li>
+              <li><span class="spec-key">NETWORK TOPOLOGY</span><span class="spec-val">Tailscale WireGuard Mesh + NetworkManager</span></li>
+              <li><span class="spec-key">THERMALS</span><span class="spec-val">Active fan curve + custom standby throttling</span></li>
             </ul>
           </div>
 
           <div class="dossier-card">
             <h3 class="card-heading">// RF RECEIVER FRONT-END</h3>
             <ul class="spec-list">
-              <li><span class="spec-key">TUNER CHIPSET:</span><span class="spec-val">Rafael Micro R820T / RTL2832U Demodulator</span></li>
-              <li><span class="spec-key">TARGET FREQUENCY:</span><span class="spec-val">1090 MHz (ADS-B Mode-S & 1090ES)</span></li>
-              <li><span class="spec-key">BANDWIDTH / SAMPLING:</span><span class="spec-val">2.4 MSPS Quadrature (I/Q)</span></li>
-              <li><span class="spec-key">DECODER ENGINE:</span><span class="spec-val">readsb v3.16 (Wiedehopf multi-threaded fork)</span></li>
-              <li><span class="spec-key">STANDBY BEHAVIOR:</span><span class="spec-val">Automated software park to prevent heat creep</span></li>
+              <li><span class="spec-key">TUNER CHIPSET</span><span class="spec-val">Rafael Micro R820T / RTL2832U Demodulator</span></li>
+              <li><span class="spec-key">TARGET FREQUENCY</span><span class="spec-val">1090 MHz (ADS-B Mode-S & 1090ES)</span></li>
+              <li><span class="spec-key">BANDWIDTH / SAMPLING</span><span class="spec-val">2.4 MSPS Quadrature (I/Q)</span></li>
+              <li><span class="spec-key">DECODER ENGINE</span><span class="spec-val">readsb v3.16 (Wiedehopf multi-threaded fork)</span></li>
+              <li><span class="spec-key">STANDBY BEHAVIOR</span><span class="spec-val">Automatic software parking to mitigate heat creep</span></li>
             </ul>
           </div>
         </div>
