@@ -1,0 +1,160 @@
+/* ==========================================================================
+   RADAR // MAP VIEWPORT, AIRCRAFT MARKERS & TARGET SIDEBAR (TAB 01)
+   ========================================================================== */
+
+#tab-radar.tab-pane.active {
+  display: flex;
+  flex: 1;
+}
+
+.hud-main {
+  display: flex;
+  flex: 1;
+  position: relative;
+  z-index: 1;               /* Keeps map and side inspector below header popovers */
+  overflow: hidden;
+}
+
+.map-viewport {
+  flex: 1;
+  height: 100%;
+  background-color: #05070a;
+}
+
+/* Dark mode overrides for Leaflet */
+.leaflet-container {
+  background-color: #0b0f14 !important;
+}
+
+/* Inverts OSM into high-contrast dark radar mode */
+.dark-tiles {
+  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  width: 340px;
+  min-width: 340px;       /* CRITICAL: Sets a hard floor for width */
+  flex-shrink: 0;         /* CRITICAL: Forbids the map from squishing this panel */
+  background-color: var(--bg-panel);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 14px;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+}
+
+.sidebar-header h3 {
+  font-size: 12px;
+  letter-spacing: 1.2px;
+  color: var(--accent-cyan);
+}
+
+.target-badge {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+  color: var(--accent-amber);
+}
+
+/* Photo Container */
+.photo-container {
+  width: 100%;
+  height: 180px;
+  background-color: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.photo-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-placeholder {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.photo-credit {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 9px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 4px;
+  border-radius: 2px;
+  color: var(--text-muted);
+}
+
+/* Sidebar Telemetry Grid */
+.sidebar-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.field {
+  background-color: var(--bg-card);
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.field-label {
+  display: block;
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.field-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+}
+
+/* --- Map Marker Styling --- */
+.plane-icon-wrapper {
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease-out;
+  overflow: visible !important;
+}
+
+.plane-svg {
+  width: 24px;
+  height: 24px;
+  overflow: visible !important;
+  fill: var(--accent-cyan);
+  filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.6));
+  transform-origin: center center;
+}
+
+.plane-svg.selected {
+  fill: var(--accent-amber);
+  filter: drop-shadow(0 0 6px rgba(255, 179, 0, 0.8));
+}

@@ -1,0 +1,76 @@
+/* ==========================================================================
+   BASE // VARIABLES, RESET & MASTER CONTAINERS
+   ========================================================================== */
+
+:root {
+  --bg-primary: #0a0e14;
+  --bg-panel: #101721;
+  --bg-card: #151f2c;
+  --border-color: #1f2d3d;
+  --accent-cyan: #00e5ff;
+  --accent-green: #00e676;
+  --accent-amber: #ffb300;
+  --accent-orange: #ff9100;
+  --accent-red: #ff3d00;
+  --text-primary: #e6edf3;
+  --text-muted: #7d8b99;
+  --font-mono: "SF Mono", "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Master Viewport Switcher */
+.hud-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-pane {
+  display: none; /* Inactive tabs hidden */
+  width: 100%;
+  height: 100%;
+}
+
+.tab-pane.active {
+  display: flex; /* Active tab visible */
+}
+
+/* Shared Tactical Buttons */
+.hud-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-decoration: none;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 229, 255, 0.05);
+}
+
+.hud-btn:hover {
+  background: var(--accent-cyan);
+  color: #000;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+}

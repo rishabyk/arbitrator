@@ -1,0 +1,210 @@
+/* ==========================================================================
+   PAGES // DOSSIER / RESUME (TAB 02) & NODE SPECIFICATIONS (TAB 03)
+   ========================================================================== */
+
+/* Scrollable Containers */
+.dossier-container,
+.specs-container {
+  overflow-y: auto !important;
+  padding: 24px 20px;
+  background-color: var(--bg-primary);
+  width: 100%;
+}
+
+.dossier-wrapper,
+.specs-wrapper {
+  max-width: 1050px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Shared Section Cards */
+.dossier-card {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 20px;
+}
+
+.card-heading {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: var(--accent-cyan);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+/* --- Tab 02: Bio Header & Competencies --- */
+.dossier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.dossier-name {
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+}
+
+.dossier-title {
+  font-size: 13px;
+  color: var(--accent-amber);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.dossier-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.skill-group-title {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-list span {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-size: 10.5px;
+  color: var(--text-primary);
+}
+
+/* Projects */
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-entry {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 14px;
+  border-radius: 3px;
+}
+
+.project-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.project-title {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.project-date {
+  color: var(--accent-amber);
+  font-size: 10px;
+}
+
+.project-desc {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* --- Tab 03: Signal Pipeline & Node Specs --- */
+.pipeline-flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 0;
+}
+
+.pipeline-step {
+  flex: 1;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 12px;
+  border-radius: 3px;
+  min-width: 140px;
+}
+
+.step-num {
+  display: block;
+  font-size: 9px;
+  color: var(--accent-cyan);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.step-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.step-desc {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.pipeline-arrow {
+  color: var(--accent-cyan);
+  font-size: 14px;
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.spec-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.spec-list li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  border-bottom: 1px dashed var(--border-color);
+  padding-bottom: 6px;
+}
+
+.spec-key {
+  color: var(--text-muted);
+}
+
+.spec-val {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: right;
+}
