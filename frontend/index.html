@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ARBITRATOR // ADS-B Telemetry Node</title>
+  <title>ARBITRATOR // Telemetry & Airspace Node</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -17,8 +16,7 @@
   <!-- Top Telemetry Ribbon -->
   <header class="hud-header">
     <div class="hud-brand">
-      <span class="status-dot"></span>
-      <span class="hud-title">rishabyk // ARBITRATOR</span>
+      <span class="hud-title">NODE // ARBITRATOR</span>
     </div>
 
     <div class="hud-metrics">
@@ -34,71 +32,252 @@
         <span class="metric-label">RAM USED</span>
         <span class="metric-val" id="ram-usage">--%</span>
       </div>
-      <div class="metric-card">
-        <span class="metric-label">RECEIVER</span>
+
+      <!-- Receiver Metric with State Matrix Help Tooltip -->
+      <div class="metric-card receiver-metric">
+        <div class="metric-label-row">
+          <span class="metric-label">RECEIVER</span>
+          <span class="help-trigger" tabindex="0">?
+            <div class="status-legend-popover">
+              <div class="legend-title">// RECEIVER STATE MATRIX</div>
+              <div class="legend-item">
+                <span class="legend-dot dot-online"></span>
+                <span class="legend-name">ONLINE</span>
+                <span class="legend-desc">1090 MHz tuner active & stream frames updating (&lt;5s)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot dot-standby"></span>
+                <span class="legend-name">STANDBY</span>
+                <span class="legend-desc">Hardware detected; decoder parked to manage thermal load</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot dot-init"></span>
+                <span class="legend-name">INITIALIZING</span>
+                <span class="legend-desc">Daemon starting; locking frequency & priming FIFO buffer</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot dot-disc"></span>
+                <span class="legend-name">DISCONNECTED</span>
+                <span class="legend-desc">RTL2832U SDR USB tuner not detected in system bus</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot dot-degraded"></span>
+                <span class="legend-name">DEGRADED</span>
+                <span class="legend-desc">Daemon alive but frame buffer stale (&gt;5s without frame)</span>
+              </div>
+            </div>
+          </span>
+        </div>
         <span class="metric-val status-badge" id="receiver-status">STANDBY</span>
       </div>
     </div>
   </header>
 
-  <!-- Split radar & side panel -->
-  <main class="hud-main">
+  <!-- Tactical Navigation Tab Bar -->
+  <nav class="hud-nav">
+    <button class="nav-tab active" data-tab="tab-radar">01 // AIRSPACE RADAR</button>
+    <button class="nav-tab" data-tab="tab-dossier">02 // FLIGHT DIRECTOR (RESUME)</button>
+    <button class="nav-tab" data-tab="tab-specs">03 // NODE SPECIFICATIONS</button>
+  </nav>
+
+  <!-- Viewport Switcher Container -->
+  <main class="hud-content">
     
-    <!-- Radar view -->
-    <section id="map" class="map-viewport"></section>
+    <!-- ========================================================
+         TAB 1: LIVE AIRSPACE RADAR
+         ======================================================== -->
+    <div id="tab-radar" class="tab-pane active hud-main">
+      <section id="map" class="map-viewport"></section>
 
-    <!-- Side panel -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <h3>ACTIVE TARGET</h3>
-        <span class="target-badge" id="target-hex">NONE</span>
-      </div>
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <h3>ACTIVE TARGET</h3>
+          <span class="target-badge" id="target-hex">NONE</span>
+        </div>
 
-      <!-- Photo placeholder -->
-      <div class="photo-container" id="photo-box">
-        <div class="photo-placeholder">AWAITING IMAGE</div>
-      </div>
+        <div class="photo-container" id="photo-box">
+          <div class="photo-placeholder">AWAITING TARGET LOCK</div>
+        </div>
 
-      <!-- sidebar telemetry grid -->
-      <div class="sidebar-grid">
-        <div class="field">
-          <span class="field-label">CALLSIGN</span>
-          <span class="field-val" id="target-callsign">----</span>
+        <div class="sidebar-grid">
+          <div class="field">
+            <span class="field-label">CALLSIGN</span>
+            <span class="field-val" id="target-callsign">----</span>
+          </div>
+          <div class="field">
+            <span class="field-label">ALTITUDE</span>
+            <span class="field-val" id="target-alt">---- FT</span>
+          </div>
+          <div class="field">
+            <span class="field-label">V-RATE</span>
+            <span class="field-val" id="target-vrate">---- FPM</span>
+          </div>
+          <div class="field">
+            <span class="field-label">GND SPEED</span>
+            <span class="field-val" id="target-speed">--- KT</span>
+          </div>
+          <div class="field">
+            <span class="field-label">HEADING</span>
+            <span class="field-val" id="target-track">---°</span>
+          </div>
+          <div class="field">
+            <span class="field-label">SQUAWK</span>
+            <span class="field-val" id="target-squawk">----</span>
+          </div>
+          <div class="field">
+            <span class="field-label">TARGET ALT</span>
+            <span class="field-val" id="target-sel-alt">---- FT</span>
+          </div>
+          <div class="field">
+            <span class="field-label">SIGNAL</span>
+            <span class="field-val" id="target-rssi">--.- dBFS</span>
+          </div>
         </div>
-        <div class="field">
-          <span class="field-label">ALTITUDE</span>
-          <span class="field-val" id="target-alt">---- FT</span>
+      </aside>
+    </div>
+
+    <!-- ========================================================
+         TAB 2: ENGINEERING DOSSIER / RESUME
+         ======================================================== -->
+    <div id="tab-dossier" class="tab-pane dossier-container">
+      <div class="dossier-wrapper">
+        
+        <!-- Header Bio & Action Buttons -->
+        <div class="dossier-card dossier-header">
+          <div>
+            <h1 class="dossier-name">RISHABH Y. K.</h1>
+            <h2 class="dossier-title">Aerospace & Systems Engineer</h2>
+            <p class="dossier-sub">Autonomous Avionics // RF Telemetry // Propulsion Dynamics // Embedded Linux</p>
+          </div>
+          <div class="dossier-actions">
+            <a href="resume.pdf" download class="hud-btn glow-btn">⬇ DOWNLOAD CV (PDF)</a>
+          </div>
         </div>
-        <div class="field">
-          <span class="field-label">VERT RATE</span>
-          <span class="field-val" id="target-vrate">---- FPM</span>
+
+        <!-- Competencies Matrix -->
+        <div class="dossier-card">
+          <h3 class="card-heading">// TECHNICAL COMPETENCIES</h3>
+          <div class="skills-grid">
+            <div class="skill-category">
+              <span class="skill-group-title">AEROSPACE & FLIGHT DYNAMICS</span>
+              <div class="tag-list">
+                <span>Aerodynamics & CFD</span>
+                <span>Flight Stability</span>
+                <span>Orbital Mechanics</span>
+                <span>Propulsion Dynamics</span>
+                <span>FEA / Stress Analysis</span>
+              </div>
+            </div>
+            <div class="skill-category">
+              <span class="skill-group-title">SYSTEMS & EMBEDDED COMPUTING</span>
+              <div class="tag-list">
+                <span>Embedded Linux / POSIX</span>
+                <span>FastAPI / Python</span>
+                <span>RTL-SDR / 1090MHz RF</span>
+                <span>Git / Automation Pipelines</span>
+                <span>Tailscale / Mesh VPN</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="field">
-          <span class="field-label">GRND SPEED</span>
-          <span class="field-val" id="target-speed">--- KT</span>
+
+        <!-- Featured Projects Showcase -->
+        <div class="dossier-card">
+          <h3 class="card-heading">// ACTIVE SYSTEMS & MISSIONS</h3>
+          <div class="project-list">
+            <div class="project-entry">
+              <div class="project-head">
+                <span class="project-title">PROJECT ARBITRATOR // EDGE TELEMETRY NODE</span>
+                <span class="project-date">2026 – PRESENT</span>
+              </div>
+              <p class="project-desc">
+                Engineered a standalone 1090 MHz Mode-S/ADS-B edge station on a Raspberry Pi 5. Implemented low-latency RAM-disk demodulation, hardware thermal management routines, and an interactive FastAPI-powered tactical radar HUD.
+              </p>
+            </div>
+
+            <div class="project-entry">
+              <div class="project-head">
+                <span class="project-title">SUBJUGATOR COMPUTE NODE // DISTRIBUTED SIMULATION</span>
+                <span class="project-date">ACTIVE</span>
+              </div>
+              <p class="project-desc">
+                High-throughput distributed compute node configured for numerical simulation pipelines, aerostructural modeling, and automated data processing over encrypted Tailscale interconnects.
+              </p>
+            </div>
+          </div>
         </div>
-        <div class="field">
-          <span class="field-label">HEADING</span>
-          <span class="field-val" id="target-track">---°</span>
-        </div>
-        <div class="field">
-          <span class="field-label">SQUAWK</span>
-          <span class="field-val" id="target-squawk">----</span>
-        </div>
-        <div class="field">
-          <span class="field-label">TARGET ALT</span>
-          <span class="field-val" id="target-sel-alt">---- FT</span>
-        </div>
-        <div class="field">
-          <span class="field-label">SIGNAL</span>
-          <span class="field-val" id="target-rssi">--.- dBFS</span>
-        </div>
+
       </div>
-    </aside>
+    </div>
+
+    <!-- ========================================================
+         TAB 3: NODE ARCHITECTURE & SPECIFICATIONS
+         ======================================================== -->
+    <div id="tab-specs" class="tab-pane specs-container">
+      <div class="specs-wrapper">
+
+        <!-- Architecture Flow Banner -->
+        <div class="dossier-card">
+          <h3 class="card-heading">// TELEMETRY SIGNAL PIPELINE</h3>
+          <div class="pipeline-flow">
+            <div class="pipeline-step">
+              <span class="step-num">01</span>
+              <span class="step-title">1090 MHz RF</span>
+              <span class="step-desc">Mode-S transponder pulse reception via tuned antenna</span>
+            </div>
+            <span class="pipeline-arrow">➔</span>
+            <div class="pipeline-step">
+              <span class="step-num">02</span>
+              <span class="step-title">Nooelec SDR</span>
+              <span class="step-desc">RTL2832U baseband I/Q demodulation over USB</span>
+            </div>
+            <span class="pipeline-arrow">➔</span>
+            <div class="pipeline-step">
+              <span class="step-num">03</span>
+              <span class="step-title">readsb Daemon</span>
+              <span class="step-desc">Cyclic 1Hz message decode written directly to RAM</span>
+            </div>
+            <span class="pipeline-arrow">➔</span>
+            <div class="pipeline-step">
+              <span class="step-num">04</span>
+              <span class="step-title">FastAPI Backend</span>
+              <span class="step-desc">Telemetry aggregation & REST endpoints on :8000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Node Hardware Grid -->
+        <div class="specs-grid">
+          <div class="dossier-card">
+            <h3 class="card-heading">// COMPUTE NODE SPECS</h3>
+            <ul class="spec-list">
+              <li><span class="spec-key">HOST PLATFORM:</span><span class="spec-val">Raspberry Pi 5 Model B (8GB)</span></li>
+              <li><span class="spec-key">PROCESSOR:</span><span class="spec-val">Broadcom BCM2712 Quad-Core Cortex-A76 @ 2.4GHz</span></li>
+              <li><span class="spec-key">OPERATING SYSTEM:</span><span class="spec-val">Debian GNU/Linux 12 (Bookworm 64-bit)</span></li>
+              <li><span class="spec-key">NETWORK TOPOLOGY:</span><span class="spec-val">Tailscale WireGuard Mesh + NetworkManager</span></li>
+              <li><span class="spec-key">THERMAL ENVELOPE:</span><span class="spec-val">Active fan curve + custom standby throttling</span></li>
+            </ul>
+          </div>
+
+          <div class="dossier-card">
+            <h3 class="card-heading">// RF RECEIVER FRONT-END</h3>
+            <ul class="spec-list">
+              <li><span class="spec-key">TUNER CHIPSET:</span><span class="spec-val">Rafael Micro R820T / RTL2832U Demodulator</span></li>
+              <li><span class="spec-key">TARGET FREQUENCY:</span><span class="spec-val">1090 MHz (ADS-B Mode-S & 1090ES)</span></li>
+              <li><span class="spec-key">BANDWIDTH / SAMPLING:</span><span class="spec-val">2.4 MSPS Quadrature (I/Q)</span></li>
+              <li><span class="spec-key">DECODER ENGINE:</span><span class="spec-val">readsb v3.16 (Wiedehopf multi-threaded fork)</span></li>
+              <li><span class="spec-key">STANDBY BEHAVIOR:</span><span class="spec-val">Automated software park to prevent heat creep</span></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
 
   </main>
 
-  <!-- Leaflet & App script -->
+  <!-- Leaflet JS & App Script -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
 </body>

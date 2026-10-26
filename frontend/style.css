@@ -29,29 +29,21 @@ body {
   user-select: none;
 }
 
-/* --- Top Ribbon --- */
 .hud-header {
+  position: relative;       /* enables z-index stacking context */
+  z-index: 3000;            /* Floats entire header & tooltips above all panels */
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
   background-color: var(--bg-panel);
   border-bottom: 1px solid var(--border-color);
-  z-index: 1000;
 }
 
 .hud-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: var(--accent-green);
-  box-shadow: 0 0 8px var(--accent-green);
 }
 
 .hud-title {
@@ -101,11 +93,11 @@ body {
 }
 
 
-/* --- Main viewport - Radar & side --- */
 .hud-main {
   display: flex;
   flex: 1;
   position: relative;
+  z-index: 1;               /* Keeps map and side inspector below header popovers */
   overflow: hidden;
 }
 
@@ -123,6 +115,8 @@ body {
 /* --- Sidebar --- */
 .sidebar {
   width: 340px;
+  min-width: 340px;       /* CRITICAL: Sets a hard floor for width */
+  flex-shrink: 0;         /* CRITICAL: Forbids the map from squishing this panel */
   background-color: var(--bg-panel);
   border-left: 1px solid var(--border-color);
   display: flex;
@@ -249,4 +243,412 @@ body {
 /* Inverts OSM into high-contrast dark radar mode */
 .dark-tiles {
   filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
+}
+
+/* ==========================================================================
+   RECEIVER STATE BADGES & STATUS LEGEND TOOLTIP
+   ========================================================================== */
+
+/* Header Card Layout */
+.receiver-metric {
+  position: relative;
+  min-width: 130px;
+}
+
+.metric-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+/* Help Trigger Button (?) */
+.help-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.help-trigger:hover,
+.help-trigger:focus {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* Hover/Focus Popover Legend */
+.status-legend-popover {
+  display: none;
+  position: absolute;
+  top: 24px;
+  right: 0;
+  width: 290px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+  border-radius: 4px;
+  padding: 12px;
+  z-index: 2000;
+  text-align: left;
+  pointer-events: none;
+}
+
+.help-trigger:hover .status-legend-popover,
+.help-trigger:focus .status-legend-popover {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent-cyan);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.legend-item {
+  display: grid;
+  grid-template-columns: 12px 90px 1fr;
+  align-items: center;
+  font-size: 9.5px;
+  line-height: 1.25;
+  gap: 6px;
+}
+
+.legend-desc {
+  color: var(--text-muted);
+}
+
+/* Color Dots */
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-online   { background-color: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.dot-standby  { background-color: var(--accent-amber); box-shadow: 0 0 6px var(--accent-amber); }
+.dot-init     { background-color: var(--accent-cyan);  box-shadow: 0 0 6px var(--accent-cyan); }
+.dot-disc     { background-color: var(--accent-red);   box-shadow: 0 0 6px var(--accent-red); }
+.dot-degraded { background-color: var(--accent-orange);box-shadow: 0 0 6px var(--accent-orange); }
+
+/* Status Badge Dynamic Text Colors */
+.status-badge.online       { color: var(--accent-green); text-shadow: 0 0 8px rgba(0, 230, 118, 0.4); }
+.status-badge.standby      { color: var(--accent-amber); }
+.status-badge.initializing { color: var(--accent-cyan);  animation: pulse-init 1.5s infinite; }
+.status-badge.disconnected  { color: var(--accent-red);   text-shadow: 0 0 8px rgba(255, 61, 0, 0.4); }
+.status-badge.degraded     { color: var(--accent-orange); }
+
+@keyframes pulse-init {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ==========================================================================
+   TACTICAL TAB BAR & DOSSIER/SPECS VIEWS
+   ========================================================================== */
+
+/* Navigation Bar */
+.hud-nav {
+  display: flex;
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 16px;
+  gap: 8px;
+  z-index: 2500;
+}
+
+.nav-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-tab:hover {
+  color: var(--text-primary);
+  background-color: rgba(0, 229, 255, 0.04);
+}
+
+.nav-tab.active {
+  color: var(--accent-cyan);
+  border-bottom: 2px solid var(--accent-cyan);
+  background-color: rgba(0, 229, 255, 0.08);
+}
+
+/* Master Viewport Switcher */
+.hud-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-pane {
+  display: none; /* Inactive tabs hidden */
+  width: 100%;
+  height: 100%;
+}
+
+.tab-pane.active {
+  display: flex; /* Active tab visible */
+}
+
+/* Tab 1: Radar Viewport (Flex preservation) */
+#tab-radar.tab-pane.active {
+  display: flex;
+  flex: 1;
+}
+
+/* Tab 2 & 3 Scrollable Containers */
+.dossier-container,
+.specs-container {
+  overflow-y: auto !important;
+  padding: 24px 20px;
+  background-color: var(--bg-primary);
+  width: 100%;
+}
+
+.dossier-wrapper,
+.specs-wrapper {
+  max-width: 1050px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Dossier Cards */
+.dossier-card {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 20px;
+}
+
+.card-heading {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: var(--accent-cyan);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+/* Bio Header */
+.dossier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.dossier-name {
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+}
+
+.dossier-title {
+  font-size: 13px;
+  color: var(--accent-amber);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.dossier-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Buttons */
+.hud-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-decoration: none;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 229, 255, 0.05);
+}
+
+.hud-btn:hover {
+  background: var(--accent-cyan);
+  color: #000;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+}
+
+/* Competencies Grid */
+.skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.skill-group-title {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-list span {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-size: 10.5px;
+  color: var(--text-primary);
+}
+
+/* Projects */
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-entry {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 14px;
+  border-radius: 3px;
+}
+
+.project-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.project-title {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.project-date {
+  color: var(--accent-amber);
+  font-size: 10px;
+}
+
+.project-desc {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Pipeline Flow (Tab 3) */
+.pipeline-flow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 0;
+}
+
+.pipeline-step {
+  flex: 1;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 12px;
+  border-radius: 3px;
+  min-width: 140px;
+}
+
+.step-num {
+  display: block;
+  font-size: 9px;
+  color: var(--accent-cyan);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.step-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.step-desc {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.pipeline-arrow {
+  color: var(--accent-cyan);
+  font-size: 14px;
+}
+
+/* Specs Details */
+.specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.spec-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.spec-list li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  border-bottom: 1px dashed var(--border-color);
+  padding-bottom: 6px;
+}
+
+.spec-key {
+  color: var(--text-muted);
+}
+
+.spec-val {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: right;
 }

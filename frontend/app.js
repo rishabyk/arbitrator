@@ -2,13 +2,6 @@ let map;
 let aircraftMarkers = {}; // hex -> { marker, data }
 let selectedHex = null;
 
-// SVG airplane symbol, used in createPlaneIcon()
-const PLANE_SVG = `
-<svg class="plane-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-  <path d="M12 2L9 9H3L2 11L9 13V19L7 20V22L12 21L17 22V20L15 19V13L22 11L21 9H15L12 2Z" />
-</svg>
-`;
-
 // Initialize map
 function initMap() {
   // Centering around Bay area
@@ -27,13 +20,15 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   });
 }
 
-// Rotate SVG icon according to plane
+// generate SVG icon & rotate to plane heading
 function createPlaneIcon(heading = 0, isSelected = false) {
   const selectedClass = isSelected ? 'selected' : '';
   const html = `
-    <div style="transform: rotate(${heading}deg); width: 24px; height: 24px;">
-      <svg class="plane-svg ${selectedClass}" viewBox="0 0 24 24">
-        <path d="M12 2L9 9H3L2 11L9 13V19L7 20V22L12 21L17 22V20L15 19V13L22 11L21 9H15L12 2Z" />
+    <div style="transform: rotate(${heading}deg); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+      <svg class="plane-svg ${selectedClass}" viewBox="-4 -4 40 40" style="overflow: visible;" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(3.2, -0.9) rotate(-45 16 16)">
+          <path d="M12.25 8.719l-0.469 0.469 4 0.344 2.406-2.406c0.375-0.375 1.063-0.938 2.063-1.563s1.656-0.813 1.906-0.563c0.688 0.688 0 2.031-2.063 4.063l-2.375 2.375 0.344 4 0.469-0.438c0.375-0.406 0.781-0.406 1.094-0.094 0.375 0.375 0.219 0.906-0.531 1.656l-0.75 0.781 0.375 2.688 0.531-0.563c0.344-0.375 0.719-0.375 1.063-0.063 0.375 0.375 0.313 0.844-0.188 1.344l-1.125 1.125c0.438 3 0.5 4.688 0.156 5.031-0.156 0.125-0.375 0.25-0.688 0.313-0.281 0.031-0.531 0-0.688-0.125-0.125-0.156-0.313-0.719-0.5-1.688-0.219-1-0.75-2.688-1.688-5.063-0.906-2.406-1.563-3.75-1.875-4.094-0.125-0.125-0.313-0.125-0.531 0-0.219 0.094-1 0.75-2.25 1.969-1.25 1.25-2.406 2.25-3.5 3.031-0.031 0.188 0.063 0.813 0.219 1.844s0.219 1.719 0.188 1.969c-0.063 0.25-0.313 0.594-0.719 1-0.219 0.219-0.375 0.344-0.531 0.375-0.406-0.406-1.031-1.719-1.875-3.875-2.344-1.031-3.625-1.688-3.875-1.938 0-0.125 0.125-0.313 0.344-0.531 0.406-0.406 0.75-0.656 1.031-0.688 0.25-0.063 0.906 0.031 1.938 0.219 1.031 0.156 1.656 0.219 1.875 0.219 0.75-1.125 2.156-2.781 4.344-4.969 0.625-0.688 0.813-1.125 0.594-1.344-0.313-0.344-1.688-0.969-4.063-1.875-2.406-0.906-4.063-1.5-5.063-1.688-1-0.219-1.563-0.375-1.688-0.531-0.156-0.125-0.188-0.375-0.125-0.688 0.031-0.313 0.156-0.531 0.313-0.688 0.313-0.313 2-0.281 5.031 0.156l1.094-1.125c0.5-0.469 0.969-0.531 1.344-0.156 0.344 0.313 0.313 0.688-0.031 1.031l-0.563 0.531 2.688 0.375 0.75-0.719c0.75-0.75 1.281-0.906 1.656-0.531 0.344 0.344 0.313 0.688-0.063 1.094z" />
+        </g>
       </svg>
     </div>
   `;
@@ -67,14 +62,24 @@ async function fetchAircraft() {
     if (!res.ok) return;
     const data = await res.json();
 
-    // Update receiver status badge
+// Update receiver status badge with dedicated color classes
     const badge = document.getElementById('receiver-status');
-    badge.textContent = data.status;
+    const status = (data.status || 'UNKNOWN').toUpperCase();
+    badge.textContent = status;
     badge.className = 'metric-val status-badge';
-    if (data.status === 'INACTIVE' || data.status === 'DEGRADED') {
-      badge.classList.add('inactive');
-    } else if (data.status === 'ERROR') {
-      badge.classList.add('error');
+
+    if (status === 'ONLINE') {
+      badge.classList.add('online');
+    } else if (status === 'STANDBY') {
+      badge.classList.add('standby');
+    } else if (status === 'INITIALIZING') {
+      badge.classList.add('initializing');
+    } else if (status === 'DISCONNECTED') {
+      badge.classList.add('disconnected');
+    } else if (status === 'DEGRADED') {
+      badge.classList.add('degraded');
+    } else {
+      badge.classList.add('disconnected');
     }
 
     const currentContacts = data.aircraft || [];
@@ -205,9 +210,42 @@ async function fetchAircraftPhoto(hex) {
   }
 }
 
+// Tab Switching Controller with Leaflet Size Recalculation
+function initTabNavigation() {
+  const tabs = document.querySelectorAll('.nav-tab');
+  const panes = document.querySelectorAll('.tab-pane');
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const targetId = tab.getAttribute('data-tab');
+
+      // Update button active state
+      tabs.forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      // Update tab pane visibility
+      panes.forEach((pane) => {
+        if (pane.id === targetId) {
+          pane.classList.add('active');
+        } else {
+          pane.classList.remove('active');
+        }
+      });
+
+      // If returning to Radar tab, force Leaflet to recalculate tile layout
+      if (targetId === 'tab-radar' && map) {
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 100);
+      }
+    });
+  });
+}
+
 // Initialize & Loop timers
 document.addEventListener('DOMContentLoaded', () => {
   initMap();
+  initTabNavigation();
   fetchTelemetry();
   fetchAircraft();
 
