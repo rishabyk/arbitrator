@@ -4,8 +4,6 @@ let selectedHex = null;
 
 // Tactical Map Overlays
 const STATION_COORDS = [37.7749, -122.3194];
-let rangeRingsLayer = null;
-let showRings = true;
 let showTrails = true;
 
 // Rolling 60-second temperature history for Tab 04 sparkline
@@ -33,19 +31,6 @@ function initMap() {
   });
 }
 
-  const ringsNM = [10, 25, 50];
-  ringsNM.forEach((nm) => {
-    const radiusMeters = nm * 1852; // 1 NM = 1852 meters
-    L.circle(STATION_COORDS, {
-      radius: radiusMeters,
-      color: '#00e5ff',
-      weight: 1,
-      opacity: 0.25,
-      fill: false,
-      dashArray: '4, 6',
-      interactive: false
-    }).addTo(rangeRingsLayer);
-  });
 
 // Generate SVG icon & rotate to plane heading
 function createPlaneIcon(heading = 0, isSelected = false, squawk = '----') {
@@ -235,28 +220,19 @@ function updateReceiverBadge(status) {
   const badge = document.getElementById('receiver-status');
   const tableBadge = document.getElementById('table-status-badge');
 
-  badge.textContent = status;
-  badge.className = 'metric-val status-badge';
+  if (badge) {
+    badge.textContent = status;
+    badge.className = 'metric-val status-badge';
+    
+    if (status === 'ONLINE') badge.classList.add('online');
+    else if (status === 'STANDBY') badge.classList.add('standby');
+    else if (status === 'INITIALIZING') badge.classList.add('initializing');
+    else if (status === 'DEGRADED') badge.classList.add('degraded');
+    else badge.classList.add('disconnected');
+  }
 
-  if (tableBadge) tableBadge.textContent = `RECEIVER: ${status}`;
-
-  if (status === 'ONLINE') {
-    badge.classList.add('online');
-    toggleBtn?.classList.add('active-rx');
-  } else if (status === 'STANDBY') {
-    badge.classList.add('standby');
-    toggleBtn?.classList.remove('active-rx');
-  } else if (status === 'INITIALIZING') {
-    badge.classList.add('initializing');
-    toggleBtn?.classList.add('active-rx');
-  } else if (status === 'DISCONNECTED') {
-    badge.classList.add('disconnected');
-    toggleBtn?.classList.remove('active-rx');
-  } else if (status === 'DEGRADED') {
-    badge.classList.add('degraded');
-    toggleBtn?.classList.add('active-rx');
-  } else {
-    badge.classList.add('disconnected');
+  if (tableBadge) {
+    tableBadge.textContent = `RECEIVER: ${status}`;
   }
 }
 

@@ -202,13 +202,13 @@ def get_aircraft():
 
                     aircraft = [
                         {
-                            "hex": a.get("hex"),
-                            "flight": a.get("flight", "").strip(),
-                            "squawk": a.get("squawk", "----"),
+                            "hex": str(a.get("hex") or "UNKNOWN"),
+                            "flight": str(a.get("flight") or "").strip(),
+                            "squawk": str(a.get("squawk") or "----"),
                             "alt_baro": (
                                 0 if a.get("alt_baro") == "ground" else a.get("alt_baro")
                             ),
-                            "vert_rate": a.get("baro_rate", 0),
+                            "vert_rate": a.get("baro_rate") or 0,
                             "selected_alt": a.get("nav_altitude_mcp"),
                             "speed": a.get("gs"),
                             "track": a.get("track"),
@@ -218,7 +218,7 @@ def get_aircraft():
                                 STATION_LAT, STATION_LON, a.get("lat"), a.get("lon")
                             ),
                             "rssi": a.get("rssi"),
-                            "seen_sec": a.get("seen", 0),
+                            "seen_sec": a.get("seen") or 0,
                         }
                         for a in data.get("aircraft", [])
                         if a.get("lat") and a.get("lon")
