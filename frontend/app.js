@@ -24,9 +24,6 @@ function initMap() {
     className: 'dark-tiles'
   }).addTo(map);
 
-  // Draw Station Origin Marker & Range Rings (10, 25, 50 NM)
-  initRangeRings();
-
   // Deselect plane when clicking empty space on map
   map.on('click', () => {
     if (selectedHex) {
@@ -35,19 +32,6 @@ function initMap() {
     }
   });
 }
-
-// Draw 10 NM, 25 NM, and 50 NM Concentric Radar Rings + Station Reticle
-function initRangeRings() {
-  rangeRingsLayer = L.layerGroup().addTo(map);
-
-  // Station Center Crosshair Dot
-  L.circleMarker(STATION_COORDS, {
-    radius: 4,
-    color: '#00e676',
-    fillColor: '#00e676',
-    fillOpacity: 1,
-    weight: 1
-  }).bindTooltip('NODE // ARBITRATOR', { direction: 'top', offset: [0, -6] }).addTo(rangeRingsLayer);
 
   const ringsNM = [10, 25, 50];
   ringsNM.forEach((nm) => {
@@ -69,7 +53,7 @@ function createPlaneIcon(heading = 0, isSelected = false, squawk = '----') {
   const isEmergency = ['7700', '7600', '7500'].includes(String(squawk));
   const selectedClass = isSelected ? 'selected' : (isEmergency ? 'emergency' : '');
   const html = `
-    <div style="transform: rotate(${heading}deg); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+    <div style="transform: rotate(${heading}deg); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
       <svg class="plane-svg ${selectedClass}" viewBox="-4 -4 40 40" style="overflow: visible;" xmlns="http://www.w3.org/2000/svg">
         <g transform="translate(3.2, -0.9) rotate(-45 16 16)">
           <path d="M12.25 8.719l-0.469 0.469 4 0.344 2.406-2.406c0.375-0.375 1.063-0.938 2.063-1.563s1.656-0.813 1.906-0.563c0.688 0.688 0 2.031-2.063 4.063l-2.375 2.375 0.344 4 0.469-0.438c0.375-0.406 0.781-0.406 1.094-0.094 0.375 0.375 0.219 0.906-0.531 1.656l-0.75 0.781 0.375 2.688 0.531-0.563c0.344-0.375 0.719-0.375 1.063-0.063 0.375 0.375 0.313 0.844-0.188 1.344l-1.125 1.125c0.438 3 0.5 4.688 0.156 5.031-0.156 0.125-0.375 0.25-0.688 0.313-0.281 0.031-0.531 0-0.688-0.125-0.125-0.156-0.313-0.719-0.5-1.688-0.219-1-0.75-2.688-1.688-5.063-0.906-2.406-1.563-3.75-1.875-4.094-0.125-0.125-0.313-0.125-0.531 0-0.219 0.094-1 0.75-2.25 1.969-1.25 1.25-2.406 2.25-3.5 3.031-0.031 0.188 0.063 0.813 0.219 1.844s0.219 1.719 0.188 1.969c-0.063 0.25-0.313 0.594-0.719 1-0.219 0.219-0.375 0.344-0.531 0.375-0.406-0.406-1.031-1.719-1.875-3.875-2.344-1.031-3.625-1.688-3.875-1.938 0-0.125 0.125-0.313 0.344-0.531 0.406-0.406 0.75-0.656 1.031-0.688 0.25-0.063 0.906 0.031 1.938 0.219 1.031 0.156 1.656 0.219 1.875 0.219 0.75-1.125 2.156-2.781 4.344-4.969 0.625-0.688 0.813-1.125 0.594-1.344-0.313-0.344-1.688-0.969-4.063-1.875-2.406-0.906-4.063-1.5-5.063-1.688-1-0.219-1.563-0.375-1.688-0.531-0.156-0.125-0.188-0.375-0.125-0.688 0.031-0.313 0.156-0.531 0.313-0.688 0.313-0.313 2-0.281 5.031 0.156l1.094-1.125c0.5-0.469 0.969-0.531 1.344-0.156 0.344 0.313 0.313 0.688-0.031 1.031l-0.563 0.531 2.688 0.375 0.75-0.719c0.75-0.75 1.281-0.906 1.656-0.531 0.344 0.344 0.313 0.688-0.063 1.094z" />
@@ -81,7 +65,7 @@ function createPlaneIcon(heading = 0, isSelected = false, squawk = '----') {
     html: html,
     className: 'plane-icon-wrapper',
     iconSize: [24, 24],
-    iconAnchor: [12, 12]
+    iconAnchor: [16, 16]
   });
 }
 
@@ -204,7 +188,7 @@ async function fetchAircraft() {
 
         const polyline = L.polyline([[lat, lon]], {
           color: isSelected ? '#ffb300' : '#00e5ff',
-          weight: 1.5,
+          weight: 2.5,
           opacity: showTrails ? 0.45 : 0,
           dashArray: '3, 4'
         }).addTo(map);
@@ -250,7 +234,6 @@ async function fetchAircraft() {
 
 function updateReceiverBadge(status) {
   const badge = document.getElementById('receiver-status');
-  const toggleBtn = document.getElementById('receiver-toggle-btn');
   const tableBadge = document.getElementById('table-status-badge');
 
   badge.textContent = status;
@@ -414,49 +397,10 @@ async function fetchAircraftPhoto(hex) {
   }
 }
 
-// Hardware SDR Power Override Toggle
-function initReceiverToggle() {
-  const btn = document.getElementById('receiver-toggle-btn');
-  if (!btn) return;
-
-  btn.addEventListener('click', async () => {
-    btn.disabled = true;
-    const badge = document.getElementById('receiver-status');
-    badge.textContent = 'SWITCHING...';
-
-    try {
-      const res = await fetch('/api/receiver/toggle', { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.detail || 'Failed to toggle SDR receiver');
-      } else {
-        updateReceiverBadge(data.status);
-      }
-    } catch (err) {
-      console.error('Toggle error:', err);
-    } finally {
-      btn.disabled = false;
-      fetchAircraft();
-    }
-  });
-}
-
 // Radar Overlay Control Buttons (Rings, Trails, Recenter)
 function initRadarControls() {
-  const ringsBtn = document.getElementById('toggle-rings-btn');
   const trailsBtn = document.getElementById('toggle-trails-btn');
   const centerBtn = document.getElementById('recenter-map-btn');
-
-  ringsBtn?.addEventListener('click', () => {
-    showRings = !showRings;
-    ringsBtn.textContent = `RINGS: ${showRings ? 'ON' : 'OFF'}`;
-    ringsBtn.classList.toggle('active', showRings);
-    if (showRings) {
-      rangeRingsLayer.addTo(map);
-    } else {
-      map.removeLayer(rangeRingsLayer);
-    }
-  });
 
   trailsBtn?.addEventListener('click', () => {
     showTrails = !showTrails;
@@ -503,7 +447,6 @@ function initTabNavigation() {
 document.addEventListener('DOMContentLoaded', () => {
   initMap();
   initTabNavigation();
-  initReceiverToggle();
   initRadarControls();
   fetchTelemetry();
   fetchAircraft();

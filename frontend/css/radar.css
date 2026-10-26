@@ -219,7 +219,7 @@
 /* Crisp dark contour stroke around aircraft vector */
 .plane-svg path {
   stroke: #0a0e14;
-  stroke-width: 1.5px;
+  stroke-width: 2.5px;
   stroke-linejoin: round;
   paint-order: stroke fill;
 }
