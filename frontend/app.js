@@ -46,7 +46,6 @@ function initMap() {
       interactive: false
     }).addTo(rangeRingsLayer);
   });
-}
 
 // Generate SVG icon & rotate to plane heading
 function createPlaneIcon(heading = 0, isSelected = false, squawk = '----') {
