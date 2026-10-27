@@ -10,7 +10,7 @@ import psutil
 
 app = FastAPI(title="Node Arbitrator")
 
-# Allows requests from local frontend instance during development
+# cors middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,22 +19,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# ADS-B .json output files
+# ads-b json paths
 ADSB_FILEPATHS = [
     "/run/readsb/aircraft.json",
     "/run/dump1090-fa/aircraft.json",
     "/var/run/dump1090-mutability/aircraft.json",
 ]
 
-# Default Station Coordinates (Bay Area) for Range & Distance Calculations
+# station coordinates
 STATION_LAT = 37.7749
 STATION_LON = -122.3194
 
 
+# calculate distance in nautical miles
 def calc_distance_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Calculates great-circle distance in Nautical Miles (NM) using Haversine formula."""
-    r_nm = 3440.065  # Earth radius in Nautical Miles
+    r_nm = 3440.065
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
     dlambda = math.radians(lon2 - lon1)
@@ -46,8 +45,8 @@ def calc_distance_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> floa
     return round(2 * r_nm * math.atan2(math.sqrt(a), math.sqrt(1 - a)), 1)
 
 
+# read soc temperature in celsius
 def getCPUTemp() -> float:
-    """Returns Pi 5 SoC temperature in Celsius."""
     try:
         with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
             return round(int(f.read().strip()) / 1000.0, 1)
@@ -55,8 +54,8 @@ def getCPUTemp() -> float:
         return 0.0
 
 
+# check rtl-sdr usb hardware in sysfs
 def is_sdr_hardware_connected() -> bool:
-    """Checks Linux USB sysfs tree for RTL2832U tuner hardware."""
     usb_dir = "/sys/bus/usb/devices"
     if not os.path.exists(usb_dir):
         return False
@@ -77,8 +76,8 @@ def is_sdr_hardware_connected() -> bool:
     return False
 
 
+# inspect hardware, process, and frame freshness
 def check_receiver_status():
-    """Checks if USB plugged in, daemon process state, and JSON heartbeat."""
     hardware_present = is_sdr_hardware_connected()
     decoder_names = {"readsb", "dump1090", "dump1090-fa"}
 
@@ -103,9 +102,9 @@ def check_receiver_status():
     return "INITIALIZING", "RECEIVER ATTEMPTING LOCK // PLEASE WAIT"
 
 
+# telemetry vitals endpoint
 @app.get("/api/telemetry")
 def get_telemetry():
-    """Returns comprehensive system vitals: CPU cores, clock, thermals, RAM, disk, network & uptime."""
     cpu_percent = psutil.cpu_percent(interval=None)
     cpu_per_core = psutil.cpu_percent(interval=None, percpu=True)
     mem = psutil.virtual_memory()
@@ -144,9 +143,9 @@ def get_telemetry():
     }
 
 
+# toggle readsb service
 @app.post("/api/receiver/toggle")
 def toggle_receiver():
-    """Starts or stops the readsb systemd daemon to control SDR power and thermals."""
     if not is_sdr_hardware_connected():
         raise HTTPException(
             status_code=400,
@@ -162,7 +161,7 @@ def toggle_receiver():
             check=True,
             timeout=10,
         )
-        time.sleep(0.4)  # Allow systemd process table to settle
+        time.sleep(0.4)
         new_status, new_msg = check_receiver_status()
         return {
             "success": True,
@@ -177,9 +176,9 @@ def toggle_receiver():
         )
 
 
+# aircraft transponder endpoint
 @app.get("/api/aircraft")
 def get_aircraft():
-    """Returns ADS-B contacts, distance from station, and receiver status."""
     status, status_msg = check_receiver_status()
 
     response = {
@@ -236,8 +235,8 @@ def get_aircraft():
     return response
 
 
+# static files with no-cache headers
 class CachedStaticFiles(StaticFiles):
-    """Custom static handler that ensures frontend scripts and styles are never cached stale."""
     def is_not_modified(self, response_headers, request_headers) -> bool:
         return False
 
@@ -249,7 +248,7 @@ class CachedStaticFiles(StaticFiles):
         return response
 
 
-# Pointing FastAPI to the Frontend directory
+# mount frontend directory
 frontend_path = os.path.join(os.path.dirname(__file__), "../frontend")
 if os.path.exists(frontend_path):
     app.mount("/", CachedStaticFiles(directory=frontend_path, html=True), name="static")

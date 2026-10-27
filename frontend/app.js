@@ -1,29 +1,8 @@
-/* ==========================================================================
-   ARBITRATOR // FRONTEND APPLICATION
-   ==========================================================================
-   Sections:
-     01. Constants & State
-     02. Utility — Anomaly-Aware Field Updater
-     03. Map Initialization
-     04. Aircraft Icon Factory
-     05. Telemetry Polling  (Header Ribbon + Tab 04 Vitals)
-     06. Thermal Sparkline
-     07. Aircraft Polling & Marker Management
-     08. Receiver Status Badge
-     09. Marker Icon & Trail Refresh
-     10. Target Selection & Sidebar
-     11. Aircraft Photo Lookup
-     12. Airspace Table  (Tab 04)
-     13. Radar Overlay Controls
-     14. Tab Navigation
-     15. Bootstrap
-   ========================================================================== */
+// application bootstrap and state controllers
 
-
-/* ── 01. Constants & State ────────────────────────────────────────────── */
-
+// state and config
 let map;
-let aircraftMarkers = {};      // hex → { marker, polyline, trail: [], data }
+let aircraftMarkers = {};
 let selectedHex     = null;
 let showTrails      = true;
 
@@ -31,50 +10,19 @@ const STATION_COORDS = [37.7749, -122.3194];
 const tempHistory    = [];
 const MAX_HISTORY    = 60;
 
-/** Anomaly detection thresholds */
+// anomaly thresholds
 const ANOMALY = {
-  ALT_FLOOR:        0,                       // ft — negative altitude is anomalous
-  VRATE_EXTREME:    4000,                    // fpm — extreme climb / descent
-  SEEN_WARN_SEC:    5,                       // seconds → yellow warning threshold
-  SEEN_CRITICAL_SEC: 20,                     // seconds → red stale threshold
-  SEEN_PURGE_SEC:   40,                      // seconds → axe contact from tracking
+  ALT_FLOOR:        0,
+  VRATE_EXTREME:    4000,
+  SEEN_WARN_SEC:    5,
+  SEEN_CRITICAL_SEC: 20,
+  SEEN_PURGE_SEC:   40,
   SQUAWK_EMERGENCY: ['7500', '7600', '7700'],
 };
 
-
-/* ── 02. Utility — Anomaly-Aware Field Updater & Ticker Slot Engine ──── */
-
-/**
- * Extracts numeric value, prefix, and suffix from a display string.
- * Examples:
- *  "0"             -> { prefix: "", suffix: "", value: 0 }
- *  "34.5 NM"       -> { prefix: "", suffix: " NM", value: 34.5 }
- *  "▲ +1,200 FPM"  -> { prefix: "▲ +", suffix: " FPM", value: 1200 }
- *  "-- NM"         -> null
- */
-function extractNumber(str) {
-  if (str === null || str === undefined) return null;
-  const s = String(str).trim();
-  const match = s.match(/^([^\d\-+]*?)([-+]?[\d,]+\.?\d*|\.\d+)(.*)$/);
-  if (!match) return null;
-
-  const cleanNum = match[2].replace(/,/g, '');
-  const val = parseFloat(cleanNum);
-  if (isNaN(val)) return null;
-
-  return {
-    prefix: match[1],
-    suffix: match[3],
-    value: val,
-  };
-}
-
-/**
- * Pre-initializes all metric, stat, and field values with ticker-slot containers
- * so that subsequent data updates smoothly slide without sudden DOM jumps.
- */
+// initialize tabular ticker slots
 function initTickerSlots() {
-  document.querySelectorAll('.field-val, .stat-num, .metric-value, .tactical-stat-val, .sparkline-stat-val').forEach((el) => {
+  document.querySelectorAll('.field-val, .stat-num, .metric-val, .tactical-stat-val, .sparkline-stat-val').forEach((el) => {
     el.classList.add('ticker-slot');
     const txt = el.textContent.trim();
     if (txt) {
@@ -84,22 +32,14 @@ function initTickerSlots() {
   });
 }
 
-/**
- * Sets an element's text content with a real mechanical sliding ticker transition,
- * direction-aware (slides up if increasing, down if decreasing),
- * applies anomaly classes, and triggers visual card alert pulses.
- *
- * @param {string}      id            – DOM element ID
- * @param {string}      text          – New text to display
- * @param {string|null} [anomalyClass] – 'val-anomaly' | 'val-warn' | 'val-stale' | null
- */
+// set field text and anomaly states
 function setField(id, text, anomalyClass) {
   const el = document.getElementById(id);
   if (!el) return;
 
   const targetStr = String(text ?? '').trim();
 
-  // Swap anomaly state on the field element only if changed (prevents restarting CSS strobe animations)
+  // update anomaly state
   const currentAnomaly = el.classList.contains('val-anomaly') ? 'val-anomaly'
                        : el.classList.contains('val-warn') ? 'val-warn'
                        : el.classList.contains('val-stale') ? 'val-stale'
@@ -109,7 +49,7 @@ function setField(id, text, anomalyClass) {
     if (anomalyClass) el.classList.add(anomalyClass);
   }
 
-  // Sync container alert state only if changed
+  // update container alert state
   const cardParent = el.closest('.field, .metric-card, .radar-stat');
   if (cardParent) {
     const currentCardAlert = cardParent.classList.contains('field-alert-anomaly') ? 'field-alert-anomaly'
@@ -131,134 +71,40 @@ function setField(id, text, anomalyClass) {
     }
   }
 
-  // If text is identical to current target, no transition needed
-  if (el._animTarget === targetStr) {
-    return;
-  }
-  const prevStr = el._animTarget !== undefined ? el._animTarget : el.textContent.trim();
+  if (el._animTarget === targetStr) return;
   el._animTarget = targetStr;
-
-  // Pulse normal card flash if not an anomaly alert
-  if (!anomalyClass && cardParent) {
-    cardParent.classList.remove('field-flash');
-    void cardParent.offsetHeight;
-    cardParent.classList.add('field-flash');
-  }
-
-  // Determine direction: should new value slide up from bottom (isUp=true) or down from top (isUp=false)?
-  const prevNum   = extractNumber(prevStr);
-  const targetNum = extractNumber(targetStr);
-  let isUp = true;
-  if (prevNum !== null && targetNum !== null) {
-    isUp = targetNum.value >= prevNum.value;
-  } else if (prevStr === '0' || prevStr.startsWith('--') || prevStr === 'NONE' || prevStr === '----' || prevStr === '--- KT' || prevStr === '---°') {
-    isUp = true;
-  } else if (targetStr === '0' || targetStr.startsWith('--') || targetStr === 'NONE' || targetStr === '----' || targetStr === '--- KT' || targetStr === '---°') {
-    isUp = false;
-  }
 
   el.classList.add('ticker-slot');
 
-  // Cancel any in-flight ticker timer on this element
-  if (el._tickerTimer) {
-    clearTimeout(el._tickerTimer);
-    el._tickerTimer = null;
-  }
-
-  // Get active view or wrap existing content
-  let currentView = el.querySelector('.ticker-view:not(.ticker-out)');
-  if (!currentView) {
+  let view = el.querySelector('.ticker-view');
+  if (!view) {
     el.innerHTML = '';
-    currentView = document.createElement('span');
-    currentView.className = 'ticker-view';
-    currentView.textContent = prevStr;
-    el.appendChild(currentView);
-  } else {
-    // Clean up any stale outgoing views immediately
-    el.querySelectorAll('.ticker-out').forEach(node => node.remove());
+    view = document.createElement('span');
+    view.className = 'ticker-view';
+    el.appendChild(view);
+    view.textContent = targetStr;
+    return;
   }
 
-  const isFixedWidth = el.classList.contains('bar-val') || el.classList.contains('ticker-fixed');
-
-  // Create incoming view
-  const nextView = document.createElement('span');
-
-  if (!isFixedWidth) {
-    const prevWidth = currentView.offsetWidth;
-
-    nextView.className = 'ticker-view';
-    nextView.textContent = targetStr;
-
-    // Measure intrinsic width without inheriting 100% width
-    nextView.style.position = 'absolute';
-    nextView.style.visibility = 'hidden';
-    nextView.style.width = 'auto';
-    nextView.style.whiteSpace = 'nowrap';
-    el.appendChild(nextView);
-    const nextWidth = nextView.offsetWidth;
-
-    // Configure nextView for animation
-    nextView.className = 'ticker-view ticker-next';
-    nextView.style.width = '';
-    nextView.style.visibility = 'visible';
-
-    // Animate slot width if changed
-    if (prevWidth > 0 && nextWidth > 0 && prevWidth !== nextWidth) {
-      el.style.width = prevWidth + 'px';
-      void el.offsetWidth;
-      el.style.width = nextWidth + 'px';
-    } else if (nextWidth > 0) {
-      el.style.width = nextWidth + 'px';
-    }
-  } else {
-    // Fixed-width right-anchored elements (e.g. CPU core load percentages)
-    nextView.className = 'ticker-view ticker-next';
-    nextView.textContent = targetStr;
-    el.appendChild(nextView);
-  }
-
-  // Calculate transforms based on direction
-  const outTransform     = isUp ? 'translateY(-100%)' : 'translateY(100%)';
-  const inStartTransform = isUp ? 'translateY(100%)' : 'translateY(-100%)';
-
-  nextView.style.transform = inStartTransform;
-  nextView.style.opacity   = '0';
-
-  // Force reflow so browser commits initial transform before transitioning
-  void nextView.offsetHeight;
-
-  // Execute slide
-  currentView.classList.add('ticker-out');
-  currentView.style.transform = outTransform;
-  currentView.style.opacity   = '0';
-
-  nextView.style.transform = 'translateY(0)';
-  if (!anomalyClass) {
-    nextView.style.opacity = '1';
-    nextView.classList.add('stat-updating');
-  } else {
-    nextView.style.opacity = '';
-  }
-
-  // Clean up when animation finishes
-  el._tickerTimer = setTimeout(() => {
-    if (currentView.parentNode === el) {
-      el.removeChild(currentView);
-    }
-    nextView.className = 'ticker-view';
-    nextView.style.position  = '';
-    nextView.style.transform = '';
-    nextView.style.opacity   = '';
-    if (!isFixedWidth) {
-      el.style.width = '';
-    }
-    el._tickerTimer = null;
-  }, 340);
+  // in-place tabular update
+  view.textContent = targetStr;
 }
 
+// telemetry heartbeat state
+function setHeartbeatState(isOnline) {
+  const dot = document.getElementById('stream-heartbeat-dot');
+  if (!dot) return;
+  if (isOnline) {
+    dot.classList.remove('stale');
+    dot.classList.add('pulse');
+    setTimeout(() => dot.classList.remove('pulse'), 220);
+  } else {
+    dot.classList.remove('pulse');
+    dot.classList.add('stale');
+  }
+}
 
-/* ── 03. Map Initialization ───────────────────────────────────────────── */
-
+// initialize leaflet map
 function initMap() {
   map = L.map('map', {
     zoomControl: true,
@@ -270,8 +116,14 @@ function initMap() {
     className: 'dark-tiles',
   }).addTo(map);
 
-  // Deselect target when clicking empty map space
-  map.on('click', () => {
+  // deselect target on raw map click only
+  map.on('click', (e) => {
+    if (e && e.originalEvent && e.originalEvent.target) {
+      const target = e.originalEvent.target;
+      if (target.closest('.radar-overlay-bar, .leaflet-control, .sidebar, button, input, a, [role="button"]')) {
+        return;
+      }
+    }
     if (selectedHex) {
       clearSidebar();
       refreshMarkerIcons();
@@ -279,11 +131,9 @@ function initMap() {
   });
 }
 
-
-/* ── 04. Aircraft Icon Factory ────────────────────────────────────────── */
-
+// create plane marker icon
 function createPlaneIcon(heading = 0, isSelected = false, squawk = '----', isStale = false, isWarn = false) {
-  const isEmergency  = ANOMALY.SQUAWK_EMERGENCY.includes(String(squawk));
+  const isEmergency = ANOMALY.SQUAWK_EMERGENCY.includes(String(squawk));
   let statusClass = '';
   if (isSelected) {
     statusClass = 'selected';
@@ -338,16 +188,18 @@ function createPlaneIcon(heading = 0, isSelected = false, squawk = '----', isSta
   });
 }
 
-
-/* ── 05. Telemetry Polling ────────────────────────────────────────────── */
-
+// poll hardware telemetry
 async function fetchTelemetry() {
   try {
     const res = await fetch('/api/telemetry');
-    if (!res.ok) return;
+    if (!res.ok) {
+      setHeartbeatState(false);
+      return;
+    }
     const d = await res.json();
+    setHeartbeatState(true);
 
-    /* — Header Ribbon — */
+    // header ribbon
     if (typeof d.cpu_temp_c === 'number' && !isNaN(d.cpu_temp_c)) {
       setField('cpu-temp', `${d.cpu_temp_c.toFixed(1)}°C`);
       updateThermalSparkline(d.cpu_temp_c);
@@ -362,7 +214,7 @@ async function fetchTelemetry() {
       setField('node-uptime', `${d.uptime_hours.toFixed(1)}H`);
     }
 
-    /* — Tab 04: Per-Core Bars — */
+    // per-core load bars
     if (Array.isArray(d.cpu_per_core)) {
       d.cpu_per_core.forEach((pct, i) => {
         const bar = document.getElementById(`core-bar-${i}`);
@@ -373,7 +225,7 @@ async function fetchTelemetry() {
       });
     }
 
-    /* — Tab 04: System Vitals — */
+    // system vitals
     setField('telem-freq',  `${d.cpu_freq_mhz || '----'} MHz`);
     setField('telem-procs', String(d.process_count || '---'));
     setField('telem-mem',
@@ -386,22 +238,19 @@ async function fetchTelemetry() {
     if (d.load_avg) {
       setField('telem-load', d.load_avg.map(n => n.toFixed(2)).join(' / '));
     }
-
-    updateThermalSparkline(d.cpu_temp_c);
   } catch (err) {
     console.warn('Telemetry poll error:', err);
+    setHeartbeatState(false);
   }
 }
 
-
-/* ── 06. Thermal Sparkline ────────────────────────────────────────────── */
-
+// update thermal history sparkline
 function updateThermalSparkline(temp) {
   if (typeof temp !== 'number' || isNaN(temp)) return;
   tempHistory.push(temp);
   if (tempHistory.length > MAX_HISTORY) tempHistory.shift();
 
-  const poly  = document.getElementById('temp-sparkline-line');
+  const poly = document.getElementById('temp-sparkline-line');
   if (!poly) return;
 
   setField('sparkline-current', `${temp.toFixed(1)}°C`);
@@ -418,9 +267,7 @@ function updateThermalSparkline(temp) {
   poly.setAttribute('points', points);
 }
 
-
-/* ── 07. Aircraft Polling & Marker Management ─────────────────────────── */
-
+// poll ads-b contacts
 async function fetchAircraft() {
   try {
     const res = await fetch('/api/aircraft');
@@ -437,7 +284,7 @@ async function fetchAircraft() {
 
     updateReceiverBadge(status);
 
-    /* ── Process each contact ── */
+    // update map contacts
     contacts.forEach((ac) => {
       const hex   = ac.hex;
       const lat   = ac.lat;
@@ -451,13 +298,12 @@ async function fetchAircraft() {
       if (ac.distance_nm && ac.distance_nm > maxDist) maxDist = ac.distance_nm;
 
       if (aircraftMarkers[hex]) {
-        /* Update existing marker */
         const entry = aircraftMarkers[hex];
         entry.marker.setLatLng([lat, lon]);
         entry.marker.setIcon(createPlaneIcon(track, isSel, ac.squawk, isStale, isWarn));
         entry.data = ac;
 
-        /* Append breadcrumb trail point */
+        // append trail coordinates
         const last = entry.trail[entry.trail.length - 1];
         if (!last || last[0] !== lat || last[1] !== lon) {
           entry.trail.push([lat, lon]);
@@ -467,7 +313,6 @@ async function fetchAircraft() {
 
         if (isSel) updateSidebar(ac);
       } else {
-        /* Create new marker + trail */
         const marker = L.marker([lat, lon], {
           icon: createPlaneIcon(track, isSel, ac.squawk, isStale, isWarn),
         }).addTo(map);
@@ -484,11 +329,16 @@ async function fetchAircraft() {
           selectTarget(hex);
         });
 
+        polyline.on('click', (e) => {
+          L.DomEvent.stopPropagation(e);
+          selectTarget(hex);
+        });
+
         aircraftMarkers[hex] = { marker, polyline, trail: [[lat, lon]], data: ac };
       }
     });
 
-    /* ── Purge stale contacts ── */
+    // purge inactive contacts
     Object.keys(aircraftMarkers).forEach((hex) => {
       if (!activeHexes.has(hex)) {
         map.removeLayer(aircraftMarkers[hex].marker);
@@ -498,46 +348,46 @@ async function fetchAircraft() {
       }
     });
 
-    /* ── Radar overlay stats ── */
+    // update overlay stats
     setField('hud-contact-count', String(contacts.length));
     setField('hud-max-range',
       maxDist > 0 ? `${maxDist.toFixed(1)} NM` : '-- NM');
 
-    /* ── Tab 04 table ── */
+    // update table feeds
     updateAircraftTable(contacts, status);
   } catch (err) {
     console.warn('Aircraft poll error:', err);
   }
 }
 
-
-/* ── 08. Receiver Status Badge ────────────────────────────────────────── */
-
+// update receiver status badge
 function updateReceiverBadge(status) {
   const badge      = document.getElementById('receiver-status');
   const tableBadge = document.getElementById('table-status-badge');
 
+  const classMap = {
+    ONLINE:       'online',
+    STANDBY:      'standby',
+    INITIALIZING: 'initializing',
+    DEGRADED:     'degraded',
+    DISCONNECTED: 'disconnected',
+    ERROR:        'error',
+  };
+
+  const statusClass = classMap[status] || 'disconnected';
+
   if (badge) {
     badge.textContent = status;
-    badge.className   = 'metric-val status-badge';
-
-    const classMap = {
-      ONLINE:       'online',
-      STANDBY:      'standby',
-      INITIALIZING: 'initializing',
-      DEGRADED:     'degraded',
-    };
-    badge.classList.add(classMap[status] || 'disconnected');
+    badge.className   = `metric-val status-badge ${statusClass}`;
   }
 
   if (tableBadge) {
     tableBadge.textContent = `RECEIVER: ${status}`;
+    tableBadge.className   = `target-badge status-badge ${statusClass}`;
   }
 }
 
-
-/* ── 09. Marker Icon & Trail Refresh ──────────────────────────────────── */
-
+// refresh markers and breadcrumb trails
 function refreshMarkerIcons() {
   Object.keys(aircraftMarkers).forEach((h) => {
     const entry = aircraftMarkers[h];
@@ -556,9 +406,7 @@ function refreshMarkerIcons() {
   });
 }
 
-
-/* ── 10. Target Selection & Sidebar ───────────────────────────────────── */
-
+// select target aircraft
 function selectTarget(hex) {
   selectedHex = hex;
   const target = aircraftMarkers[hex]?.data;
@@ -569,6 +417,7 @@ function selectTarget(hex) {
   fetchAircraftPhoto(hex);
 }
 
+// update sidebar details
 function updateSidebar(ac) {
   if (!ac) return;
 
@@ -578,7 +427,6 @@ function updateSidebar(ac) {
   const seen    = ac.seen_sec;
   const squawk  = ac.squawk || '----';
 
-  /* Last seen — warn (>= 10s) → critical stale (>= 15s) */
   const seenVal = (seen !== null && seen !== undefined && !isNaN(Number(seen)))
     ? Number(seen) : null;
   let seenClass = null;
@@ -587,7 +435,6 @@ function updateSidebar(ac) {
     else if (seenVal >= ANOMALY.SEEN_WARN_SEC)     seenClass = 'val-warn';
   }
 
-  /* Hex badge — flags emergency squawk or stale telemetry */
   let hexAnomaly = null;
   if (ANOMALY.SQUAWK_EMERGENCY.includes(String(squawk))) {
     hexAnomaly = 'val-anomaly';
@@ -595,56 +442,46 @@ function updateSidebar(ac) {
     hexAnomaly = seenClass;
   }
   setField('target-hex', String(ac.hex || 'NONE').toUpperCase(), hexAnomaly);
-
-  /* Callsign */
   setField('target-callsign', ac.flight || 'NO CALLSIGN');
 
-  /* Altitude — anomaly if negative */
   const altVal = (alt !== null && alt !== undefined && !isNaN(Number(alt)))
     ? Number(alt) : null;
   const altText = altVal !== null ? `${altVal.toLocaleString()} FT` : '---- FT';
   setField('target-alt', altText,
     (altVal !== null && altVal < ANOMALY.ALT_FLOOR) ? 'val-anomaly' : null);
 
-  /* Vertical rate — warn if extreme */
   const vrateNum = Number(vrate) || 0;
   const vratePrefix = vrateNum > 0 ? `▲ +${vrateNum}` : (vrateNum < 0 ? `▼ ${vrateNum}` : '0');
   setField('target-vrate', `${vratePrefix} FPM`,
     Math.abs(vrateNum) > ANOMALY.VRATE_EXTREME ? 'val-warn' : null);
 
-  /* Ground speed */
   const speedVal = (speed !== null && speed !== undefined && !isNaN(Number(speed)))
     ? Number(speed) : null;
   setField('target-speed', speedVal !== null ? `${Math.round(speedVal)} KT` : '--- KT');
 
-  /* Heading */
   const trackVal = (ac.track !== null && ac.track !== undefined && !isNaN(Number(ac.track)))
     ? Number(ac.track) : null;
   setField('target-track', trackVal !== null ? `${Math.round(trackVal)}°` : '---°');
 
-  /* Squawk — anomaly if emergency */
   setField('target-squawk', squawk,
     ANOMALY.SQUAWK_EMERGENCY.includes(String(squawk)) ? 'val-anomaly' : null);
 
-  /* Selected altitude */
   const selAltVal = (ac.selected_alt !== null && ac.selected_alt !== undefined && !isNaN(Number(ac.selected_alt)))
     ? Number(ac.selected_alt) : null;
   setField('target-sel-alt', selAltVal !== null ? `${selAltVal.toLocaleString()} FT` : '---- FT');
 
-  /* Distance */
   const distVal = (ac.distance_nm !== null && ac.distance_nm !== undefined && !isNaN(Number(ac.distance_nm)))
     ? Number(ac.distance_nm) : null;
   setField('target-dist', distVal !== null ? `${distVal.toFixed(1)} NM` : '--.- NM');
 
-  /* Signal strength */
   const rssiVal = (ac.rssi !== null && ac.rssi !== undefined && !isNaN(Number(ac.rssi)))
     ? Number(ac.rssi) : null;
   setField('target-rssi', rssiVal !== null ? `${rssiVal.toFixed(1)} dBFS` : '--.- dBFS');
 
-  /* Last seen value */
   setField('target-seen', seenVal !== null ? `${seenVal.toFixed(1)} S` : '--.- S', seenClass);
 }
 
+// reset sidebar to empty state
 function clearSidebar() {
   selectedHex = null;
 
@@ -663,40 +500,24 @@ function clearSidebar() {
   };
 
   Object.entries(defaults).forEach(([id, text]) => {
-    const el = document.getElementById(id);
-    if (el) {
-      if (el._animRaf) cancelAnimationFrame(el._animRaf);
-      el._animRaf = null;
-      el._animValue = undefined;
-    }
     setField(id, text);
   });
 
   const photoBox = document.getElementById('photo-box');
   if (photoBox) {
     photoBox.innerHTML = `
-      <div class="target-prompt">
-        <div class="target-reticle" aria-hidden="true">
-          <svg class="reticle-svg" viewBox="0 0 40 40" fill="none" stroke="currentColor">
-            <circle cx="20" cy="20" r="14" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6"/>
-            <circle cx="20" cy="20" r="7" stroke-width="1.2" opacity="0.8"/>
-            <line x1="20" y1="2" x2="20" y2="9" stroke-width="1.5"/>
-            <line x1="20" y1="31" x2="20" y2="38" stroke-width="1.5"/>
-            <line x1="2" y1="20" x2="9" y2="20" stroke-width="1.5"/>
-            <line x1="31" y1="20" x2="38" y2="20" stroke-width="1.5"/>
-          </svg>
-        </div>
-        <span class="target-prompt-badge">Awaiting User Selection</span>
-        <p class="target-prompt-title">Click a flight to inspect</p>
-        <p class="target-prompt-desc">Select any contact on the radar map to lock telemetry & optical feed.</p>
+      <div class="flight-prompt">
+        <svg class="flight-prompt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+        </svg>
+        <p class="flight-prompt-title">No flight selected</p>
+        <p class="flight-prompt-desc">Click any aircraft on the map to view live flight data and photos.</p>
       </div>
     `;
   }
 }
 
-
-/* ── 11. Aircraft Photo Lookup ────────────────────────────────────────── */
-
+// fetch aircraft photo from public archive
 async function fetchAircraftPhoto(hex) {
   const photoBox = document.getElementById('photo-box');
   if (!photoBox) return;
@@ -704,14 +525,13 @@ async function fetchAircraftPhoto(hex) {
   photoBox.innerHTML = `
     <div class="photo-placeholder scanning">
       <div class="radar-scan-spinner" aria-hidden="true"></div>
-      <span class="photo-status-title">Querying Optical Archive</span>
+      <span class="photo-status-title">Finding Aircraft Photo</span>
       <span class="photo-status-sub">ICAO: ${hex.toUpperCase()}</span>
     </div>
   `;
 
   try {
-    const res = await fetch(
-      `https://api.planespotters.net/pub/photos/hex/${hex}`);
+    const res = await fetch(`https://api.planespotters.net/pub/photos/hex/${hex}`);
     if (!res.ok) throw new Error('Photo lookup failed');
     const data = await res.json();
 
@@ -731,133 +551,195 @@ async function fetchAircraftPhoto(hex) {
             <circle cx="8.5" cy="8.5" r="1.5"/>
           </svg>
           <span class="photo-status-title">No Photo on File</span>
-          <span class="photo-status-sub">Transponder telemetry active</span>
+          <span class="photo-status-sub">Live flight data active</span>
         </div>
       `;
     }
   } catch {
     photoBox.innerHTML = `
       <div class="photo-placeholder offline">
-        <span class="photo-status-title">Archive Feed Offline</span>
-        <span class="photo-status-sub">Mode-S data active</span>
+        <span class="photo-status-title">Photo Archive Offline</span>
+        <span class="photo-status-sub">Live flight data active</span>
       </div>
     `;
   }
 }
 
-
-/* ── 12. Airspace Table (Tab 04) ──────────────────────────────────────── */
-
+// update transponder tables
 function updateAircraftTable(aircraftList, status) {
   const tbody = document.getElementById('aircraft-table-body');
-  if (!tbody) return;
+  const sidebarTbody = document.getElementById('sidebar-aircraft-table-body');
+  const countBadge = document.getElementById('sidebar-contacts-count');
+
+  const count = aircraftList ? aircraftList.length : 0;
+  if (countBadge) countBadge.textContent = String(count);
 
   if (!aircraftList || aircraftList.length === 0) {
-    tbody.innerHTML =
-      `<tr><td colspan="10" class="empty-table-msg">` +
-      `NO ACTIVE TRANSPONDER CONTACTS (${status})</td></tr>`;
+    if (tbody) {
+      tbody.innerHTML =
+        `<tr><td colspan="10" class="empty-table-msg">` +
+        `NO ACTIVE TRANSPONDER CONTACTS (${status})</td></tr>`;
+    }
+    if (sidebarTbody) {
+      sidebarTbody.innerHTML = `<tr><td colspan="4" class="empty-table-msg">No aircraft in range</td></tr>`;
+    }
     return;
   }
 
-  /* Sort closest-first */
+  // sort closest first
   const sorted = [...aircraftList].sort(
     (a, b) => (a.distance_nm || 999) - (b.distance_nm || 999));
 
-  tbody.innerHTML = sorted.map((ac) => {
-    const vrateNum  = Number(ac.vert_rate) || 0;
-    const vrateStr  = vrateNum > 0 ? `+${vrateNum}` : `${vrateNum}`;
-    const emergency = ANOMALY.SQUAWK_EMERGENCY.includes(String(ac.squawk));
-    const isStale   = (typeof ac.seen_sec === 'number' && !isNaN(ac.seen_sec) && ac.seen_sec >= ANOMALY.SEEN_CRITICAL_SEC);
-    const isWarn    = (!isStale && typeof ac.seen_sec === 'number' && !isNaN(ac.seen_sec) && ac.seen_sec >= ANOMALY.SEEN_WARN_SEC);
-    const rowClass  = [
-      'table-row-clickable',
-      ac.hex === selectedHex ? 'selected-row' : '',
-      emergency              ? 'row-emergency' : '',
-      isStale                ? 'row-stale' : (isWarn ? 'row-warn' : ''),
-    ].filter(Boolean).join(' ');
+  // tab 4 detailed transponder table
+  if (tbody) {
+    tbody.innerHTML = sorted.map((ac) => {
+      const vrateNum  = Number(ac.vert_rate) || 0;
+      const vrateStr  = vrateNum > 0 ? `+${vrateNum}` : `${vrateNum}`;
+      const emergency = ANOMALY.SQUAWK_EMERGENCY.includes(String(ac.squawk));
+      const isStale   = (typeof ac.seen_sec === 'number' && !isNaN(ac.seen_sec) && ac.seen_sec >= ANOMALY.SEEN_CRITICAL_SEC);
+      const isWarn    = (!isStale && typeof ac.seen_sec === 'number' && !isNaN(ac.seen_sec) && ac.seen_sec >= ANOMALY.SEEN_WARN_SEC);
+      const rowClass  = [
+        'table-row-clickable',
+        ac.hex === selectedHex ? 'selected-row' : '',
+        emergency              ? 'row-emergency' : '',
+        isStale                ? 'row-stale' : (isWarn ? 'row-warn' : ''),
+      ].filter(Boolean).join(' ');
 
-    const altVal = (ac.alt_baro !== undefined && ac.alt_baro !== null && !isNaN(Number(ac.alt_baro)))
-      ? Number(ac.alt_baro) : null;
-    const altStr = altVal !== null ? `${altVal.toLocaleString()} FT` : '----';
-    const altClass = (altVal !== null && altVal < ANOMALY.ALT_FLOOR) ? 'cell-anomaly' : '';
+      const altVal = (ac.alt_baro !== undefined && ac.alt_baro !== null && !isNaN(Number(ac.alt_baro)))
+        ? Number(ac.alt_baro) : null;
+      const altStr = altVal !== null ? `${altVal.toLocaleString()} FT` : '----';
+      const altClass = (altVal !== null && altVal < ANOMALY.ALT_FLOOR) ? 'cell-anomaly' : '';
 
-    const speedVal = (ac.speed !== undefined && ac.speed !== null && !isNaN(Number(ac.speed)))
-      ? Number(ac.speed) : null;
-    const speedStr = speedVal !== null ? `${Math.round(speedVal)} KT` : '---';
+      const speedVal = (ac.speed !== undefined && ac.speed !== null && !isNaN(Number(ac.speed)))
+        ? Number(ac.speed) : null;
+      const speedStr = speedVal !== null ? `${Math.round(speedVal)} KT` : '---';
 
-    const trackVal = (ac.track !== undefined && ac.track !== null && !isNaN(Number(ac.track)))
-      ? Number(ac.track) : null;
-    const trackStr = trackVal !== null ? `${Math.round(trackVal)}°` : '---';
+      const trackVal = (ac.track !== undefined && ac.track !== null && !isNaN(Number(ac.track)))
+        ? Number(ac.track) : null;
+      const trackStr = trackVal !== null ? `${Math.round(trackVal)}°` : '---';
 
-    const distVal = (ac.distance_nm !== undefined && ac.distance_nm !== null && !isNaN(Number(ac.distance_nm)))
-      ? Number(ac.distance_nm) : null;
-    const distStr = distVal !== null ? `${distVal.toFixed(1)} NM` : '--.-';
+      const distVal = (ac.distance_nm !== undefined && ac.distance_nm !== null && !isNaN(Number(ac.distance_nm)))
+        ? Number(ac.distance_nm) : null;
+      const distStr = distVal !== null ? `${distVal.toFixed(1)} NM` : '--.-';
 
-    const rssiVal = (ac.rssi !== undefined && ac.rssi !== null && !isNaN(Number(ac.rssi)))
-      ? Number(ac.rssi) : null;
-    const rssiStr = rssiVal !== null ? `${rssiVal.toFixed(1)} dBFS` : '--.-';
+      const rssiVal = (ac.rssi !== undefined && ac.rssi !== null && !isNaN(Number(ac.rssi)))
+        ? Number(ac.rssi) : null;
+      const rssiStr = rssiVal !== null ? `${rssiVal.toFixed(1)} dBFS` : '--.-';
 
-    const squawkStr = ac.squawk || '----';
-    const squawkClass = emergency ? 'cell-anomaly' : '';
+      const squawkStr = ac.squawk || '----';
+      const squawkClass = emergency ? 'cell-anomaly' : '';
 
-    const seenVal = (ac.seen_sec !== undefined && ac.seen_sec !== null && !isNaN(Number(ac.seen_sec)))
-      ? Number(ac.seen_sec) : null;
-    const seenStr = seenVal !== null ? `${seenVal.toFixed(1)} S` : '--.- S';
-    const seenClass = isStale ? 'cell-stale' : (isWarn ? 'cell-warn' : '');
+      const seenVal = (ac.seen_sec !== undefined && ac.seen_sec !== null && !isNaN(Number(ac.seen_sec)))
+        ? Number(ac.seen_sec) : null;
+      const seenStr = seenVal !== null ? `${seenVal.toFixed(1)} S` : '--.- S';
+      const seenClass = isStale ? 'cell-stale' : (isWarn ? 'cell-warn' : '');
 
-    return `
-      <tr class="${rowClass}" data-hex="${ac.hex}">
-        <td class="hex-cell">${String(ac.hex || '').toUpperCase()}</td>
-        <td>${ac.flight || '----'}</td>
-        <td class="${squawkClass}">${squawkStr}</td>
-        <td class="${altClass}">${altStr}</td>
-        <td>${vrateStr} FPM</td>
-        <td>${speedStr}</td>
-        <td>${trackStr}</td>
-        <td>${distStr}</td>
-        <td>${rssiStr}</td>
-        <td class="${seenClass}">${seenStr}</td>
-      </tr>`;
-  }).join('');
+      return `
+        <tr class="${rowClass}" data-hex="${ac.hex}">
+          <td class="hex-cell">${String(ac.hex || '').toUpperCase()}</td>
+          <td>${ac.flight || '----'}</td>
+          <td class="${squawkClass}">${squawkStr}</td>
+          <td class="${altClass}">${altStr}</td>
+          <td>${vrateStr} FPM</td>
+          <td>${speedStr}</td>
+          <td>${trackStr}</td>
+          <td>${distStr}</td>
+          <td>${rssiStr}</td>
+          <td class="${seenClass}">${seenStr}</td>
+        </tr>`;
+    }).join('');
 
-  /* Row click → jump to radar tab and lock target */
-  tbody.querySelectorAll('.table-row-clickable').forEach((row) => {
-    row.addEventListener('click', () => {
-      const hex = row.getAttribute('data-hex');
-      const radarBtn = document.querySelector('.nav-tab[data-tab="tab-radar"]');
-      if (radarBtn) radarBtn.click();
+    tbody.querySelectorAll('.table-row-clickable').forEach((row) => {
+      row.addEventListener('click', () => {
+        const hex = row.getAttribute('data-hex');
+        const radarBtn = document.querySelector('.nav-tab[data-tab="tab-radar"]');
+        if (radarBtn) radarBtn.click();
 
-      setTimeout(() => {
+        setTimeout(() => {
+          selectTarget(hex);
+          const target = aircraftMarkers[hex]?.data;
+          if (target && map) map.panTo([target.lat, target.lon]);
+        }, 150);
+      });
+    });
+  }
+
+  // sidebar compact contacts table
+  if (sidebarTbody) {
+    sidebarTbody.innerHTML = sorted.map((ac) => {
+      const isSel = ac.hex === selectedHex;
+      const emergency = ANOMALY.SQUAWK_EMERGENCY.includes(String(ac.squawk));
+      const rowClass = [
+        'table-row-clickable',
+        isSel ? 'selected-row' : '',
+        emergency ? 'row-emergency' : '',
+      ].filter(Boolean).join(' ');
+
+      const callsign = ac.flight ? ac.flight.trim() : String(ac.hex || '').toUpperCase();
+      const hexSub = ac.flight ? String(ac.hex || '').toUpperCase() : '';
+      const altVal = (ac.alt_baro !== undefined && ac.alt_baro !== null && !isNaN(Number(ac.alt_baro)))
+        ? Number(ac.alt_baro) : null;
+      const altStr = altVal !== null ? `${altVal.toLocaleString()} FT` : '----';
+      const speedVal = (ac.speed !== undefined && ac.speed !== null && !isNaN(Number(ac.speed)))
+        ? Number(ac.speed) : null;
+      const speedStr = speedVal !== null ? `${Math.round(speedVal)} KT` : '---';
+      const distVal = (ac.distance_nm !== undefined && ac.distance_nm !== null && !isNaN(Number(ac.distance_nm)))
+        ? Number(ac.distance_nm) : null;
+      const distStr = distVal !== null ? `${distVal.toFixed(1)} NM` : '--.-';
+
+      return `
+        <tr class="${rowClass}" data-hex="${ac.hex}">
+          <td class="cell-flight">
+            <span class="flight-callsign">${callsign}</span>
+            ${hexSub ? `<span class="flight-hex-sub">${hexSub}</span>` : ''}
+          </td>
+          <td class="cell-alt">${altStr}</td>
+          <td class="cell-speed">${speedStr}</td>
+          <td class="cell-dist">${distStr}</td>
+        </tr>
+      `;
+    }).join('');
+
+    sidebarTbody.querySelectorAll('.table-row-clickable').forEach((row) => {
+      row.addEventListener('click', () => {
+        const hex = row.getAttribute('data-hex');
         selectTarget(hex);
         const target = aircraftMarkers[hex]?.data;
         if (target && map) map.panTo([target.lat, target.lon]);
-      }, 150);
+      });
     });
-  });
+  }
 }
 
-
-/* ── 13. Radar Overlay Controls ───────────────────────────────────────── */
-
+// radar dock overlay controls
 function initRadarControls() {
   const trailsBtn = document.getElementById('toggle-trails-btn');
   const centerBtn = document.getElementById('recenter-map-btn');
+  const overlayBar = document.querySelector('.radar-overlay-bar');
 
-  trailsBtn?.addEventListener('click', () => {
+  // suppress map click propagation
+  if (overlayBar && typeof L !== 'undefined' && L.DomEvent) {
+    L.DomEvent.disableClickPropagation(overlayBar);
+    L.DomEvent.disableScrollPropagation(overlayBar);
+  }
+
+  trailsBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (typeof L !== 'undefined' && L.DomEvent) L.DomEvent.stopPropagation(e);
     showTrails = !showTrails;
     trailsBtn.textContent = `TRAILS: ${showTrails ? 'ON' : 'OFF'}`;
     trailsBtn.classList.toggle('active', showTrails);
     refreshMarkerIcons();
   });
 
-  centerBtn?.addEventListener('click', () => {
+  centerBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (typeof L !== 'undefined' && L.DomEvent) L.DomEvent.stopPropagation(e);
     map?.setView(STATION_COORDS, 9);
   });
 }
 
-
-/* ── 14. Tab Navigation ───────────────────────────────────────────────── */
-
+// tab navigation switcher
 function initTabNavigation() {
   const tabs  = document.querySelectorAll('.nav-tab');
   const panes = document.querySelectorAll('.tab-pane');
@@ -867,23 +749,19 @@ function initTabNavigation() {
       const targetId   = tab.getAttribute('data-tab');
       const targetPane = document.getElementById(targetId);
 
-      /* Skip if already on this tab */
       if (targetPane && targetPane.classList.contains('active')) return;
 
-      /* Deactivate everything */
       tabs.forEach((t)  => t.classList.remove('active'));
       panes.forEach((p) => p.classList.remove('active'));
 
-      /* Activate clicked tab button */
       tab.classList.add('active');
 
-      /* Force reflow so the browser commits opacity:0 before we transition */
       if (targetPane) {
         void targetPane.offsetHeight;
         targetPane.classList.add('active');
       }
 
-      /* Leaflet needs a size recalculation after the pane becomes visible */
+      // recalculate leaflet viewport
       if (targetId === 'tab-radar' && map) {
         setTimeout(() => map.invalidateSize(), 100);
       }
@@ -891,14 +769,98 @@ function initTabNavigation() {
   });
 }
 
+// collapsible panels and heartbeat toggle
+function initCollapsibles() {
+  // heartbeat toggle
+  const hb = document.querySelector('.stream-heartbeat');
+  if (hb) {
+    if (localStorage.getItem('heartbeat_collapsed') === '1') {
+      hb.classList.add('collapsed');
+      hb.setAttribute('aria-expanded', 'false');
+    } else {
+      hb.setAttribute('aria-expanded', 'true');
+    }
 
-/* ── 15. Bootstrap ────────────────────────────────────────────────────── */
+    const toggleHeartbeat = () => {
+      hb.classList.toggle('collapsed');
+      const isCollapsed = hb.classList.contains('collapsed');
+      hb.setAttribute('aria-expanded', String(!isCollapsed));
+      localStorage.setItem('heartbeat_collapsed', isCollapsed ? '1' : '0');
+    };
 
+    hb.setAttribute('tabindex', '0');
+    hb.setAttribute('role', 'button');
+    hb.addEventListener('click', toggleHeartbeat);
+    hb.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleHeartbeat();
+      }
+    });
+  }
+
+  // sidebar contacts toggle
+  const scToggle = document.getElementById('sidebar-contacts-toggle');
+  const scPanel = document.getElementById('sidebar-contacts-panel');
+  if (scToggle && scPanel) {
+    if (localStorage.getItem('sidebar_contacts_collapsed') === '1') {
+      scPanel.classList.add('collapsed');
+      scToggle.setAttribute('aria-expanded', 'false');
+    } else {
+      scToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    const toggleSidebarContacts = () => {
+      scPanel.classList.toggle('collapsed');
+      const isCollapsed = scPanel.classList.contains('collapsed');
+      scToggle.setAttribute('aria-expanded', String(!isCollapsed));
+      localStorage.setItem('sidebar_contacts_collapsed', isCollapsed ? '1' : '0');
+    };
+
+    scToggle.addEventListener('click', toggleSidebarContacts);
+    scToggle.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleSidebarContacts();
+      }
+    });
+  }
+
+  // telemetry table toggle
+  const ttToggle = document.getElementById('telemetry-table-toggle');
+  const ttCard = document.getElementById('telemetry-table-card');
+  if (ttToggle && ttCard) {
+    if (localStorage.getItem('telem_table_collapsed') === '1') {
+      ttCard.classList.add('collapsed');
+      ttToggle.setAttribute('aria-expanded', 'false');
+    } else {
+      ttToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    const toggleTelemetryTable = () => {
+      ttCard.classList.toggle('collapsed');
+      const isCollapsed = ttCard.classList.contains('collapsed');
+      ttToggle.setAttribute('aria-expanded', String(!isCollapsed));
+      localStorage.setItem('telem_table_collapsed', isCollapsed ? '1' : '0');
+    };
+
+    ttToggle.addEventListener('click', toggleTelemetryTable);
+    ttToggle.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleTelemetryTable();
+      }
+    });
+  }
+}
+
+// application bootstrap
 document.addEventListener('DOMContentLoaded', () => {
   initTickerSlots();
   initMap();
   initTabNavigation();
   initRadarControls();
+  initCollapsibles();
 
   fetchTelemetry();
   fetchAircraft();

@@ -1,8 +1,6 @@
-/* ==========================================================================
-   ARBITRATOR // MASTER STYLESHEET
-   ========================================================================== */
+/* stylesheet imports */
 
-@import url('css/base.css?v=20261027_reticle');
-@import url('css/header.css?v=20261027_reticle');
-@import url('css/radar.css?v=20261027_reticle');
-@import url('css/pages.css?v=20261027_reticle');
+@import url('css/base.css?v=20261027_clean');
+@import url('css/header.css?v=20261027_clean');
+@import url('css/radar.css?v=20261027_clean');
+@import url('css/pages.css?v=20261027_clean');

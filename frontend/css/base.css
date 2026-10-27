@@ -1,9 +1,7 @@
-/* ==========================================================================
-   ARBITRATOR // DESIGN SYSTEM: BASE VARIABLES, TOKENS & RESET
-   ========================================================================== */
+/* design tokens */
 
 :root {
-  /* --- Spacing Scale (8pt primary grid, 4pt micro-scale) --- */
+  /* spacing */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -14,13 +12,13 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* --- Border Radius Scale --- */
+  /* radii */
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
   --radius-pill: 9999px;
 
-  /* --- Surface & Elevation Palette (Disciplined Obsidian Dark) --- */
+  /* surface palette */
   --bg-canvas: #090d14;
   --bg-surface: #0e141f;
   --bg-card: #131a26;
@@ -28,61 +26,57 @@
   --bg-subtle: rgba(255, 255, 255, 0.03);
   --bg-inset: #070a0f;
 
-  /* --- Border Palette --- */
+  /* border colors */
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-default: rgba(255, 255, 255, 0.14);
   --border-strong: rgba(255, 255, 255, 0.22);
   --border-focus: #38bdf8;
 
-  /* --- Typography Colors --- */
-  --text-primary: #f8fafc;     /* Slate 50 - High contrast headline & values */
-  --text-secondary: #94a3b8;   /* Slate 400 - Clear readable body copy */
-  --text-muted: #64748b;       /* Slate 500 - Technical keys, captions */
+  /* typography colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
   --text-inverse: #090d14;
 
-  /* --- Semantic Accents (Purposeful, High-Contrast, Zero Neon Bloom) --- */
-  --accent-info: #38bdf8;          /* Sky 400 - Instrumentation blue/cyan */
-  --accent-info-hover: #0284c7;    /* Sky 600 */
+  /* semantic accents */
+  --accent-info: #38bdf8;
+  --accent-info-hover: #0284c7;
   --accent-info-subtle: rgba(56, 189, 248, 0.08);
   --accent-info-border: rgba(56, 189, 248, 0.28);
 
-  --accent-success: #10b981;       /* Emerald 500 - Active / Nominal */
+  --accent-success: #10b981;
   --accent-success-subtle: rgba(16, 185, 129, 0.1);
 
-  --accent-warning: #fbbf24;       /* Amber 400 - Refined Standby / Caution */
+  --accent-warning: #fbbf24;
   --accent-warning-subtle: rgba(251, 191, 36, 0.1);
 
-  --accent-danger: #f87171;        /* Red 400 - Refined Soft Crimson / Alert */
+  --accent-danger: #f87171;
   --accent-danger-subtle: rgba(248, 113, 113, 0.12);
 
-  --accent-orange: #fb923c;        /* Orange 400 - Degraded */
+  --accent-orange: #fb923c;
 
-  /* --- Elevation Shadows --- */
+  /* receiver status tokens */
+  --status-online: #10b981;
+  --status-standby: #cbd5e1;
+  --status-init: #38bdf8;
+  --status-degraded: #f59e0b;
+  --status-disc: #ef4444;
+
+  /* shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 12px 32px -4px rgba(0, 0, 0, 0.6);
 
-  /* --- Typography Families --- */
+  /* fonts */
   --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, Monaco, monospace;
 
-  /* --- Transitions --- */
+  /* transitions */
   --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-base: 220ms cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* Backward Compatibility Aliases */
-  --bg-primary: var(--bg-canvas);
-  --bg-panel: var(--bg-surface);
-  --border-color: var(--border-subtle);
-  --accent-cyan: var(--accent-info);
-  --accent-green: var(--accent-success);
-  --accent-amber: var(--accent-warning);
-  --accent-red: var(--accent-danger);
 }
 
-/* ==========================================================================
-   RESET & FOUNDATIONS
-   ========================================================================== */
+/* reset & base */
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -110,20 +104,20 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Focus Outline System */
+/* focus outline */
 :focus-visible {
   outline: 2px solid var(--accent-info);
   outline-offset: 2px;
 }
 
-/* Master Viewport Switcher */
+/* viewport switcher */
 .hud-content {
   flex: 1;
   position: relative;
   overflow: hidden;
 }
 
-/* Tab panes: Stacked absolutely for smooth opacity transitions */
+/* tab panes */
 .tab-pane {
   position: absolute;
   inset: 0;
@@ -144,9 +138,7 @@ body {
   z-index: 1;
 }
 
-/* ==========================================================================
-   SHARED BUTTONS & CONTROLS
-   ========================================================================== */
+/* buttons */
 
 .hud-btn {
   display: inline-flex;
@@ -185,50 +177,26 @@ body {
   box-shadow: none;
 }
 
-/* ==========================================================================
-   TICKER ENGINE & VALUE TRANSITIONS (MUTED TRANSITION COLORS)
-   ========================================================================== */
+/* tabular ticker slots */
 
 .ticker-slot {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   position: relative;
-  overflow: hidden;
-  vertical-align: bottom;
-  height: 1.35em;
-  line-height: 1.35em;
+  vertical-align: baseline;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  transition: width 0.26s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .ticker-view {
-  display: block;
+  display: inline-block;
   white-space: nowrap;
-  height: 1.35em;
-  line-height: 1.35em;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
-  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1),
-              color 0.4s ease-out;
-  will-change: transform, opacity;
 }
 
-.ticker-view.ticker-next {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-}
-
-/* Muted transition when value is actively sliding into place */
-.ticker-view.stat-updating,
-.stat-updating {
-  color: #cbd5e1; /* Soft slate-200: Calm and subtle, zero harsh color flash */
-}
-
-/* Muted Semantic Anomaly States */
+/* semantic value states */
 .val-anomaly,
 .val-anomaly .ticker-view {
   color: var(--accent-danger) !important;
@@ -244,9 +212,7 @@ body {
   color: var(--accent-danger) !important;
 }
 
-/* ==========================================================================
-   SKELETON LOADER SYSTEM
-   ========================================================================== */
+/* skeleton loaders */
 
 @keyframes skeleton-shimmer {
   0% {

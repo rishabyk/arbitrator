@@ -1,8 +1,5 @@
-/* ==========================================================================
-   PAGES // DOSSIER / RESUME (TAB 02), SPECS (TAB 03) & TELEMETRY (TAB 04)
-   ========================================================================== */
+/* scrollable page containers */
 
-/* Scrollable Viewport Containers */
 .dossier-container,
 .specs-container {
   overflow-y: auto !important;
@@ -20,7 +17,8 @@
   gap: var(--space-6);
 }
 
-/* Master Dossier / Spec Card */
+/* dossier card */
+
 .dossier-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -46,9 +44,7 @@
   margin-bottom: 0;
 }
 
-/* ==========================================================================
-   TAB 02: DOSSIER / RESUME
-   ========================================================================== */
+/* dossier tab */
 
 .dossier-header {
   display: flex;
@@ -92,7 +88,8 @@
   align-items: center;
 }
 
-/* Competencies Matrix (De-boxed, Unified Clean List Hierarchy) */
+/* competencies matrix */
+
 .skills-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -148,7 +145,8 @@
   flex-shrink: 0;
 }
 
-/* Featured Projects */
+/* projects */
+
 .project-list {
   display: flex;
   flex-direction: column;
@@ -193,9 +191,15 @@
   color: var(--text-secondary);
 }
 
-/* ==========================================================================
-   TAB 03: SPECS & PIPELINE ARCHITECTURE
-   ========================================================================== */
+/* specs tab */
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+/* pipeline architecture */
 
 .pipeline-flow {
   display: flex;
@@ -253,11 +257,7 @@
   user-select: none;
 }
 
-.specs-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-6);
-}
+/* specs key-value lists */
 
 .spec-list {
   list-style: none;
@@ -297,11 +297,8 @@
   margin-top: var(--space-4);
 }
 
-/* ==========================================================================
-   TAB 04: TELEMETRY DIAGNOSTICS & FLIGHT TABLE
-   ========================================================================== */
+/* telemetry tab */
 
-/* Cortex-A76 Core Utilization Bars */
 .bars-stack {
   display: flex;
   flex-direction: column;
@@ -372,7 +369,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Thermal Sparkline Graph */
+/* thermal sparkline */
+
 .sparkline-box {
   position: relative;
   height: 75px;
@@ -401,7 +399,8 @@
   align-items: center;
 }
 
-/* Tactical Airspace Table */
+/* collapsible transponder table */
+
 .table-header-row {
   display: flex;
   justify-content: space-between;
@@ -410,6 +409,37 @@
   padding-bottom: var(--space-3);
   margin-bottom: var(--space-4);
   gap: var(--space-3);
+  user-select: none;
+  cursor: pointer;
+}
+
+.table-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.table-collapse-wrapper {
+  max-height: 800px;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  opacity: 1;
+}
+
+.collapsible-card.collapsed .table-collapse-wrapper {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.collapsible-card.collapsed .chevron-svg {
+  transform: rotate(-90deg);
+}
+
+.collapsible-card.collapsed .table-header-row {
+  border-bottom-color: transparent;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .table-subtitle {
@@ -418,6 +448,8 @@
   color: var(--text-muted);
   margin-top: 2px;
 }
+
+/* table layout */
 
 .table-scroll {
   overflow-x: auto;
@@ -478,6 +510,8 @@
   font-size: 13px;
 }
 
+/* table cell states */
+
 .row-emergency {
   background-color: var(--accent-danger-subtle) !important;
 }
@@ -505,7 +539,8 @@
   background-color: var(--accent-danger-subtle) !important;
 }
 
-/* Responsive adjustments */
+/* responsive */
+
 @media (max-width: 900px) {
   .hud-header {
     flex-direction: column;

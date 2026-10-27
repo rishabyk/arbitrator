@@ -1,6 +1,4 @@
-/* ==========================================================================
-   RADAR // MAP VIEWPORT, AIRCRAFT MARKERS & TARGET SIDEBAR (TAB 01)
-   ========================================================================== */
+/* radar map view */
 
 #tab-radar.tab-pane.active {
   display: flex;
@@ -21,7 +19,8 @@
   background-color: var(--bg-canvas);
 }
 
-/* Dark mode styling for Leaflet */
+/* dark tile filters */
+
 .leaflet-container {
   background-color: var(--bg-canvas) !important;
 }
@@ -30,9 +29,7 @@
   filter: brightness(0.65) invert(1) contrast(2) hue-rotate(190deg) saturate(0.2);
 }
 
-/* ==========================================================================
-   SIDEBAR // TARGET INSPECTOR
-   ========================================================================== */
+/* target sidebar */
 
 .sidebar {
   width: 360px;
@@ -73,7 +70,8 @@
   margin-top: 1px;
 }
 
-/* Refined Target Registration Badge (No Clipping, Disciplined Neutral Colorway) */
+/* target registration badge */
+
 .target-badge {
   display: inline-flex;
   align-items: center;
@@ -96,7 +94,6 @@
               color var(--transition-fast);
 }
 
-/* Warning & Anomaly States (Solid & Stable) */
 .target-badge.val-stale {
   border-color: rgba(248, 113, 113, 0.4) !important;
   background-color: var(--accent-danger-subtle) !important;
@@ -115,7 +112,41 @@
   color: var(--accent-danger) !important;
 }
 
-/* Photo Container & Tactical Starfleet Reticle Frame */
+/* target badge receiver status states */
+
+.target-badge.online {
+  color: var(--status-online) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  background-color: rgba(16, 185, 129, 0.08) !important;
+}
+
+.target-badge.standby {
+  color: var(--status-standby) !important;
+  border-color: var(--border-default) !important;
+  background-color: var(--bg-card) !important;
+}
+
+.target-badge.initializing {
+  color: var(--status-init) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  background-color: rgba(56, 189, 248, 0.08) !important;
+}
+
+.target-badge.degraded {
+  color: var(--status-degraded) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  background-color: rgba(245, 158, 11, 0.08) !important;
+}
+
+.target-badge.disconnected,
+.target-badge.error {
+  color: var(--status-disc) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+/* photo container */
+
 .photo-container {
   position: relative;
   width: 100%;
@@ -127,28 +158,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* Starfleet Optical Corner Brackets */
-.photo-container::before {
-  content: "";
-  position: absolute;
-  inset: var(--space-2);
-  border: 1px solid transparent;
-  pointer-events: none;
-  background:
-    linear-gradient(to right, var(--accent-info-border) 8px, transparent 8px) top left,
-    linear-gradient(to bottom, var(--accent-info-border) 8px, transparent 8px) top left,
-    linear-gradient(to left, var(--accent-info-border) 8px, transparent 8px) top right,
-    linear-gradient(to bottom, var(--accent-info-border) 8px, transparent 8px) top right,
-    linear-gradient(to right, var(--accent-info-border) 8px, transparent 8px) bottom left,
-    linear-gradient(to top, var(--accent-info-border) 8px, transparent 8px) bottom left,
-    linear-gradient(to left, var(--accent-info-border) 8px, transparent 8px) bottom right,
-    linear-gradient(to top, var(--accent-info-border) 8px, transparent 8px) bottom right;
-  background-repeat: no-repeat;
-  background-size: 8px 8px;
-  opacity: 0.6;
-  z-index: 2;
 }
 
 .photo-container img {
@@ -165,77 +174,47 @@
   to { opacity: 1; }
 }
 
-/* --- Tactical Tooltip & User Guidance State (Not a system loading spinner) --- */
-.target-prompt {
+/* empty flight inspector prompt */
+
+.flight-prompt {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-4) var(--space-5);
   width: 100%;
   height: 100%;
   position: relative;
-  z-index: 3;
-  background: radial-gradient(circle at center, rgba(56, 189, 248, 0.06) 0%, transparent 72%);
+  z-index: 2;
 }
 
-.target-reticle {
-  width: 36px;
-  height: 36px;
-  color: var(--accent-info);
-  margin-bottom: var(--space-2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.flight-prompt-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--text-muted);
+  margin-bottom: var(--space-3);
+  opacity: 0.75;
 }
 
-.reticle-svg {
-  width: 100%;
-  height: 100%;
-  animation: reticle-breathe 4s ease-in-out infinite;
-}
-
-@keyframes reticle-breathe {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-}
-
-.target-prompt-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--accent-info);
-  background: var(--accent-info-subtle);
-  border: 1px solid var(--accent-info-border);
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  margin-bottom: var(--space-2);
-}
-
-.target-prompt-title {
+.flight-prompt-title {
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 2px;
-  letter-spacing: -0.01em;
+  margin-bottom: var(--space-1);
 }
 
-.target-prompt-desc {
+.flight-prompt-desc {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-secondary);
-  line-height: 1.45;
+  line-height: 1.5;
   max-width: 250px;
 }
 
-/* --- Photo Placeholders (Scanning, Empty, Offline) --- */
+/* photo states & spinner */
+
 .photo-placeholder {
   display: flex;
   flex-direction: column;
@@ -287,6 +266,8 @@
   margin-top: 2px;
 }
 
+/* photo credit */
+
 .photo-credit {
   position: absolute;
   bottom: var(--space-2);
@@ -299,7 +280,8 @@
   z-index: 3;
 }
 
-/* --- De-boxed Telemetry Data Panel --- */
+/* sidebar telemetry grid */
+
 .sidebar-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -318,11 +300,6 @@
   background-color: var(--bg-subtle);
   border: 1px solid transparent;
   transition: background-color var(--transition-fast), border-color var(--transition-fast);
-}
-
-.field.field-flash {
-  background-color: var(--accent-info-subtle);
-  border-color: var(--accent-info-border);
 }
 
 .field.field-alert-anomaly,
@@ -370,9 +347,7 @@
   transition: color var(--transition-fast);
 }
 
-/* ==========================================================================
-   AIRCRAFT MARKERS & OVERLAYS
-   ========================================================================== */
+/* aircraft map markers */
 
 .plane-icon-wrapper {
   background: transparent;
@@ -416,7 +391,8 @@
   opacity: 0.4;
 }
 
-/* Floating Tactical Scope Control Dock */
+/* tactical scope dock */
+
 .radar-overlay-bar {
   position: absolute;
   bottom: var(--space-4);
@@ -491,4 +467,180 @@
   border-color: var(--accent-info-border);
   color: var(--accent-info);
   background: var(--accent-info-subtle);
+}
+
+/* sidebar contacts panel */
+
+.sidebar-contacts-panel {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+}
+
+.contacts-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--bg-card);
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background-color var(--transition-fast);
+}
+
+.contacts-panel-header:hover {
+  background-color: var(--bg-card-hover);
+}
+
+.contacts-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.contacts-title {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+.contacts-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent-info);
+  background: var(--accent-info-subtle);
+  border: 1px solid var(--accent-info-border);
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  min-width: 20px;
+  text-align: center;
+}
+
+.contacts-collapse-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  transition: color var(--transition-fast);
+}
+
+.contacts-panel-header:hover .contacts-collapse-btn {
+  color: var(--text-primary);
+}
+
+.chevron-svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-contacts-panel.collapsed .chevron-svg {
+  transform: rotate(-90deg);
+}
+
+.contacts-panel-body {
+  max-height: 280px;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  opacity: 1;
+}
+
+.sidebar-contacts-panel.collapsed .contacts-panel-body {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-contacts-panel.collapsed .contacts-panel-header {
+  border-bottom-color: transparent;
+}
+
+.sidebar-table-scroll {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.sidebar-table-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-table-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-pill);
+}
+
+/* compact contacts table */
+
+.sidebar-contacts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  text-align: left;
+}
+
+.sidebar-contacts-table th {
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.sidebar-contacts-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cell-flight {
+  line-height: 1.25;
+}
+
+.flight-callsign {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+}
+
+.flight-hex-sub {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--accent-info);
+  display: block;
+}
+
+.cell-alt,
+.cell-speed,
+.cell-dist {
+  color: var(--text-secondary);
+}
+
+.sidebar-contacts-table .empty-table-msg {
+  padding: var(--space-4) var(--space-2) !important;
+  font-size: 11px;
 }

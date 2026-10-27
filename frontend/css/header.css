@@ -1,6 +1,4 @@
-/* ==========================================================================
-   HEADER // TELEMETRY RIBBON, STATUS MATRIX & TAB NAVIGATION
-   ========================================================================== */
+/* header layout */
 
 .hud-header {
   position: relative;
@@ -13,9 +11,13 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
+/* brand */
+
 .hud-brand {
   display: flex;
   align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }
 
 .hud-title {
@@ -37,7 +39,78 @@
   user-select: none;
 }
 
-/* --- De-boxed Unified Telemetry Strip --- */
+/* heartbeat indicator */
+
+.stream-heartbeat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  user-select: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.stream-heartbeat:hover {
+  border-color: var(--border-default);
+  background-color: var(--bg-card-hover);
+}
+
+.heartbeat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent-success);
+  opacity: 0.75;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.18s ease-out,
+              box-shadow 0.18s ease-out;
+}
+
+.heartbeat-dot.pulse {
+  opacity: 1;
+  transform: scale(1.4);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+.heartbeat-dot.stale {
+  background-color: var(--accent-danger);
+  box-shadow: none;
+  opacity: 1;
+}
+
+.heartbeat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: opacity var(--transition-fast);
+}
+
+/* heartbeat collapsed state */
+
+.stream-heartbeat.collapsed {
+  padding: 6px 10px;
+  gap: 0;
+}
+
+.stream-heartbeat.collapsed .heartbeat-label {
+  display: none;
+}
+
+.stream-heartbeat.collapsed .heartbeat-dot.pulse {
+  transform: none !important;
+  box-shadow: none !important;
+  opacity: 0.75 !important;
+}
+
+/* telemetry metrics ribbon */
+
 .hud-metrics {
   display: flex;
   align-items: stretch;
@@ -60,10 +133,6 @@
 
 .metric-card:last-child {
   border-right: none;
-}
-
-.metric-card.field-flash {
-  background-color: var(--accent-info-subtle);
 }
 
 .metric-label {
@@ -89,7 +158,8 @@
   align-items: center;
 }
 
-/* --- Receiver Status & Help Popover --- */
+/* receiver status popover */
+
 .receiver-metric {
   position: relative;
   min-width: 140px;
@@ -193,13 +263,14 @@
   align-self: center;
 }
 
-.dot-online   { background-color: var(--accent-success); }
-.dot-standby  { background-color: var(--accent-warning); }
-.dot-init     { background-color: var(--accent-info); }
-.dot-disc     { background-color: var(--accent-danger); }
-.dot-degraded { background-color: var(--accent-orange); }
+.dot-online   { background-color: var(--status-online); }
+.dot-standby  { background-color: var(--status-standby); }
+.dot-init     { background-color: var(--status-init); }
+.dot-degraded { background-color: var(--status-degraded); }
+.dot-disc     { background-color: var(--status-disc); }
 
-/* Status Badge Text Colors */
+/* status badge colors */
+
 .status-badge {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -207,13 +278,27 @@
   letter-spacing: 0.02em;
 }
 
-.status-badge.online        { color: var(--accent-success); }
+.status-badge.online {
+  color: var(--status-online);
+}
+
 .status-badge.standby,
-.status-badge.inactive      { color: var(--accent-warning); }
-.status-badge.initializing  { color: var(--accent-info); }
+.status-badge.inactive {
+  color: var(--status-standby);
+}
+
+.status-badge.initializing {
+  color: var(--status-init);
+}
+
+.status-badge.degraded {
+  color: var(--status-degraded);
+}
+
 .status-badge.disconnected,
-.status-badge.error         { color: var(--accent-danger); }
-.status-badge.degraded      { color: var(--accent-orange); }
+.status-badge.error {
+  color: var(--status-disc);
+}
 
 .receiver-control-row {
   display: flex;
@@ -222,7 +307,8 @@
   margin-top: 2px;
 }
 
-/* --- Clean Modern Navigation Bar (Concise Naming) --- */
+/* navigation bar */
+
 .hud-nav {
   display: flex;
   background-color: var(--bg-surface);
