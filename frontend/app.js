@@ -35,9 +35,9 @@ const MAX_HISTORY    = 60;
 const ANOMALY = {
   ALT_FLOOR:        0,                       // ft — negative altitude is anomalous
   VRATE_EXTREME:    4000,                    // fpm — extreme climb / descent
-  SEEN_WARN_SEC:    5,                       // seconds → yellow warning threshold (5s - 15s)
-  SEEN_CRITICAL_SEC: 15,                     // seconds → red stale threshold (15s - 30s)
-  SEEN_PURGE_SEC:   30,                      // seconds → axe contact from tracking (>= 30s)
+  SEEN_WARN_SEC:    5,                       // seconds → yellow warning threshold
+  SEEN_CRITICAL_SEC: 20,                     // seconds → red stale threshold
+  SEEN_PURGE_SEC:   40,                      // seconds → axe contact from tracking
   SQUAWK_EMERGENCY: ['7500', '7600', '7700'],
 };
 
