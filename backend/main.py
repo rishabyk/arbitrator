@@ -19,6 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # ADS-B .json output files
 ADSB_FILEPATHS = [
     "/run/readsb/aircraft.json",
@@ -191,7 +192,7 @@ def get_aircraft():
         "aircraft": [],
     }
 
-    if status != "ONLINE":
+    if status not in ("ONLINE", "DEGRADED"):
         return response
 
     for path in ADSB_FILEPATHS:
@@ -221,7 +222,7 @@ def get_aircraft():
                             "seen_sec": a.get("seen") or 0,
                         }
                         for a in data.get("aircraft", [])
-                        if a.get("lat") and a.get("lon")
+                        if a.get("lat") and a.get("lon") and (a.get("seen") is None or a.get("seen") < 30)
                     ]
 
                     response["total_tracked"] = len(aircraft)
@@ -235,7 +236,20 @@ def get_aircraft():
     return response
 
 
+class CachedStaticFiles(StaticFiles):
+    """Custom static handler that ensures frontend scripts and styles are never cached stale."""
+    def is_not_modified(self, response_headers, request_headers) -> bool:
+        return False
+
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
+
 # Pointing FastAPI to the Frontend directory
 frontend_path = os.path.join(os.path.dirname(__file__), "../frontend")
 if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
+    app.mount("/", CachedStaticFiles(directory=frontend_path, html=True), name="static")

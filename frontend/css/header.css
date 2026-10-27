@@ -39,6 +39,24 @@
   border-radius: 4px;
   border: 1px solid var(--border-color);
   min-width: 90px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.metric-card.field-flash {
+  animation: metric-glow 0.45s ease;
+}
+
+@keyframes metric-glow {
+  0% {
+    background-color: rgba(0, 229, 255, 0.025);
+    border-color: rgba(0, 229, 255, 0.25);
+    box-shadow: none;
+  }
+  100% {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: none;
+  }
 }
 
 .metric-label {
@@ -89,7 +107,9 @@
 }
 
 .status-legend-popover {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   position: absolute;
   top: 24px;
   right: 0;
@@ -102,13 +122,17 @@
   z-index: 2000;
   text-align: left;
   pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
 }
 
 .help-trigger:hover .status-legend-popover,
 .help-trigger:focus .status-legend-popover {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .legend-title {
@@ -175,26 +199,75 @@
 .nav-tab {
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.2px;
-  padding: 10px 14px;
+  padding: 10px 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  position: relative;
+  user-select: none;
+  transition: color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Background gradient smooth fade */
+.nav-tab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 229, 255, 0.12) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+/* Glowing active tab bottom indicator: expands smoothly on activation */
+.nav-tab::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  pointer-events: none;
 }
 
 .nav-tab:hover {
   color: var(--text-primary);
-  background-color: rgba(0, 229, 255, 0.04);
+  background-color: rgba(0, 229, 255, 0.05);
+}
+
+.nav-tab:hover::before {
+  transform: scaleX(0.4);
+  opacity: 0.6;
+}
+
+.nav-tab:active {
+  transform: scale(0.94);
+  background-color: rgba(0, 229, 255, 0.15);
 }
 
 .nav-tab.active {
   color: var(--accent-cyan);
-  border-bottom: 2px solid var(--accent-cyan);
-  background-color: rgba(0, 229, 255, 0.08);
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+}
+
+.nav-tab.active::after {
+  opacity: 1;
+}
+
+.nav-tab.active::before {
+  transform: scaleX(1);
+  opacity: 1;
 }
 
 /* Receiver Power Toggle Row & Button */

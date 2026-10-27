@@ -67,6 +67,22 @@
   font-size: 11px;
   border-radius: 3px;
   color: var(--accent-amber);
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.target-badge.val-stale {
+  border-color: rgba(255, 61, 0, 0.8) !important;
+  background-color: rgba(255, 61, 0, 0.15) !important;
+}
+
+.target-badge.val-warn {
+  border-color: rgba(255, 179, 0, 0.8) !important;
+  background-color: rgba(255, 179, 0, 0.12) !important;
+}
+
+.target-badge.val-anomaly {
+  border-color: rgba(255, 23, 68, 0.9) !important;
+  background-color: rgba(255, 23, 68, 0.18) !important;
 }
 
 /* Photo Container */
@@ -87,6 +103,18 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  animation: photo-fade-in 0.3s ease;
+}
+
+@keyframes photo-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .photo-placeholder {
@@ -119,6 +147,85 @@
   padding: 8px 10px;
   border-radius: 4px;
   border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.field.field-flash {
+  animation: field-glow 0.45s ease;
+}
+
+@keyframes field-glow {
+  0% {
+    background-color: rgba(0, 229, 255, 0.025);
+    border-color: rgba(0, 229, 255, 0.28);
+    box-shadow: none;
+  }
+  100% {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: none;
+  }
+}
+
+/* Card container alert flashes — dimmed, distinct box strobing */
+.field.field-alert-anomaly,
+.radar-stat.field-alert-anomaly,
+.metric-card.field-alert-anomaly {
+  border-color: rgba(255, 61, 0, 0.5);
+  animation: alert-pulse-anomaly 0.9s ease infinite;
+}
+
+@keyframes alert-pulse-anomaly {
+  0%, 100% {
+    background-color: rgba(255, 61, 0, 0.09);
+    border-color: rgba(255, 61, 0, 0.75);
+    box-shadow: 0 0 8px rgba(255, 61, 0, 0.25);
+  }
+  50% {
+    background-color: var(--bg-card);
+    border-color: rgba(255, 61, 0, 0.25);
+    box-shadow: none;
+  }
+}
+
+.field.field-alert-warn,
+.radar-stat.field-alert-warn,
+.metric-card.field-alert-warn {
+  border-color: rgba(255, 179, 0, 0.4);
+  animation: alert-pulse-warn 1.2s ease infinite;
+}
+
+@keyframes alert-pulse-warn {
+  0%, 100% {
+    background-color: rgba(255, 179, 0, 0.06);
+    border-color: rgba(255, 179, 0, 0.55);
+    box-shadow: 0 0 6px rgba(255, 179, 0, 0.15);
+  }
+  50% {
+    background-color: var(--bg-card);
+    border-color: rgba(255, 179, 0, 0.15);
+    box-shadow: none;
+  }
+}
+
+.field.field-alert-stale,
+.radar-stat.field-alert-stale,
+.metric-card.field-alert-stale {
+  border-color: rgba(255, 61, 0, 0.4);
+  animation: alert-pulse-stale 1.1s ease infinite;
+}
+
+@keyframes alert-pulse-stale {
+  0%, 100% {
+    background-color: rgba(255, 61, 0, 0.08);
+    border-color: rgba(255, 61, 0, 0.65);
+    box-shadow: 0 0 6px rgba(255, 61, 0, 0.2);
+  }
+  50% {
+    background-color: var(--bg-card);
+    border-color: rgba(255, 61, 0, 0.2);
+    box-shadow: none;
+  }
 }
 
 .field-label {
@@ -132,6 +239,8 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--accent-cyan);
+  display: inline-block;
+  transition: color 0.3s ease, transform 0.2s ease, text-shadow 0.3s ease;
 }
 
 /* --- Map Marker Styling --- */
@@ -179,8 +288,26 @@
   font-size: 11px;
   display: flex;
   gap: 4px;
-  padding-right: 8px;
+  padding: 3px 8px 3px 6px;
   border-right: 1px solid var(--border-color);
+  align-items: center;
+  border-radius: 3px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.radar-stat.field-flash {
+  animation: radar-stat-glow 0.45s ease;
+}
+
+@keyframes radar-stat-glow {
+  0% {
+    background-color: rgba(0, 229, 255, 0.04);
+    box-shadow: none;
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
 }
 
 .stat-lbl {
@@ -190,6 +317,9 @@
 .stat-num {
   color: var(--accent-cyan);
   font-weight: 700;
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .radar-ctrl-btn {
@@ -199,21 +329,38 @@
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
-  padding: 4px 8px;
+  padding: 4px 9px;
   border-radius: 3px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: color 0.2s ease, border-color 0.2s ease,
+              background 0.2s ease, transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s ease;
 }
 
 .radar-ctrl-btn:hover {
   border-color: var(--accent-cyan);
   color: var(--text-primary);
+  background: rgba(0, 229, 255, 0.08);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.radar-ctrl-btn:active {
+  transform: translateY(1px) scale(0.92);
+  background: rgba(0, 229, 255, 0.2);
+  box-shadow: 0 0 4px rgba(0, 229, 255, 0.5);
 }
 
 .radar-ctrl-btn.active {
   border-color: var(--accent-cyan);
   color: var(--accent-cyan);
-  background: rgba(0, 229, 255, 0.08);
+  background: rgba(0, 229, 255, 0.14);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.35), inset 0 0 6px rgba(0, 229, 255, 0.15);
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
 }
 
 /* Crisp dark contour stroke around aircraft vector */
@@ -227,4 +374,13 @@
 .plane-svg.emergency {
   fill: var(--accent-red);
   filter: drop-shadow(0 0 8px rgba(255, 61, 0, 0.95));
+}
+
+.plane-svg.warn {
+  opacity: 0.75;
+}
+
+.plane-svg.stale {
+  opacity: 0.45;
+  filter: drop-shadow(0 0 2px rgba(255, 61, 0, 0.5));
 }

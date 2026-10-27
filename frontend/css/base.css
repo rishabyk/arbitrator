@@ -34,26 +34,39 @@ body {
   user-select: none;
 }
 
-/* Master Viewport Switcher */
+
+/* ---------- Master Viewport Switcher ---------- */
+
 .hud-content {
   flex: 1;
   position: relative;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
+/* All panes stacked absolutely so opacity transitions fire */
 .tab-pane {
-  display: none; /* Inactive tabs hidden */
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  display: flex;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  z-index: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .tab-pane.active {
-  display: flex; /* Active tab visible */
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  z-index: 1;
 }
 
-/* Shared buttons */
+
+/* ---------- Shared Buttons ---------- */
+
 .hud-btn {
   display: inline-block;
   padding: 8px 16px;
@@ -62,15 +75,79 @@ body {
   letter-spacing: 1.2px;
   text-decoration: none;
   border-radius: 3px;
-  transition: all 0.2s ease;
   cursor: pointer;
   border: 1px solid var(--accent-cyan);
   color: var(--accent-cyan);
   background: rgba(0, 229, 255, 0.05);
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hud-btn:hover {
   background: var(--accent-cyan);
   color: #000;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.7);
+  transform: translateY(-1px);
+}
+
+.hud-btn:active {
+  transform: translateY(1px) scale(0.95);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+
+
+/* ---------- Value Transitions & Ticker Slot Engine ---------- */
+
+/* Ticker slot container */
+.ticker-slot {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  vertical-align: bottom;
+  height: 1.35em;
+  line-height: 1.35em;
+  font-variant-numeric: tabular-nums;
+  transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ticker-view {
+  display: block;
+  white-space: nowrap;
+  height: 1.35em;
+  line-height: 1.35em;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.ticker-view.ticker-next {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+
+/* Subtle cyan glow while number is actively rolling into place */
+.ticker-view.stat-updating,
+.stat-updating {
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.85);
+}
+
+/* Anomaly state styling — Static high-visibility colors without text strobing */
+.val-anomaly,
+.val-anomaly .ticker-view {
+  color: var(--accent-red) !important;
+  text-shadow: 0 0 8px rgba(255, 61, 0, 0.7);
+}
+
+.val-warn,
+.val-warn .ticker-view {
+  color: var(--accent-amber) !important;
+  text-shadow: 0 0 6px rgba(255, 179, 0, 0.5);
+}
+
+.val-stale,
+.val-stale .ticker-view {
+  color: var(--accent-red) !important;
+  text-shadow: 0 0 8px rgba(255, 61, 0, 0.7);
 }

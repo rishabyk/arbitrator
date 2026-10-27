@@ -218,7 +218,7 @@
 
 .bar-row {
   display: grid;
-  grid-template-columns: 55px 1fr 40px;
+  grid-template-columns: 55px minmax(0, 1fr) 42px;
   align-items: center;
   gap: 10px;
   font-size: 11px;
@@ -227,6 +227,7 @@
 .bar-label {
   color: var(--text-muted);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .bar-track {
@@ -235,18 +236,40 @@
   border: 1px solid var(--border-color);
   border-radius: 2px;
   overflow: hidden;
+  min-width: 0;
 }
 
 .bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
-  transition: width 0.3s ease;
+  transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bar-val {
+  width: 42px;
+  min-width: 42px;
+  max-width: 42px;
   text-align: right;
+  justify-self: end;
   color: var(--text-primary);
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+}
+
+.bar-val.ticker-slot {
+  width: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  transition: none !important;
+  display: block;
+}
+
+.bar-val .ticker-view {
+  width: 100% !important;
+  text-align: right !important;
+  display: block;
+  font-variant-numeric: tabular-nums;
 }
 
 /* --- Thermal Sparkline Graph --- */
@@ -331,4 +354,44 @@
   color: var(--text-muted) !important;
   padding: 20px !important;
   letter-spacing: 1px;
+}
+
+/* Emergency squawk row highlight */
+.row-emergency {
+  background-color: rgba(255, 61, 0, 0.08) !important;
+}
+
+.row-emergency:hover {
+  background-color: rgba(255, 61, 0, 0.14) !important;
+}
+
+/* Anomaly table styling */
+.tactical-table td.cell-anomaly {
+  color: var(--accent-red) !important;
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(255, 61, 0, 0.5);
+}
+
+.tactical-table td.cell-warn {
+  color: var(--accent-amber) !important;
+  font-weight: 600;
+  text-shadow: 0 0 5px rgba(255, 179, 0, 0.5);
+}
+
+.tactical-table td.cell-stale {
+  color: var(--accent-red) !important;
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(255, 61, 0, 0.7);
+}
+
+.row-warn {
+  background-color: rgba(255, 179, 0, 0.05) !important;
+}
+
+.row-stale {
+  background-color: rgba(255, 61, 0, 0.08) !important;
+}
+
+.row-stale:hover {
+  background-color: rgba(255, 61, 0, 0.14) !important;
 }
