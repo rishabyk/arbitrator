@@ -3,73 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ARBITRATOR // rishabyk</title>
-  
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'><g transform='rotate(-45, 7, 7)'><path fill='%2300e5ff' d='M 11.2,6.4 8.8,6.1 7.9,5.8 7.45,5.8 5.2592125,3.025 l 0.7407937,0 C 6.2187438,3.025 6.4,2.97578 6.4,2.9125 6.4,2.84922 6.2187438,2.8 6.0000062,2.8 L 3.85,2.8 l 0,0.225 0.3,0 0,3.075 -0.9,0 L 1.9999937,4.6 1.3500062,4.6 1.15,4.80001 1.15,6.1 l 0.15,0 0,0.3 0.9,0 0,0.05 -1.2,0.15 0,0.8 1.2,0.15 0,0.05 -0.9,0 0,0.3 -0.15,0 0,1.29999 L 1.3500062,9.4 2.0000125,9.4 3.25,7.9 l 0.9,0 0,3.075 -0.3,0 0,0.225 2.1500062,0 C 6.2187625,11.2 6.4,11.15078 6.4,11.0875 6.4,11.0242 6.2187438,10.975 6.0000062,10.975 l -0.7407937,0 L 7.45,8.2 7.9,8.2 8.8,7.9 11.2,7.6 C 13,7.20001 13,7.10157 13,7 13,6.89843 13,6.79999 11.2,6.4 Z'/></g></svg>">
+  <title>Arbitrator — 1090 MHz ADS-B Telemetry & RF Station</title>
+  <meta name="description" content="High-performance 1090 MHz Mode-S/ADS-B edge telemetry station and tactical radar flight monitor.">
+  <meta name="author" content="Rishab Yekaldevi">
+  <meta name="theme-color" content="#0a0d14">
+
+  <!-- Open Graph / Meta -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Arbitrator — 1090 MHz ADS-B Telemetry Station">
+  <meta property="og:description" content="Real-time Mode-S edge demodulation, tactical flight tracking, and hardware telemetry.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'><g transform='rotate(-45, 7, 7)'><path fill='%2338bdf8' d='M 11.2,6.4 8.8,6.1 7.9,5.8 7.45,5.8 5.2592125,3.025 l 0.7407937,0 C 6.2187438,3.025 6.4,2.97578 6.4,2.9125 6.4,2.84922 6.2187438,2.8 6.0000062,2.8 L 3.85,2.8 l 0,0.225 0.3,0 0,3.075 -0.9,0 L 1.9999937,4.6 1.3500062,4.6 1.15,4.80001 1.15,6.1 l 0.15,0 0,0.3 0.9,0 0,0.05 -1.2,0.15 0,0.8 1.2,0.15 0,0.05 -0.9,0 0,0.3 -0.15,0 0,1.29999 L 1.3500062,9.4 2.0000125,9.4 3.25,7.9 l 0.9,0 0,3.075 -0.3,0 0,0.225 2.1500062,0 C 6.2187625,11.2 6.4,11.15078 6.4,11.0875 6.4,11.0242 6.2187438,10.975 6.0000062,10.975 l -0.7407937,0 L 7.45,8.2 7.9,8.2 8.8,7.9 11.2,7.6 C 13,7.20001 13,7.10157 13,7 13,6.89843 13,6.79999 11.2,6.4 Z'/></g></svg>">
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <!-- Custom Styling -->
-  <link rel="stylesheet" href="style.css?v=20261026_axe30">
+  <link rel="stylesheet" href="style.css?v=20261027_reticle">
 </head>
 <body>
 
   <!-- Top Telemetry Ribbon -->
   <header class="hud-header">
     <div class="hud-brand">
-      <span class="hud-title">ARBITRATOR // rishabyk</span>
+      <h1 class="hud-title">rishabyk <span class="brand-divider">//</span> ARBITRATOR</h1>
     </div>
 
     <div class="hud-metrics">
       <div class="metric-card">
-        <span class="metric-label">CPU TEMP</span>
-        <span class="metric-val" id="cpu-temp">--.-°C</span>
+        <span class="metric-label">CPU Temp</span>
+        <span class="metric-val" id="cpu-temp"><span class="skeleton-bar" style="width: 46px;"></span></span>
       </div>
       <div class="metric-card">
-        <span class="metric-label">CPU LOAD</span>
-        <span class="metric-val" id="cpu-usage">--%</span>
+        <span class="metric-label">CPU Load</span>
+        <span class="metric-val" id="cpu-usage"><span class="skeleton-bar" style="width: 38px;"></span></span>
       </div>
       <div class="metric-card">
-        <span class="metric-label">RAM USED</span>
-        <span class="metric-val" id="ram-usage">--%</span>
+        <span class="metric-label">RAM Usage</span>
+        <span class="metric-val" id="ram-usage"><span class="skeleton-bar" style="width: 38px;"></span></span>
       </div>
       <div class="metric-card">
-        <span class="metric-label">UPTIME</span>
-        <span class="metric-val" id="node-uptime">--.-H</span>
+        <span class="metric-label">Node Uptime</span>
+        <span class="metric-val" id="node-uptime"><span class="skeleton-bar" style="width: 48px;"></span></span>
       </div>
 
       <!-- Receiver Metric with State Matrix Help Tooltip & Power Toggle -->
       <div class="metric-card receiver-metric">
         <div class="metric-label-row">
-          <span class="metric-label">RECEIVER</span>
-          <span class="help-trigger" tabindex="0">?
+          <span class="metric-label">Receiver Status</span>
+          <span class="help-trigger" tabindex="0" aria-label="Receiver Status Information">?
             <div class="status-legend-popover">
-              <div class="legend-title">// RECEIVER STATES</div>
+              <div class="legend-title">Receiver States</div>
               <div class="legend-item">
                 <span class="legend-dot dot-online"></span>
                 <span class="legend-name">ONLINE</span>
-                <span class="legend-desc">SDR reciever & antenna active, last frame &lt; 5s ago</span>
+                <span class="legend-desc">SDR receiver & antenna active, last frame &lt; 5s ago</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-standby"></span>
                 <span class="legend-name">STANDBY</span>
-                <span class="legend-desc">SDR reciever & antenna inactive due to thermals</span>
+                <span class="legend-desc">SDR receiver inactive to mitigate thermal accumulation</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-init"></span>
                 <span class="legend-name">INITIALIZING</span>
-                <span class="legend-desc">SDR reciever & antenna active, background processes initializing / locking targets</span>
+                <span class="legend-desc">SDR receiver active, daemon locking target signals</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-disc"></span>
                 <span class="legend-name">DISCONNECTED</span>
-                <span class="legend-desc">SDR reciever physically absent, likely due to maintenance</span>
+                <span class="legend-desc">SDR hardware absent or unmounted from USB tree</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-degraded"></span>
                 <span class="legend-name">DEGRADED</span>
-                <span class="legend-desc">SDR reciever & antenna unhealthy (&gt; 5s without frame)</span>
+                <span class="legend-desc">Frame stream stale (&gt; 5s without demodulation)</span>
               </div>
             </div>
           </span>
@@ -82,11 +91,11 @@
   </header>
 
   <!-- Tactical Navigation Tab Bar -->
-  <nav class="hud-nav">
-    <button class="nav-tab active" data-tab="tab-radar">01 // RADAR</button>
-    <button class="nav-tab" data-tab="tab-dossier">02 // RESUME</button>
-    <button class="nav-tab" data-tab="tab-specs">03 // SPECS</button>
-    <button class="nav-tab" data-tab="tab-telemetry">04 // TELEMETRY</button>
+  <nav class="hud-nav" aria-label="Main Navigation">
+    <button class="nav-tab active" data-tab="tab-radar">Radar</button>
+    <button class="nav-tab" data-tab="tab-dossier">Dossier</button>
+    <button class="nav-tab" data-tab="tab-specs">Specs</button>
+    <button class="nav-tab" data-tab="tab-telemetry">Telemetry</button>
   </nav>
 
   <!-- Viewport Switcher Container -->
@@ -96,141 +105,156 @@
          TAB 1: RADAR
          ======================================================== -->
     <div id="tab-radar" class="tab-pane active hud-main">
-      <section id="map" class="map-viewport">
+      <section id="map" class="map-viewport" aria-label="Interactive Airspace Map">
         <!-- Floating Tactical Scope Overlay -->
         <div class="radar-overlay-bar">
           <div class="radar-stat">
-            <span class="stat-lbl">TRACKING:</span>
-            <span class="stat-num" id="hud-contact-count">0</span>
+            <span class="stat-lbl">Tracking</span>
+            <span class="stat-num" id="hud-contact-count"><span class="skeleton-bar" style="width: 24px;"></span></span>
           </div>
           <div class="radar-stat">
-            <span class="stat-lbl">MAX RNG:</span>
-            <span class="stat-num" id="hud-max-range">-- NM</span>
+            <span class="stat-lbl">Max Range</span>
+            <span class="stat-num" id="hud-max-range"><span class="skeleton-bar" style="width: 42px;"></span></span>
           </div>
-          <button class="radar-ctrl-btn active" id="toggle-trails-btn">TRAILS: ON</button>
-          <button class="radar-ctrl-btn" id="recenter-map-btn">⌖ CENTER</button>
+          <button class="radar-ctrl-btn active" id="toggle-trails-btn" type="button">TRAILS: ON</button>
+          <button class="radar-ctrl-btn" id="recenter-map-btn" type="button">Center Map</button>
         </div>
       </section>
 
       <!-- Sidebar -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-          <h3>ACTIVE TARGET</h3>
+          <div>
+            <h3 class="sidebar-title">Active Target</h3>
+            <span class="sidebar-subtitle">Mode-S Transponder Track</span>
+          </div>
           <span class="target-badge" id="target-hex">NONE</span>
         </div>
 
         <div class="photo-container" id="photo-box">
-          <div class="photo-placeholder">AWAITING TARGET SELECTION</div>
+          <div class="target-prompt">
+            <div class="target-reticle" aria-hidden="true">
+              <svg class="reticle-svg" viewBox="0 0 40 40" fill="none" stroke="currentColor">
+                <circle cx="20" cy="20" r="14" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6"/>
+                <circle cx="20" cy="20" r="7" stroke-width="1.2" opacity="0.8"/>
+                <line x1="20" y1="2" x2="20" y2="9" stroke-width="1.5"/>
+                <line x1="20" y1="31" x2="20" y2="38" stroke-width="1.5"/>
+                <line x1="2" y1="20" x2="9" y2="20" stroke-width="1.5"/>
+                <line x1="31" y1="20" x2="38" y2="20" stroke-width="1.5"/>
+              </svg>
+            </div>
+            <span class="target-prompt-badge">Awaiting User Selection</span>
+            <p class="target-prompt-title">Click a flight to inspect</p>
+            <p class="target-prompt-desc">Select any contact on the radar map to lock telemetry & optical feed.</p>
+          </div>
         </div>
 
         <div class="sidebar-grid">
           <div class="field">
-            <span class="field-label">CALLSIGN</span>
-            <span class="field-val" id="target-callsign">----</span>
+            <span class="field-label">Callsign</span>
+            <span class="field-val" id="target-callsign"><span class="skeleton-bar" style="width: 48px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">SQUAWK</span>
-            <span class="field-val" id="target-squawk">----</span>
+            <span class="field-label">Squawk</span>
+            <span class="field-val" id="target-squawk"><span class="skeleton-bar" style="width: 44px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">ALTITUDE</span>
-            <span class="field-val" id="target-alt">---- FT</span>
+            <span class="field-label">Altitude</span>
+            <span class="field-val" id="target-alt"><span class="skeleton-bar" style="width: 58px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">VERT RATE</span>
-            <span class="field-val" id="target-vrate">---- FPM</span>
+            <span class="field-label">Vertical Rate</span>
+            <span class="field-val" id="target-vrate"><span class="skeleton-bar" style="width: 56px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">GND SPEED</span>
-            <span class="field-val" id="target-speed">--- KT</span>
+            <span class="field-label">Ground Speed</span>
+            <span class="field-val" id="target-speed"><span class="skeleton-bar" style="width: 50px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">HEADING</span>
-            <span class="field-val" id="target-track">---°</span>
+            <span class="field-label">Heading</span>
+            <span class="field-val" id="target-track"><span class="skeleton-bar" style="width: 42px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">TARGET ALT</span>
-            <span class="field-val" id="target-sel-alt">---- FT</span>
+            <span class="field-label">Selected Alt</span>
+            <span class="field-val" id="target-sel-alt"><span class="skeleton-bar" style="width: 58px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">DISTANCE</span>
-            <span class="field-val" id="target-dist">--.- NM</span>
+            <span class="field-label">Distance</span>
+            <span class="field-val" id="target-dist"><span class="skeleton-bar" style="width: 52px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">SIGNAL</span>
-            <span class="field-val" id="target-rssi">--.- dBFS</span>
+            <span class="field-label">Signal RSSI</span>
+            <span class="field-val" id="target-rssi"><span class="skeleton-bar" style="width: 62px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">LAST SEEN</span>
-            <span class="field-val" id="target-seen">--.- S</span>
+            <span class="field-label">Last Seen</span>
+            <span class="field-val" id="target-seen"><span class="skeleton-bar" style="width: 46px;"></span></span>
           </div>
         </div>
       </aside>
     </div>
 
     <!-- ========================================================
-         TAB 2: RESUME
+         TAB 2: RESUME / DOSSIER
          ======================================================== -->
     <div id="tab-dossier" class="tab-pane dossier-container">
       <div class="dossier-wrapper">
         
         <!-- Header Bio & Action Buttons -->
         <div class="dossier-card dossier-header">
-          <div>
-            <h1 class="dossier-name">RISHAB YEKALDEVI</h1>
-            <h2 class="dossier-title">Aerospace Engineering Student @ SJSU</h2>
-            <p class="dossier-sub">Larp larp larp larp larp</p>
+          <div class="dossier-bio">
+            <h1 class="dossier-name">Rishab Yekaldevi</h1>
+            <h2 class="dossier-title">Aerospace Engineering · San José State University</h2>
+            <p class="dossier-sub">Specializing in autonomous systems, RF signal demodulation, low-latency edge compute architectures, and computational flight dynamics.</p>
           </div>
           <div class="dossier-actions">
-            <a href="resume.pdf" download class="hud-btn glow-btn">⬇ DOWNLOAD CV (PDF)</a>
+            <a href="resume.pdf" download class="hud-btn glow-btn">Download Resume (PDF)</a>
           </div>
         </div>
 
         <!-- Competencies Matrix -->
         <div class="dossier-card">
-          <h3 class="card-heading">// TECHNICAL SKILLS</h3>
+          <h3 class="card-heading">Technical Competencies</h3>
           <div class="skills-grid">
             <div class="skill-category">
-              <span class="skill-group-title">AEROSPACE & FLIGHT DYNAMICS</span>
-              <div class="tag-list">
-                <span>Aerodynamics & CFD</span>
-                <span>Flight Stability</span>
-                <span>Orbital Mechanics</span>
-                <span>Propulsion Dynamics</span>
-                <span>FEA / Stress Analysis</span>
-              </div>
+              <span class="skill-group-title">Aerospace & Flight Dynamics</span>
+              <ul class="skill-list">
+                <li class="skill-item">Aerodynamics & Computational Fluid Dynamics (CFD)</li>
+                <li class="skill-item">Flight Stability, Control & Orbital Mechanics</li>
+                <li class="skill-item">Propulsion Dynamics & Aerothermal Modeling</li>
+                <li class="skill-item">Finite Element Analysis (FEA) & Structural Dynamics</li>
+              </ul>
             </div>
             <div class="skill-category">
-              <span class="skill-group-title">SYSTEMS & EMBEDDED COMPUTING</span>
-              <div class="tag-list">
-                <span>Embedded Linux / POSIX</span>
-                <span>FastAPI / Python</span>
-                <span>RTL-SDR / 1090MHz RF</span>
-                <span>Git / Automation Pipelines</span>
-                <span>Tailscale / Mesh VPN</span>
-              </div>
+              <span class="skill-group-title">Systems & Embedded Computing</span>
+              <ul class="skill-list">
+                <li class="skill-item">Embedded Linux, POSIX Standards & Kernel I/O</li>
+                <li class="skill-item">FastAPI, Python & High-Throughput REST Aggregation</li>
+                <li class="skill-item">RTL-SDR Signal Demodulation & 1090 MHz Mode-S/ADS-B</li>
+                <li class="skill-item">Tailscale Encrypted Mesh & Distributed VPN Topologies</li>
+              </ul>
             </div>
           </div>
         </div>
 
         <!-- Featured Projects Showcase -->
         <div class="dossier-card">
-          <h3 class="card-heading">// ACTIVE SYSTEMS & MISSIONS</h3>
+          <h3 class="card-heading">Active Engineering Projects</h3>
           <div class="project-list">
             <div class="project-entry">
               <div class="project-head">
-                <span class="project-title">PROJECT ARBITRATOR // EDGE TELEMETRY NODE</span>
-                <span class="project-date">2026 – PRESENT</span>
+                <span class="project-title">Project Arbitrator · Edge Telemetry Node</span>
+                <span class="project-date">2026 – Present</span>
               </div>
               <p class="project-desc">
-                Engineered a standalone 1090 MHz Mode-S/ADS-B edge station on a Raspberry Pi 5. Implemented low-latency RAM-disk demodulation, hardware thermal management routines, and an interactive FastAPI-powered tactical radar HUD.
+                Engineered a standalone 1090 MHz Mode-S/ADS-B edge receiver station on a Raspberry Pi 5. Implemented low-latency RAM-disk demodulation pipelines, hardware thermal governor routines, and an interactive FastAPI tactical telemetry dashboard.
               </p>
             </div>
 
             <div class="project-entry">
               <div class="project-head">
-                <span class="project-title">SUBJUGATOR COMPUTE NODE // DISTRIBUTED SIMULATION</span>
-                <span class="project-date">ACTIVE</span>
+                <span class="project-title">Subjugator Compute Node · Distributed Simulation</span>
+                <span class="project-date">Active</span>
               </div>
               <p class="project-desc">
                 High-throughput distributed compute node configured for numerical simulation pipelines, aerostructural modeling, and automated data processing over encrypted Tailscale interconnects.
@@ -250,30 +274,30 @@
 
         <!-- Architecture Flow Banner -->
         <div class="dossier-card">
-          <h3 class="card-heading">// TELEMETRY PIPELINE</h3>
+          <h3 class="card-heading">Telemetry Demodulation Pipeline</h3>
           <div class="pipeline-flow">
             <div class="pipeline-step">
               <span class="step-num">01</span>
               <span class="step-title">RF Capture</span>
-              <span class="step-desc">Mode-S transponder pulse reception w/ antenna tuned to 1090 MHz</span>
+              <span class="step-desc">Mode-S transponder pulse reception via tuned 1090 MHz collinear antenna</span>
             </div>
-            <span class="pipeline-arrow">➔</span>
+            <div class="pipeline-arrow" aria-hidden="true">→</div>
             <div class="pipeline-step">
               <span class="step-num">02</span>
-              <span class="step-title">Nooelec SDR </span>
-              <span class="step-desc">RTL2832U baseband I/Q demodulation via USB</span>
+              <span class="step-title">Nooelec SDR</span>
+              <span class="step-desc">RTL2832U baseband I/Q quadrature demodulation via USB bus</span>
             </div>
-            <span class="pipeline-arrow">➔</span>
+            <div class="pipeline-arrow" aria-hidden="true">→</div>
             <div class="pipeline-step">
               <span class="step-num">03</span>
               <span class="step-title">readsb Daemon</span>
-              <span class="step-desc">Cyclic 1Hz message decode written to RAM</span>
+              <span class="step-desc">Cyclic 1 Hz Mode-S frame decode committed directly to volatile RAM</span>
             </div>
-            <span class="pipeline-arrow">➔</span>
+            <div class="pipeline-arrow" aria-hidden="true">→</div>
             <div class="pipeline-step">
               <span class="step-num">04</span>
               <span class="step-title">FastAPI Backend</span>
-              <span class="step-desc">Telemetry aggregated, sent to REST endpoints on :8000</span>
+              <span class="step-desc">Telemetry aggregated, filtered, and served over low-latency REST endpoints</span>
             </div>
           </div>
         </div>
@@ -281,24 +305,24 @@
         <!-- Node Hardware Grid -->
         <div class="specs-grid">
           <div class="dossier-card">
-            <h3 class="card-heading">// NODE SPECS</h3>
+            <h3 class="card-heading">Host Platform Specifications</h3>
             <ul class="spec-list">
-              <li><span class="spec-key">HOST PLATFORM</span><span class="spec-val">Raspberry Pi 5 Model B (8GB)</span></li>
-              <li><span class="spec-key">PROCESSOR</span><span class="spec-val">Broadcom BCM2712 Quad-Core Cortex-A76 @ 2.4GHz</span></li>
-              <li><span class="spec-key">OPERATING SYSTEM</span><span class="spec-val">Debian GNU/Linux 12 (Bookworm 64-bit)</span></li>
-              <li><span class="spec-key">NETWORK TOPOLOGY</span><span class="spec-val">Tailscale WireGuard Mesh + NetworkManager</span></li>
-              <li><span class="spec-key">THERMALS</span><span class="spec-val">Active fan curve + custom standby throttling</span></li>
+              <li><span class="spec-key">Host Platform</span><span class="spec-val">Raspberry Pi 5 Model B (8 GB)</span></li>
+              <li><span class="spec-key">Processor</span><span class="spec-val">Broadcom BCM2712 Quad-Core Cortex-A76 @ 2.4 GHz</span></li>
+              <li><span class="spec-key">Operating System</span><span class="spec-val">Debian GNU/Linux 12 (Bookworm 64-bit)</span></li>
+              <li><span class="spec-key">Network Topology</span><span class="spec-val">Tailscale WireGuard Mesh + NetworkManager</span></li>
+              <li><span class="spec-key">Thermal Management</span><span class="spec-val">Active PWM fan curve + dynamic standby governor</span></li>
             </ul>
           </div>
 
           <div class="dossier-card">
-            <h3 class="card-heading">// RF RECEIVER FRONT-END</h3>
+            <h3 class="card-heading">RF Receiver Front-End</h3>
             <ul class="spec-list">
-              <li><span class="spec-key">TUNER CHIPSET</span><span class="spec-val">Rafael Micro R820T / RTL2832U Demodulator</span></li>
-              <li><span class="spec-key">TARGET FREQUENCY</span><span class="spec-val">1090 MHz (ADS-B Mode-S & 1090ES)</span></li>
-              <li><span class="spec-key">BANDWIDTH / SAMPLING</span><span class="spec-val">2.4 MSPS Quadrature (I/Q)</span></li>
-              <li><span class="spec-key">DECODER ENGINE</span><span class="spec-val">readsb v3.16 (Wiedehopf multi-threaded fork)</span></li>
-              <li><span class="spec-key">STANDBY BEHAVIOR</span><span class="spec-val">Automatic software parking to mitigate heat creep</span></li>
+              <li><span class="spec-key">Tuner Chipset</span><span class="spec-val">Rafael Micro R820T / RTL2832U Demodulator</span></li>
+              <li><span class="spec-key">Target Frequency</span><span class="spec-val">1090 MHz (ADS-B Mode-S & 1090ES)</span></li>
+              <li><span class="spec-key">Bandwidth & Sampling</span><span class="spec-val">2.4 MSPS Quadrature (I/Q)</span></li>
+              <li><span class="spec-key">Decoder Engine</span><span class="spec-val">readsb v3.16 (multi-threaded optimized fork)</span></li>
+              <li><span class="spec-key">Standby Behavior</span><span class="spec-val">Automatic thread parking to mitigate thermal rise</span></li>
             </ul>
           </div>
         </div>
@@ -316,49 +340,50 @@
         <div class="specs-grid">
           <!-- Per-Core Cortex-A76 Load -->
           <div class="dossier-card">
-            <h3 class="card-heading">// CORTEX-A76 CORE UTILIZATION</h3>
+            <h3 class="card-heading">Cortex-A76 Core Utilization</h3>
             <div id="core-bars-container" class="bars-stack">
               <div class="bar-row">
-                <span class="bar-label">CORE 0</span>
-                <div class="bar-track"><div class="bar-fill" id="core-bar-0" style="width: 0%"></div></div>
-                <span class="bar-val" id="core-val-0">0%</span>
+                <span class="bar-label">Core 0</span>
+                <div class="bar-track"><div class="bar-fill skeleton-shimmer" id="core-bar-0" style="width: 25%"></div></div>
+                <span class="bar-val" id="core-val-0"><span class="skeleton-bar" style="width: 28px;"></span></span>
               </div>
               <div class="bar-row">
-                <span class="bar-label">CORE 1</span>
-                <div class="bar-track"><div class="bar-fill" id="core-bar-1" style="width: 0%"></div></div>
-                <span class="bar-val" id="core-val-1">0%</span>
+                <span class="bar-label">Core 1</span>
+                <div class="bar-track"><div class="bar-fill skeleton-shimmer" id="core-bar-1" style="width: 20%"></div></div>
+                <span class="bar-val" id="core-val-1"><span class="skeleton-bar" style="width: 28px;"></span></span>
               </div>
               <div class="bar-row">
-                <span class="bar-label">CORE 2</span>
-                <div class="bar-track"><div class="bar-fill" id="core-bar-2" style="width: 0%"></div></div>
-                <span class="bar-val" id="core-val-2">0%</span>
+                <span class="bar-label">Core 2</span>
+                <div class="bar-track"><div class="bar-fill skeleton-shimmer" id="core-bar-2" style="width: 30%"></div></div>
+                <span class="bar-val" id="core-val-2"><span class="skeleton-bar" style="width: 28px;"></span></span>
               </div>
               <div class="bar-row">
-                <span class="bar-label">CORE 3</span>
-                <div class="bar-track"><div class="bar-fill" id="core-bar-3" style="width: 0%"></div></div>
-                <span class="bar-val" id="core-val-3">0%</span>
+                <span class="bar-label">Core 3</span>
+                <div class="bar-track"><div class="bar-fill skeleton-shimmer" id="core-bar-3" style="width: 15%"></div></div>
+                <span class="bar-val" id="core-val-3"><span class="skeleton-bar" style="width: 28px;"></span></span>
               </div>
             </div>
-            <ul class="spec-list" style="margin-top: 14px;">
-              <li><span class="spec-key">CLOCK SPEED</span><span class="spec-val" id="telem-freq">---- MHz</span></li>
-              <li><span class="spec-key">AVERAGE LOAD (1/5/15m)</span><span class="spec-val" id="telem-load">0.00 / 0.00 / 0.00</span></li>
-              <li><span class="spec-key">ACTIVE PROCESSES</span><span class="spec-val" id="telem-procs">---</span></li>
+            <ul class="spec-list spec-list-inset">
+              <li><span class="spec-key">Clock Frequency</span><span class="spec-val" id="telem-freq"><span class="skeleton-bar" style="width: 60px;"></span></span></li>
+              <li><span class="spec-key">Average Load (1 / 5 / 15m)</span><span class="spec-val" id="telem-load"><span class="skeleton-bar" style="width: 110px;"></span></span></li>
+              <li><span class="spec-key">Active Processes</span><span class="spec-val" id="telem-procs"><span class="skeleton-bar" style="width: 32px;"></span></span></li>
             </ul>
           </div>
 
           <!-- Thermal History & Memory/Disk Resources -->
           <div class="dossier-card">
-            <h3 class="card-heading">// THERMAL TRACE (60S) & RESOURCES</h3>
+            <h3 class="card-heading">Thermal Trace (60s) & System Resources</h3>
             <div class="sparkline-box">
               <svg id="temp-sparkline" viewBox="0 0 300 65" preserveAspectRatio="none">
-                <polyline id="temp-sparkline-line" fill="none" stroke="#00e5ff" stroke-width="2" points="" />
+                <line x1="0" y1="32" x2="300" y2="32" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+                <polyline id="temp-sparkline-line" fill="none" stroke="#38bdf8" stroke-width="2" points="" />
               </svg>
-              <span class="sparkline-label" id="sparkline-current">--.-°C</span>
+              <span class="sparkline-label" id="sparkline-current"><span class="skeleton-bar" style="width: 44px;"></span></span>
             </div>
-            <ul class="spec-list" style="margin-top: 12px;">
-              <li><span class="spec-key">MEMORY ALLOCATION</span><span class="spec-val" id="telem-mem">--- / ---- MB</span></li>
-              <li><span class="spec-key">ROOT FILESYSTEM (/)</span><span class="spec-val" id="telem-disk">--.- / --.- GB</span></li>
-              <li><span class="spec-key">NET TRAFFIC (TX / RX)</span><span class="spec-val" id="telem-net">--.- MB / --.- MB</span></li>
+            <ul class="spec-list spec-list-inset">
+              <li><span class="spec-key">Memory Allocation</span><span class="spec-val" id="telem-mem"><span class="skeleton-bar" style="width: 140px;"></span></span></li>
+              <li><span class="spec-key">Root Filesystem (/)</span><span class="spec-val" id="telem-disk"><span class="skeleton-bar" style="width: 120px;"></span></span></li>
+              <li><span class="spec-key">Network Traffic (TX / RX)</span><span class="spec-val" id="telem-net"><span class="skeleton-bar" style="width: 130px;"></span></span></li>
             </ul>
           </div>
         </div>
@@ -366,28 +391,64 @@
         <!-- Live Airspace Traffic Table -->
         <div class="dossier-card">
           <div class="table-header-row">
-            <h3 class="card-heading" style="margin-bottom: 0; border: none;">// LIVE TRANSPONDER TABLE</h3>
-            <span class="target-badge" id="table-status-badge">RECEIVER STANDBY</span>
+            <div>
+              <h3 class="card-heading card-heading-clean">Live Transponder Contacts</h3>
+              <span class="table-subtitle">Mode-S / ADS-B Extended Squitter Table</span>
+            </div>
+            <span class="target-badge" id="table-status-badge">STANDBY</span>
           </div>
           <div class="table-scroll">
             <table class="tactical-table">
               <thead>
                 <tr>
-                  <th>ICAO HEX</th>
-                  <th>CALLSIGN</th>
-                  <th>SQUAWK</th>
-                  <th>ALTITUDE</th>
-                  <th>V-RATE</th>
-                  <th>SPEED</th>
-                  <th>TRACK</th>
-                  <th>DIST</th>
-                  <th>SIGNAL</th>
-                  <th>LAST SEEN</th>
+                  <th>ICAO Hex</th>
+                  <th>Callsign</th>
+                  <th>Squawk</th>
+                  <th>Altitude</th>
+                  <th>V-Rate</th>
+                  <th>Speed</th>
+                  <th>Track</th>
+                  <th>Distance</th>
+                  <th>Signal</th>
+                  <th>Last Seen</th>
                 </tr>
               </thead>
               <tbody id="aircraft-table-body">
-                <tr>
-                  <td colspan="10" class="empty-table-msg">NO TRANSPONDER CONTACTS IN RANGE</td>
+                <tr class="skeleton-row">
+                  <td><span class="skeleton-bar" style="width: 55px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 60px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 38px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 65px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 50px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 48px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 36px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 55px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 62px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 42px;"></span></td>
+                </tr>
+                <tr class="skeleton-row">
+                  <td><span class="skeleton-bar" style="width: 50px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 52px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 38px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 58px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 45px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 44px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 36px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 50px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 58px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 42px;"></span></td>
+                </tr>
+                <tr class="skeleton-row">
+                  <td><span class="skeleton-bar" style="width: 58px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 65px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 38px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 62px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 48px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 52px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 36px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 58px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 60px;"></span></td>
+                  <td><span class="skeleton-bar" style="width: 42px;"></span></td>
                 </tr>
               </tbody>
             </table>
@@ -401,6 +462,6 @@
 
   <!-- Leaflet JS & App Script -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=20261026_axe30"></script>
+  <script src="app.js?v=20261027_reticle"></script>
 </body>
 </html>

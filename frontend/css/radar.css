@@ -11,37 +11,39 @@
   display: flex;
   flex: 1;
   position: relative;
-  z-index: 1;               /* Keeps map and side inspector below header popovers */
+  z-index: 1;
   overflow: hidden;
 }
 
 .map-viewport {
   flex: 1;
   height: 100%;
-  background-color: #05070a;
+  background-color: var(--bg-canvas);
 }
 
-/* Dark mode overrides for Leaflet */
+/* Dark mode styling for Leaflet */
 .leaflet-container {
-  background-color: #0b0f14 !important;
+  background-color: var(--bg-canvas) !important;
 }
 
-/* Inverts OSM into high-contrast dark radar mode */
 .dark-tiles {
-  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3);
+  filter: brightness(0.65) invert(1) contrast(2) hue-rotate(190deg) saturate(0.2);
 }
 
-/* --- Sidebar --- */
+/* ==========================================================================
+   SIDEBAR // TARGET INSPECTOR
+   ========================================================================== */
+
 .sidebar {
-  width: 340px;
-  min-width: 340px;       /* CRITICAL: Sets a hard floor for width */
-  flex-shrink: 0;         /* CRITICAL: Forbids the map from squishing this panel */
-  background-color: var(--bg-panel);
-  border-left: 1px solid var(--border-color);
+  width: 360px;
+  min-width: 360px;
+  flex-shrink: 0;
+  background-color: var(--bg-surface);
+  border-left: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  gap: 14px;
+  padding: var(--space-5);
+  gap: var(--space-4);
   z-index: 1000;
   overflow-y: auto;
 }
@@ -50,207 +52,335 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-3);
+  gap: var(--space-3);
 }
 
-.sidebar-header h3 {
-  font-size: 12px;
-  letter-spacing: 1.2px;
-  color: var(--accent-cyan);
+.sidebar-title {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
 }
 
-.target-badge {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  padding: 2px 6px;
+.sidebar-subtitle {
+  display: block;
+  font-family: var(--font-sans);
   font-size: 11px;
-  border-radius: 3px;
-  color: var(--accent-amber);
-  transition: border-color 0.3s ease, background-color 0.3s ease;
+  color: var(--text-muted);
+  margin-top: 1px;
 }
 
+/* Refined Target Registration Badge (No Clipping, Disciplined Neutral Colorway) */
+.target-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+  white-space: nowrap;
+  transition: border-color var(--transition-fast),
+              background-color var(--transition-fast),
+              color var(--transition-fast);
+}
+
+/* Warning & Anomaly States (Solid & Stable) */
 .target-badge.val-stale {
-  border-color: rgba(255, 61, 0, 0.8) !important;
-  background-color: rgba(255, 61, 0, 0.15) !important;
+  border-color: rgba(248, 113, 113, 0.4) !important;
+  background-color: var(--accent-danger-subtle) !important;
+  color: var(--accent-danger) !important;
 }
 
 .target-badge.val-warn {
-  border-color: rgba(255, 179, 0, 0.8) !important;
-  background-color: rgba(255, 179, 0, 0.12) !important;
+  border-color: rgba(251, 191, 36, 0.4) !important;
+  background-color: var(--accent-warning-subtle) !important;
+  color: var(--accent-warning) !important;
 }
 
 .target-badge.val-anomaly {
-  border-color: rgba(255, 23, 68, 0.9) !important;
-  background-color: rgba(255, 23, 68, 0.18) !important;
+  border-color: rgba(248, 113, 113, 0.5) !important;
+  background-color: var(--accent-danger-subtle) !important;
+  color: var(--accent-danger) !important;
 }
 
-/* Photo Container */
+/* Photo Container & Tactical Starfleet Reticle Frame */
 .photo-container {
+  position: relative;
   width: 100%;
   height: 180px;
   background-color: var(--bg-card);
-  border: 1px dashed var(--border-color);
-  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+}
+
+/* Starfleet Optical Corner Brackets */
+.photo-container::before {
+  content: "";
+  position: absolute;
+  inset: var(--space-2);
+  border: 1px solid transparent;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, var(--accent-info-border) 8px, transparent 8px) top left,
+    linear-gradient(to bottom, var(--accent-info-border) 8px, transparent 8px) top left,
+    linear-gradient(to left, var(--accent-info-border) 8px, transparent 8px) top right,
+    linear-gradient(to bottom, var(--accent-info-border) 8px, transparent 8px) top right,
+    linear-gradient(to right, var(--accent-info-border) 8px, transparent 8px) bottom left,
+    linear-gradient(to top, var(--accent-info-border) 8px, transparent 8px) bottom left,
+    linear-gradient(to left, var(--accent-info-border) 8px, transparent 8px) bottom right,
+    linear-gradient(to top, var(--accent-info-border) 8px, transparent 8px) bottom right;
+  background-repeat: no-repeat;
+  background-size: 8px 8px;
+  opacity: 0.6;
+  z-index: 2;
 }
 
 .photo-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  animation: photo-fade-in 0.3s ease;
+  animation: photo-fade-in 0.25s ease;
+  position: relative;
+  z-index: 1;
 }
 
 @keyframes photo-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(1.02);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.photo-placeholder {
-  font-size: 11px;
-  color: var(--text-muted);
+/* --- Tactical Tooltip & User Guidance State (Not a system loading spinner) --- */
+.target-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  letter-spacing: 1px;
+  padding: var(--space-3) var(--space-5);
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 3;
+  background: radial-gradient(circle at center, rgba(56, 189, 248, 0.06) 0%, transparent 72%);
+}
+
+.target-reticle {
+  width: 36px;
+  height: 36px;
+  color: var(--accent-info);
+  margin-bottom: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reticle-svg {
+  width: 100%;
+  height: 100%;
+  animation: reticle-breathe 4s ease-in-out infinite;
+}
+
+@keyframes reticle-breathe {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.target-prompt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-info);
+  background: var(--accent-info-subtle);
+  border: 1px solid var(--accent-info-border);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  margin-bottom: var(--space-2);
+}
+
+.target-prompt-title {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  letter-spacing: -0.01em;
+}
+
+.target-prompt-desc {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  max-width: 250px;
+}
+
+/* --- Photo Placeholders (Scanning, Empty, Offline) --- */
+.photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-4);
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 3;
+  gap: 2px;
+}
+
+.radar-scan-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border-default);
+  border-top-color: var(--accent-info);
+  animation: photo-spin 1.2s linear infinite;
+  margin-bottom: var(--space-2);
+}
+
+@keyframes photo-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.photo-empty-icon {
+  width: 26px;
+  height: 26px;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.photo-status-title {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+.photo-status-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .photo-credit {
   position: absolute;
-  bottom: 4px;
-  right: 6px;
-  font-size: 9px;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 2px 4px;
-  border-radius: 2px;
-  color: var(--text-muted);
+  bottom: var(--space-2);
+  right: var(--space-2);
+  font-size: 10px;
+  background: rgba(9, 13, 20, 0.85);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  z-index: 3;
 }
 
-/* Sidebar Telemetry Grid */
+/* --- De-boxed Telemetry Data Panel --- */
 .sidebar-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: var(--space-3);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
 }
 
 .field {
-  background-color: var(--bg-card);
-  padding: 8px 10px;
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-subtle);
+  border: 1px solid transparent;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .field.field-flash {
-  animation: field-glow 0.45s ease;
+  background-color: var(--accent-info-subtle);
+  border-color: var(--accent-info-border);
 }
 
-@keyframes field-glow {
-  0% {
-    background-color: rgba(0, 229, 255, 0.025);
-    border-color: rgba(0, 229, 255, 0.28);
-    box-shadow: none;
-  }
-  100% {
-    background-color: var(--bg-card);
-    border-color: var(--border-color);
-    box-shadow: none;
-  }
-}
-
-/* Card container alert flashes — dimmed, distinct box strobing */
 .field.field-alert-anomaly,
 .radar-stat.field-alert-anomaly,
 .metric-card.field-alert-anomaly {
-  border-color: rgba(255, 61, 0, 0.5);
-  animation: alert-pulse-anomaly 0.9s ease infinite;
-}
-
-@keyframes alert-pulse-anomaly {
-  0%, 100% {
-    background-color: rgba(255, 61, 0, 0.09);
-    border-color: rgba(255, 61, 0, 0.75);
-    box-shadow: 0 0 8px rgba(255, 61, 0, 0.25);
-  }
-  50% {
-    background-color: var(--bg-card);
-    border-color: rgba(255, 61, 0, 0.25);
-    box-shadow: none;
-  }
+  background-color: var(--accent-danger-subtle);
+  border-color: rgba(248, 113, 113, 0.4);
 }
 
 .field.field-alert-warn,
 .radar-stat.field-alert-warn,
 .metric-card.field-alert-warn {
-  border-color: rgba(255, 179, 0, 0.4);
-  animation: alert-pulse-warn 1.2s ease infinite;
-}
-
-@keyframes alert-pulse-warn {
-  0%, 100% {
-    background-color: rgba(255, 179, 0, 0.06);
-    border-color: rgba(255, 179, 0, 0.55);
-    box-shadow: 0 0 6px rgba(255, 179, 0, 0.15);
-  }
-  50% {
-    background-color: var(--bg-card);
-    border-color: rgba(255, 179, 0, 0.15);
-    box-shadow: none;
-  }
+  background-color: var(--accent-warning-subtle);
+  border-color: rgba(251, 191, 36, 0.4);
 }
 
 .field.field-alert-stale,
 .radar-stat.field-alert-stale,
 .metric-card.field-alert-stale {
-  border-color: rgba(255, 61, 0, 0.4);
-  animation: alert-pulse-stale 1.1s ease infinite;
-}
-
-@keyframes alert-pulse-stale {
-  0%, 100% {
-    background-color: rgba(255, 61, 0, 0.08);
-    border-color: rgba(255, 61, 0, 0.65);
-    box-shadow: 0 0 6px rgba(255, 61, 0, 0.2);
-  }
-  50% {
-    background-color: var(--bg-card);
-    border-color: rgba(255, 61, 0, 0.2);
-    box-shadow: none;
-  }
+  background-color: var(--accent-danger-subtle);
+  border-color: rgba(248, 113, 113, 0.3);
 }
 
 .field-label {
   display: block;
-  font-size: 9px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--text-muted);
-  margin-bottom: 4px;
+  line-height: 1.2;
 }
 
 .field-val {
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 600;
-  color: var(--accent-cyan);
-  display: inline-block;
-  transition: color 0.3s ease, transform 0.2s ease, text-shadow 0.3s ease;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  min-height: 18px;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--transition-fast);
 }
 
-/* --- Map Marker Styling --- */
+/* ==========================================================================
+   AIRCRAFT MARKERS & OVERLAYS
+   ========================================================================== */
+
 .plane-icon-wrapper {
   background: transparent;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.3s ease-out;
+  transition: transform 0.25s ease-out;
   overflow: visible !important;
 }
 
@@ -258,122 +388,24 @@
   width: 24px;
   height: 24px;
   overflow: visible !important;
-  fill: var(--accent-cyan);
-  filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.6));
+  fill: var(--accent-info);
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
   transform-origin: center center;
 }
 
-.plane-svg.selected {
-  fill: var(--accent-amber);
-  filter: drop-shadow(0 0 6px rgba(255, 179, 0, 0.8));
-}
-
-/* Floating Tactical Scope Control Bar */
-.radar-overlay-bar {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background-color: rgba(16, 23, 33, 0.9);
-  border: 1px solid var(--border-color);
-  padding: 6px 12px;
-  border-radius: 4px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
-}
-
-.radar-stat {
-  font-size: 11px;
-  display: flex;
-  gap: 4px;
-  padding: 3px 8px 3px 6px;
-  border-right: 1px solid var(--border-color);
-  align-items: center;
-  border-radius: 3px;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.radar-stat.field-flash {
-  animation: radar-stat-glow 0.45s ease;
-}
-
-@keyframes radar-stat-glow {
-  0% {
-    background-color: rgba(0, 229, 255, 0.04);
-    box-shadow: none;
-  }
-  100% {
-    background-color: transparent;
-    box-shadow: none;
-  }
-}
-
-.stat-lbl {
-  color: var(--text-muted);
-}
-
-.stat-num {
-  color: var(--accent-cyan);
-  font-weight: 700;
-  display: inline-block;
-  font-variant-numeric: tabular-nums;
-  transition: color 0.3s ease, text-shadow 0.3s ease;
-}
-
-.radar-ctrl-btn {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 9px;
-  border-radius: 3px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-  transition: color 0.2s ease, border-color 0.2s ease,
-              background 0.2s ease, transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.2s ease;
-}
-
-.radar-ctrl-btn:hover {
-  border-color: var(--accent-cyan);
-  color: var(--text-primary);
-  background: rgba(0, 229, 255, 0.08);
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
-  transform: translateY(-1px);
-}
-
-.radar-ctrl-btn:active {
-  transform: translateY(1px) scale(0.92);
-  background: rgba(0, 229, 255, 0.2);
-  box-shadow: 0 0 4px rgba(0, 229, 255, 0.5);
-}
-
-.radar-ctrl-btn.active {
-  border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
-  background: rgba(0, 229, 255, 0.14);
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.35), inset 0 0 6px rgba(0, 229, 255, 0.15);
-  text-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
-}
-
-/* Crisp dark contour stroke around aircraft vector */
 .plane-svg path {
-  stroke: #0a0e14;
-  stroke-width: 2.5px;
+  stroke: var(--bg-canvas);
+  stroke-width: 1.5px;
   stroke-linejoin: round;
   paint-order: stroke fill;
 }
 
+.plane-svg.selected {
+  fill: var(--accent-warning);
+}
+
 .plane-svg.emergency {
-  fill: var(--accent-red);
-  filter: drop-shadow(0 0 8px rgba(255, 61, 0, 0.95));
+  fill: var(--accent-danger);
 }
 
 .plane-svg.warn {
@@ -381,6 +413,82 @@
 }
 
 .plane-svg.stale {
-  opacity: 0.45;
-  filter: drop-shadow(0 0 2px rgba(255, 61, 0, 0.5));
+  opacity: 0.4;
+}
+
+/* Floating Tactical Scope Control Dock */
+.radar-overlay-bar {
+  position: absolute;
+  bottom: var(--space-4);
+  left: var(--space-4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background-color: rgba(14, 20, 31, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-default);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.radar-stat {
+  font-size: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.stat-lbl {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.stat-num {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.radar-ctrl-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: color var(--transition-fast),
+              border-color var(--transition-fast),
+              background-color var(--transition-fast);
+}
+
+.radar-ctrl-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.radar-ctrl-btn.active {
+  border-color: var(--accent-info-border);
+  color: var(--accent-info);
+  background: var(--accent-info-subtle);
 }

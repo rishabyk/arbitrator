@@ -672,8 +672,26 @@ function clearSidebar() {
     setField(id, text);
   });
 
-  document.getElementById('photo-box').innerHTML =
-    '<div class="photo-placeholder">AWAITING TARGET LOCK</div>';
+  const photoBox = document.getElementById('photo-box');
+  if (photoBox) {
+    photoBox.innerHTML = `
+      <div class="target-prompt">
+        <div class="target-reticle" aria-hidden="true">
+          <svg class="reticle-svg" viewBox="0 0 40 40" fill="none" stroke="currentColor">
+            <circle cx="20" cy="20" r="14" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6"/>
+            <circle cx="20" cy="20" r="7" stroke-width="1.2" opacity="0.8"/>
+            <line x1="20" y1="2" x2="20" y2="9" stroke-width="1.5"/>
+            <line x1="20" y1="31" x2="20" y2="38" stroke-width="1.5"/>
+            <line x1="2" y1="20" x2="9" y2="20" stroke-width="1.5"/>
+            <line x1="31" y1="20" x2="38" y2="20" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <span class="target-prompt-badge">Awaiting User Selection</span>
+        <p class="target-prompt-title">Click a flight to inspect</p>
+        <p class="target-prompt-desc">Select any contact on the radar map to lock telemetry & optical feed.</p>
+      </div>
+    `;
+  }
 }
 
 
@@ -681,8 +699,15 @@ function clearSidebar() {
 
 async function fetchAircraftPhoto(hex) {
   const photoBox = document.getElementById('photo-box');
-  photoBox.innerHTML =
-    '<div class="photo-placeholder">SCANNING IMAGE ARCHIVE...</div>';
+  if (!photoBox) return;
+
+  photoBox.innerHTML = `
+    <div class="photo-placeholder scanning">
+      <div class="radar-scan-spinner" aria-hidden="true"></div>
+      <span class="photo-status-title">Querying Optical Archive</span>
+      <span class="photo-status-sub">ICAO: ${hex.toUpperCase()}</span>
+    </div>
+  `;
 
   try {
     const res = await fetch(
@@ -697,12 +722,26 @@ async function fetchAircraftPhoto(hex) {
         <span class="photo-credit">© ${photo.photographer}</span>
       `;
     } else {
-      photoBox.innerHTML =
-        '<div class="photo-placeholder">NO IMAGE AVAILABLE</div>';
+      photoBox.innerHTML = `
+        <div class="photo-placeholder empty">
+          <svg class="photo-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M3 16l5-5c.9-.9 2.3-.9 3.2 0l5 5"/>
+            <path d="M14 14l1-1c.9-.9 2.3-.9 3.2 0l3 3"/>
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+          </svg>
+          <span class="photo-status-title">No Photo on File</span>
+          <span class="photo-status-sub">Transponder telemetry active</span>
+        </div>
+      `;
     }
   } catch {
-    photoBox.innerHTML =
-      '<div class="photo-placeholder">IMAGE LOOKUP OFFLINE</div>';
+    photoBox.innerHTML = `
+      <div class="photo-placeholder offline">
+        <span class="photo-status-title">Archive Feed Offline</span>
+        <span class="photo-status-sub">Mode-S data active</span>
+      </div>
+    `;
   }
 }
 
@@ -864,6 +903,6 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchTelemetry();
   fetchAircraft();
 
-  setInterval(fetchTelemetry, 1250);
-  setInterval(fetchAircraft,  1250);
+  setInterval(fetchTelemetry, 1000);
+  setInterval(fetchAircraft,  1000);
 });

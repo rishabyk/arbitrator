@@ -1,266 +1,366 @@
 /* ==========================================================================
-   PAGES // DOSSIER / RESUME (TAB 02) & NODE SPECIFICATIONS (TAB 03)
+   PAGES // DOSSIER / RESUME (TAB 02), SPECS (TAB 03) & TELEMETRY (TAB 04)
    ========================================================================== */
 
-/* Scrollable Containers */
+/* Scrollable Viewport Containers */
 .dossier-container,
 .specs-container {
   overflow-y: auto !important;
-  padding: 24px 20px;
-  background-color: var(--bg-primary);
+  padding: var(--space-6);
+  background-color: var(--bg-canvas);
   width: 100%;
 }
 
 .dossier-wrapper,
 .specs-wrapper {
-  max-width: 1050px;
+  max-width: 1080px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-6);
 }
 
-/* Shared Section Cards */
+/* Master Dossier / Spec Card */
 .dossier-card {
-  background-color: var(--bg-panel);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  padding: 20px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
 }
 
 .card-heading {
-  font-size: 12px;
-  letter-spacing: 1.5px;
-  color: var(--accent-cyan);
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
-  margin-bottom: 16px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-5);
 }
 
-/* --- Tab 02: Bio Header & Competencies --- */
+.card-heading-clean {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+/* ==========================================================================
+   TAB 02: DOSSIER / RESUME
+   ========================================================================== */
+
 .dossier-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: var(--space-4);
+}
+
+.dossier-bio {
+  max-width: 720px;
 }
 
 .dossier-name {
-  font-size: 20px;
-  letter-spacing: 2px;
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--text-primary);
+  line-height: 1.25;
 }
 
 .dossier-title {
-  font-size: 13px;
-  color: var(--accent-amber);
-  margin-top: 2px;
+  font-family: var(--font-sans);
+  font-size: 14px;
   font-weight: 500;
+  color: var(--accent-info);
+  margin-top: var(--space-1);
 }
 
 .dossier-sub {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 4px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-top: var(--space-3);
 }
 
+.dossier-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* Competencies Matrix (De-boxed, Unified Clean List Hierarchy) */
 .skills-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
+  gap: var(--space-6);
+}
+
+.skill-category {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
 }
 
 .skill-group-title {
   display: block;
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-  font-weight: 700;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-info);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.tag-list {
+.skill-list {
+  list-style: none;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
-.tag-list span {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  padding: 3px 8px;
-  border-radius: 2px;
-  font-size: 10.5px;
+.skill-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: 13px;
   color: var(--text-primary);
+  line-height: 1.5;
 }
 
-/* Projects */
+.skill-item::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent-info);
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+/* Featured Projects */
 .project-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .project-entry {
   background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  padding: 14px;
-  border-radius: 3px;
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+}
+
+.project-entry:hover {
+  border-color: var(--border-default);
 }
 
 .project-head {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 6px;
-  font-size: 12px;
+  align-items: baseline;
+  margin-bottom: var(--space-2);
 }
 
 .project-title {
   color: var(--text-primary);
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .project-date {
-  color: var(--accent-amber);
-  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .project-desc {
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 
-/* --- Tab 03: Signal Pipeline & Node Specs --- */
+/* ==========================================================================
+   TAB 03: SPECS & PIPELINE ARCHITECTURE
+   ========================================================================== */
+
 .pipeline-flow {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-3);
   overflow-x: auto;
-  padding: 10px 0;
+  padding: var(--space-2) 0;
 }
 
 .pipeline-step {
   flex: 1;
   background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  padding: 12px;
-  border-radius: 3px;
-  min-width: 140px;
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
 }
 
 .step-num {
   display: block;
-  font-size: 9px;
-  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-info);
   font-weight: 700;
-  margin-bottom: 2px;
+  margin-bottom: var(--space-1);
 }
 
 .step-title {
   display: block;
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .step-desc {
   display: block;
-  font-size: 10px;
-  color: var(--text-muted);
-  line-height: 1.35;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .pipeline-arrow {
-  color: var(--accent-cyan);
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-1);
+  user-select: none;
 }
 
 .specs-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: var(--space-6);
 }
 
 .spec-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .spec-list li {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
-  border-bottom: 1px dashed var(--border-color);
-  padding-bottom: 6px;
+  align-items: baseline;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-2);
+  gap: var(--space-4);
 }
 
 .spec-key {
-  color: var(--text-muted);
+  color: var(--text-secondary);
+  font-weight: 400;
 }
 
 .spec-val {
   color: var(--text-primary);
+  font-family: var(--font-mono);
   font-weight: 600;
   text-align: right;
+  font-variant-numeric: tabular-nums;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-/* --- Tab 04: Cortex-A76 Core Utilization Bars --- */
+.spec-list-inset {
+  margin-top: var(--space-4);
+}
+
+/* ==========================================================================
+   TAB 04: TELEMETRY DIAGNOSTICS & FLIGHT TABLE
+   ========================================================================== */
+
+/* Cortex-A76 Core Utilization Bars */
 .bars-stack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .bar-row {
   display: grid;
-  grid-template-columns: 55px minmax(0, 1fr) 42px;
+  grid-template-columns: 60px minmax(0, 1fr) 48px;
   align-items: center;
-  gap: 10px;
-  font-size: 11px;
+  gap: var(--space-3);
+  font-size: 12px;
 }
 
 .bar-label {
-  color: var(--text-muted);
-  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-weight: 500;
   white-space: nowrap;
 }
 
 .bar-track {
-  height: 8px;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 2px;
+  height: 6px;
+  background-color: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
   overflow: hidden;
   min-width: 0;
 }
 
 .bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
-  transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--accent-info);
+  border-radius: var(--radius-pill);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bar-val {
-  width: 42px;
-  min-width: 42px;
-  max-width: 42px;
+  width: 48px;
+  min-width: 48px;
+  max-width: 48px;
   text-align: right;
   justify-self: end;
   color: var(--text-primary);
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   overflow: hidden;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .bar-val.ticker-slot {
-  width: 42px !important;
-  min-width: 42px !important;
-  max-width: 42px !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
   transition: none !important;
   display: block;
 }
@@ -272,14 +372,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Thermal Sparkline Graph --- */
+/* Thermal Sparkline Graph */
 .sparkline-box {
   position: relative;
-  height: 70px;
+  height: 75px;
   background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 3px;
-  padding: 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  overflow: hidden;
 }
 
 #temp-sparkline {
@@ -289,21 +390,33 @@
 
 .sparkline-label {
   position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent-cyan);
+  top: var(--space-2);
+  right: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-info);
+  min-height: 18px;
+  display: flex;
+  align-items: center;
 }
 
-/* --- Live Airspace Transponder Table --- */
+/* Tactical Airspace Table */
 .table-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
-  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+  gap: var(--space-3);
+}
+
+.table-subtitle {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .table-scroll {
@@ -313,85 +426,112 @@
 .tactical-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 12px;
   text-align: left;
 }
 
 .tactical-table th {
   color: var(--text-muted);
-  font-size: 10px;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border-color);
-  letter-spacing: 0.8px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
 }
 
 .tactical-table td {
-  padding: 8px 10px;
-  border-bottom: 1px dashed rgba(31, 45, 61, 0.6);
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .table-row-clickable {
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background-color var(--transition-fast);
 }
 
 .table-row-clickable:hover {
-  background-color: rgba(0, 229, 255, 0.06);
+  background-color: var(--bg-subtle);
 }
 
 .table-row-clickable.selected-row {
-  background-color: rgba(255, 179, 0, 0.12);
+  background-color: var(--accent-info-subtle);
 }
 
 .hex-cell {
-  color: var(--accent-amber) !important;
-  font-weight: 700;
+  color: var(--accent-info) !important;
+  font-weight: 600;
 }
 
 .empty-table-msg {
   text-align: center;
   color: var(--text-muted) !important;
-  padding: 20px !important;
-  letter-spacing: 1px;
+  padding: var(--space-8) !important;
+  font-family: var(--font-sans);
+  font-size: 13px;
 }
 
-/* Emergency squawk row highlight */
 .row-emergency {
-  background-color: rgba(255, 61, 0, 0.08) !important;
+  background-color: var(--accent-danger-subtle) !important;
 }
 
-.row-emergency:hover {
-  background-color: rgba(255, 61, 0, 0.14) !important;
-}
-
-/* Anomaly table styling */
 .tactical-table td.cell-anomaly {
-  color: var(--accent-red) !important;
-  font-weight: 700;
-  text-shadow: 0 0 6px rgba(255, 61, 0, 0.5);
+  color: var(--accent-danger) !important;
+  font-weight: 600;
 }
 
 .tactical-table td.cell-warn {
-  color: var(--accent-amber) !important;
+  color: var(--accent-warning) !important;
   font-weight: 600;
-  text-shadow: 0 0 5px rgba(255, 179, 0, 0.5);
 }
 
 .tactical-table td.cell-stale {
-  color: var(--accent-red) !important;
-  font-weight: 700;
-  text-shadow: 0 0 6px rgba(255, 61, 0, 0.7);
+  color: var(--accent-danger) !important;
+  font-weight: 600;
 }
 
 .row-warn {
-  background-color: rgba(255, 179, 0, 0.05) !important;
+  background-color: var(--accent-warning-subtle) !important;
 }
 
 .row-stale {
-  background-color: rgba(255, 61, 0, 0.08) !important;
+  background-color: var(--accent-danger-subtle) !important;
 }
 
-.row-stale:hover {
-  background-color: rgba(255, 61, 0, 0.14) !important;
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .hud-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .hud-metrics {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .specs-grid,
+  .skills-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hud-main {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: 100%;
+    height: 300px;
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+  }
 }
