@@ -50,8 +50,8 @@ if ! command -v readsb &> /dev/null; then
 fi
 
 # 7. Set Receiver to Standby
-echo -e "\033[1;33m[+] Setting SDR Receiver to standby mode...\033[0m"
-sudo systemctl disable --now readsb || true
+echo -e "\033[1;33m[+] Enabling SDR Receiver...\033[0m"
+sudo systemctl enable --now readsb || true
 
 echo -e "\n\033[1;32m[✓] Arbitrator restored.\033[0m"
 echo -e "• SDR Receiver state: \033[1;33mSTANDBY (OFF)\033[0m"

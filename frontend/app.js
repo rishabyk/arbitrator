@@ -6,6 +6,10 @@ let aircraftMarkers = {};
 let selectedHex     = null;
 let showTrails      = true;
 
+let lastSuccessfulTelemetry = null;
+let telemetryFailures = 0;
+let activeEmergencies = [];
+
 const STATION_COORDS = [37.7749, -122.3194];
 const tempHistory    = [];
 const MAX_HISTORY    = 60;
@@ -104,6 +108,87 @@ function setHeartbeatState(isOnline) {
   }
 }
 
+// render global system alerts (emergencies & hardware disconnect)
+function updateAlertBanner() {
+  const banner = document.getElementById('hud-alert-banner');
+  const container = document.getElementById('hud-alert-content');
+  if (!banner || !container) return;
+
+  const alerts = [];
+
+  // 1. Station Disconnect alert: Pi offline / heartbeat lost
+  const isDisconnected = (lastSuccessfulTelemetry !== null && (telemetryFailures >= 3 || Date.now() - lastSuccessfulTelemetry > 4000))
+                      || (lastSuccessfulTelemetry === null && telemetryFailures >= 4);
+
+  if (isDisconnected) {
+    alerts.push(`
+      <div class="alert-item alert-warn">
+        <div class="alert-item-body">
+          <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span class="alert-tag">Station Disconnected</span>
+          <span class="alert-text">Telemetry heartbeat lost</span>
+        </div>
+      </div>
+    `);
+  }
+
+  // 2. Active Aircraft Squawk Emergencies
+  if (activeEmergencies && activeEmergencies.length > 0) {
+    activeEmergencies.forEach((ac) => {
+      const sq = String(ac.squawk);
+      const emergencyLabel = sq === '7700' ? 'General Emergency'
+                           : sq === '7600' ? 'Radio Failure (NORDO)'
+                           : sq === '7500' ? 'Unlawful Interference (Hijack)'
+                           : 'Emergency';
+      const callsign = ac.flight ? ac.flight.trim() : String(ac.hex || '').toUpperCase();
+      const altStr = (ac.alt_baro !== null && ac.alt_baro !== undefined && !isNaN(ac.alt_baro))
+        ? `${Number(ac.alt_baro).toLocaleString()} FT` : 'ALT UNK';
+      const speedStr = (ac.speed !== null && ac.speed !== undefined && !isNaN(ac.speed))
+        ? `${Math.round(ac.speed)} KT` : 'SPD UNK';
+
+      alerts.push(`
+        <div class="alert-item alert-danger">
+          <div class="alert-item-body">
+            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span class="alert-tag">Emergency Squawk ${sq}</span>
+            <span class="alert-text">${callsign} declaring ${emergencyLabel} (${altStr}, ${speedStr})</span>
+          </div>
+          <button class="alert-action-btn" type="button" data-focus-hex="${ac.hex}">Track on Radar</button>
+        </div>
+      `);
+    });
+  }
+
+  if (alerts.length > 0) {
+    container.innerHTML = alerts.join('');
+    banner.style.display = 'flex';
+
+    container.querySelectorAll('button[data-focus-hex]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const hex = btn.getAttribute('data-focus-hex');
+        const radarTab = document.querySelector('.nav-tab[data-tab="tab-radar"]');
+        if (radarTab) radarTab.click();
+        setTimeout(() => {
+          selectTarget(hex);
+          const target = aircraftMarkers[hex]?.data;
+          if (target && map) map.panTo([target.lat, target.lon]);
+        }, 150);
+      });
+    });
+  } else {
+    banner.style.display = 'none';
+    container.innerHTML = '';
+  }
+}
+
 // initialize leaflet map
 function initMap() {
   map = L.map('map', {
@@ -193,11 +278,16 @@ async function fetchTelemetry() {
   try {
     const res = await fetch('/api/telemetry');
     if (!res.ok) {
+      telemetryFailures++;
       setHeartbeatState(false);
+      updateAlertBanner();
       return;
     }
     const d = await res.json();
+    lastSuccessfulTelemetry = Date.now();
+    telemetryFailures = 0;
     setHeartbeatState(true);
+    updateAlertBanner();
 
     // header ribbon
     if (typeof d.cpu_temp_c === 'number' && !isNaN(d.cpu_temp_c)) {
@@ -240,7 +330,9 @@ async function fetchTelemetry() {
     }
   } catch (err) {
     console.warn('Telemetry poll error:', err);
+    telemetryFailures++;
     setHeartbeatState(false);
+    updateAlertBanner();
   }
 }
 
@@ -355,6 +447,12 @@ async function fetchAircraft() {
 
     // update table feeds
     updateAircraftTable(contacts, status);
+
+    // detect squawk emergencies (7500, 7600, 7700)
+    activeEmergencies = contacts.filter((ac) =>
+      ANOMALY.SQUAWK_EMERGENCY.includes(String(ac.squawk))
+    );
+    updateAlertBanner();
   } catch (err) {
     console.warn('Aircraft poll error:', err);
   }
@@ -510,8 +608,8 @@ function clearSidebar() {
         <svg class="flight-prompt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
         </svg>
-        <p class="flight-prompt-title">No flight selected</p>
-        <p class="flight-prompt-desc">Click any aircraft on the map to view live flight data and photos.</p>
+        <p class="flight-prompt-title">No aircraft selected</p>
+        <p class="flight-prompt-desc">Click any aircraft on the map to view live aircraft data and photos.</p>
       </div>
     `;
   }
@@ -551,7 +649,7 @@ async function fetchAircraftPhoto(hex) {
             <circle cx="8.5" cy="8.5" r="1.5"/>
           </svg>
           <span class="photo-status-title">No Photo on File</span>
-          <span class="photo-status-sub">Live flight data active</span>
+          <span class="photo-status-sub">Live aircraft data active</span>
         </div>
       `;
     }
@@ -559,7 +657,7 @@ async function fetchAircraftPhoto(hex) {
     photoBox.innerHTML = `
       <div class="photo-placeholder offline">
         <span class="photo-status-title">Photo Archive Offline</span>
-        <span class="photo-status-sub">Live flight data active</span>
+        <span class="photo-status-sub">Live aircraft data active</span>
       </div>
     `;
   }

@@ -1,6 +1,7 @@
 /* scrollable page containers */
 
 .dossier-container,
+.resume-container,
 .specs-container {
   overflow-y: auto !important;
   padding: var(--space-6);
@@ -9,6 +10,7 @@
 }
 
 .dossier-wrapper,
+.resume-wrapper,
 .specs-wrapper {
   max-width: 1080px;
   margin: 0 auto;
@@ -17,9 +19,10 @@
   gap: var(--space-6);
 }
 
-/* dossier card */
+/* dossier / resume card */
 
-.dossier-card {
+.dossier-card,
+.resume-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
@@ -44,9 +47,10 @@
   margin-bottom: 0;
 }
 
-/* dossier tab */
+/* dossier / resume tab */
 
-.dossier-header {
+.dossier-header,
+.resume-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -54,11 +58,13 @@
   gap: var(--space-4);
 }
 
-.dossier-bio {
+.dossier-bio,
+.resume-bio {
   max-width: 720px;
 }
 
-.dossier-name {
+.dossier-name,
+.resume-name {
   font-family: var(--font-sans);
   font-size: 24px;
   font-weight: 700;
@@ -67,7 +73,8 @@
   line-height: 1.25;
 }
 
-.dossier-title {
+.dossier-title,
+.resume-title {
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 500;
@@ -75,7 +82,8 @@
   margin-top: var(--space-1);
 }
 
-.dossier-sub {
+.dossier-sub,
+.resume-sub {
   font-family: var(--font-sans);
   font-size: 13px;
   line-height: 1.6;
@@ -83,7 +91,8 @@
   margin-top: var(--space-3);
 }
 
-.dossier-contacts {
+.dossier-contacts,
+.resume-contacts {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
@@ -91,7 +100,8 @@
   align-items: center;
 }
 
-.dossier-contact-item {
+.dossier-contact-item,
+.resume-contact-item {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -100,13 +110,15 @@
   font-family: var(--font-mono);
 }
 
-.dossier-contact-item a {
+.dossier-contact-item a,
+.resume-contact-item a {
   color: var(--text-secondary);
   text-decoration: none;
   transition: color var(--transition-fast);
 }
 
-.dossier-contact-item a:hover {
+.dossier-contact-item a:hover,
+.resume-contact-item a:hover {
   color: var(--accent-info);
 }
 
@@ -118,7 +130,8 @@
   flex-shrink: 0;
 }
 
-.dossier-actions {
+.dossier-actions,
+.resume-actions {
   display: flex;
   align-items: center;
   gap: var(--space-2);

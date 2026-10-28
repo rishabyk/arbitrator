@@ -13,7 +13,7 @@
   <!-- open graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Arbitrator — 1090 MHz ADS-B Telemetry Station">
-  <meta property="og:description" content="Real-time Mode-S edge demodulation, tactical flight tracking, and hardware telemetry.">
+  <meta property="og:description" content="Real-time Mode-S edge demodulation, tactical aircraft tracking, and hardware telemetry.">
 
   <!-- favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'><g transform='rotate(-45, 7, 7)'><path fill='%2338bdf8' d='M 11.2,6.4 8.8,6.1 7.9,5.8 7.45,5.8 5.2592125,3.025 l 0.7407937,0 C 6.2187438,3.025 6.4,2.97578 6.4,2.9125 6.4,2.84922 6.2187438,2.8 6.0000062,2.8 L 3.85,2.8 l 0,0.225 0.3,0 0,3.075 -0.9,0 L 1.9999937,4.6 1.3500062,4.6 1.15,4.80001 1.15,6.1 l 0.15,0 0,0.3 0.9,0 0,0.05 -1.2,0.15 0,0.8 1.2,0.15 0,0.05 -0.9,0 0,0.3 -0.15,0 0,1.29999 L 1.3500062,9.4 2.0000125,9.4 3.25,7.9 l 0.9,0 0,3.075 -0.3,0 0,0.225 2.1500062,0 C 6.2187625,11.2 6.4,11.15078 6.4,11.0875 6.4,11.0242 6.2187438,10.975 6.0000062,10.975 l -0.7407937,0 L 7.45,8.2 7.9,8.2 8.8,7.9 11.2,7.6 C 13,7.20001 13,7.10157 13,7 13,6.89843 13,6.79999 11.2,6.4 Z'/></g></svg>">
@@ -99,10 +99,15 @@
     </div>
   </header>
 
+  <!-- global status & emergency alerts -->
+  <div class="hud-alert-banner" id="hud-alert-banner" style="display: none;" role="alert" aria-live="assertive">
+    <div class="hud-alert-content" id="hud-alert-content"></div>
+  </div>
+
   <!-- navigation tabs -->
   <nav class="hud-nav" aria-label="Primary Navigation">
     <button class="nav-tab active" data-tab="tab-radar" type="button">Radar</button>
-    <button class="nav-tab" data-tab="tab-dossier" type="button">Dossier</button>
+    <button class="nav-tab" data-tab="tab-resume" type="button">Resume</button>
     <button class="nav-tab" data-tab="tab-specs" type="button">Specs</button>
     <button class="nav-tab" data-tab="tab-telemetry" type="button">Telemetry</button>
   </nav>
@@ -112,7 +117,7 @@
     
     <!-- tab 1: radar -->
     <div id="tab-radar" class="tab-pane active hud-main">
-      <section id="map" class="map-viewport" aria-label="Interactive Airspace Map">
+      <section id="map" class="map-viewport" aria-label="Interactive Map">
         <!-- tactical scope overlay -->
         <div class="radar-overlay-bar">
           <div class="radar-stat">
@@ -133,7 +138,7 @@
         <div class="sidebar-header">
           <div>
             <h3 class="sidebar-title">Selected Aircraft</h3>
-            <span class="sidebar-subtitle">Live Flight Details</span>
+            <span class="sidebar-subtitle">Live Aircraft Details</span>
           </div>
           <span class="target-badge" id="target-hex">NONE</span>
         </div>
@@ -143,8 +148,8 @@
             <svg class="flight-prompt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
             </svg>
-            <p class="flight-prompt-title">No flight selected</p>
-            <p class="flight-prompt-desc">Click any aircraft on the map to view live flight data and photos.</p>
+            <p class="flight-prompt-title">No aircraft selected</p>
+            <p class="flight-prompt-desc">Click any aircraft on the map to view live aircraft data and photos.</p>
           </div>
         </div>
 
@@ -191,11 +196,11 @@
           </div>
         </div>
 
-        <!-- airspace contacts panel -->
+        <!-- active contacts panel -->
         <div class="sidebar-contacts-panel" id="sidebar-contacts-panel">
           <div class="contacts-panel-header" id="sidebar-contacts-toggle" role="button" tabindex="0" aria-expanded="true" title="Click to collapse / expand contact list">
             <div class="contacts-header-left">
-              <span class="contacts-title">Airspace Contacts</span>
+              <span class="contacts-title">Active Contacts</span>
               <span class="contacts-badge" id="sidebar-contacts-count">0</span>
             </div>
             <button class="contacts-collapse-btn" type="button" aria-label="Toggle contact list">
@@ -209,7 +214,7 @@
               <table class="sidebar-contacts-table">
                 <thead>
                   <tr>
-                    <th>Flight / Hex</th>
+                    <th>Aircraft / Hex</th>
                     <th>Altitude</th>
                     <th>Speed</th>
                     <th>Distance</th>
@@ -237,41 +242,41 @@
       </aside>
     </div>
 
-    <!-- tab 2: dossier -->
-    <div id="tab-dossier" class="tab-pane dossier-container">
-      <div class="dossier-wrapper">
+    <!-- tab 2: resume -->
+    <div id="tab-resume" class="tab-pane resume-container dossier-container">
+      <div class="resume-wrapper dossier-wrapper">
 
         <!-- bio header -->
-        <div class="dossier-card dossier-header">
-          <div class="dossier-bio">
-            <h2 class="dossier-name">Rishab Yekaldevi</h2>
-            <div class="dossier-title">Freshman Aerospace Engineer @ San José State University</div>
-            <p class="dossier-sub">
+        <div class="resume-card dossier-card resume-header dossier-header">
+          <div class="resume-bio dossier-bio">
+            <h2 class="resume-name dossier-name">Rishab Yekaldevi</h2>
+            <div class="resume-title dossier-title">Freshman Aerospace Engineer @ San José State University</div>
+            <p class="resume-sub dossier-sub">
               Aerospace engineering student focused on multi-stage high-altitude rocketry, aerodynamic package design, 
               autonomous robotics, and edge telemetry systems. Active in SJSU HARP, Formula SAE Aerodynamics, and FIRST Robotics.
             </p>
-            <div class="dossier-contacts">
-              <span class="dossier-contact-item">
+            <div class="resume-contacts dossier-contacts">
+              <span class="resume-contact-item dossier-contact-item">
                 <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M12 21s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 7.2c0 7.3-8 11.8-8 11.8z"/>
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
                 San José, CA
               </span>
-              <span class="dossier-contact-item">
+              <span class="resume-contact-item dossier-contact-item">
                 <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
                 <a href="mailto:rishab.yekaldevi@sjsu.edu">rishab.yekaldevi@sjsu.edu</a>
               </span>
-              <span class="dossier-contact-item">
+              <span class="resume-contact-item dossier-contact-item">
                 <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                 </svg>
                 <a href="tel:+13417580431">+1 (341) - 758 - 0431</a>
               </span>
-              <span class="dossier-contact-item">
+              <span class="resume-contact-item dossier-contact-item">
                 <svg class="contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
                   <rect x="2" y="9" width="4" height="12"/>
@@ -281,24 +286,17 @@
               </span>
             </div>
           </div>
-          <div class="dossier-actions">
-            <a href="resume.pdf" target="_blank" rel="noopener noreferrer" class="hud-btn hud-btn-primary">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-              </svg>
-              View Resume PDF ↗
-            </a>
-            <a href="resume.pdf" download="Rishab_Yekaldevi_Resume.pdf" class="hud-btn">
+          <div class="resume-actions dossier-actions">
+            <a href="resume.pdf" download="Rishab_Yekaldevi_Resume.pdf" class="hud-btn hud-btn-primary">
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              Download PDF
+              Download Resume (PDF)
+            </a>
+            <a href="https://linkedin.com/in/rishabyk" target="_blank" rel="noopener noreferrer" class="hud-btn">
+              LinkedIn ↗
             </a>
             <a href="https://github.com/rishabyk" target="_blank" rel="noopener noreferrer" class="hud-btn">
               GitHub Profile ↗
@@ -466,41 +464,10 @@
               </div>
               <span class="entry-org">San José / Bay Area</span>
               <p class="project-desc">
-                Live flight tracking station running on Raspberry Pi 5. Decodes Mode-S signals at 1090 MHz, 
-                streams telemetry via FastAPI, displays flights on a live map with flight trails, and fetches aircraft photos.
+                Live aircraft tracking station running on Raspberry Pi 5. Decodes Mode-S signals at 1090 MHz, 
+                streams telemetry via FastAPI, displays aircraft on a live map with trails, and fetches aircraft photos.
               </p>
             </div>
-          </div>
-        </div>
-
-        <!-- resume document embed / preview -->
-        <div class="dossier-card resume-pdf-card">
-          <div class="resume-pdf-header">
-            <div>
-              <h3 class="card-heading card-heading-clean">Resume Document</h3>
-              <span class="table-subtitle">Rishab Yekaldevi — Curriculum Vitae (PDF)</span>
-            </div>
-            <div class="table-header-actions">
-              <a href="resume.pdf" target="_blank" rel="noopener noreferrer" class="hud-btn hud-btn-primary">
-                Open in New Tab ↗
-              </a>
-              <a href="resume.pdf" download="Rishab_Yekaldevi_Resume.pdf" class="hud-btn">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download PDF
-              </a>
-            </div>
-          </div>
-          <div class="resume-pdf-container">
-            <object data="resume.pdf" type="application/pdf" class="resume-pdf-frame">
-              <div class="pdf-fallback">
-                <p>Unable to display PDF directly in your browser frame.</p>
-                <a href="resume.pdf" target="_blank" rel="noopener noreferrer" class="hud-btn hud-btn-primary">Open Resume PDF ↗</a>
-              </div>
-            </object>
           </div>
         </div>
 
@@ -530,13 +497,13 @@
             <div class="pipeline-step">
               <span class="step-num">STAGE 03</span>
               <span class="step-title">Decoder</span>
-              <span class="step-desc">readsb decodes flight data, validates messages, and tracks positions</span>
+              <span class="step-desc">readsb decodes aircraft data, validates messages, and tracks positions</span>
             </div>
             <span class="pipeline-arrow" aria-hidden="true">→</span>
             <div class="pipeline-step">
               <span class="step-num">STAGE 04</span>
               <span class="step-title">Web Server</span>
-              <span class="step-desc">FastAPI streams live flight positions and hardware health to this dashboard</span>
+              <span class="step-desc">FastAPI streams live aircraft positions and hardware health to this dashboard</span>
             </div>
           </div>
         </div>
@@ -635,7 +602,7 @@
           <div class="table-header-row" id="telemetry-table-toggle" role="button" tabindex="0" aria-expanded="true" title="Click to collapse / expand live contacts table">
             <div>
               <h3 class="card-heading card-heading-clean">Live Transponder Contacts</h3>
-              <span class="table-subtitle">Real-time Mode-S flight data feed</span>
+              <span class="table-subtitle">Real-time Mode-S aircraft data feed</span>
             </div>
             <div class="table-header-actions">
               <span class="target-badge" id="table-status-badge">STANDBY</span>
