@@ -482,7 +482,7 @@
   height: 100%;
   background: var(--accent-info);
   border-radius: var(--radius-pill);
-  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: none;
 }
 
 .bar-val {
@@ -868,34 +868,28 @@
 
 /* responsive media queries */
 
-@media (max-width: 900px) {
+@media (max-width: 900px), (hover: none) and (pointer: coarse) {
   .hud-header {
-    flex-direction: column;
-    align-items: stretch;
-    padding: var(--space-2) var(--space-3);
-    gap: var(--space-2);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-4);
+    height: 44px;
+    min-height: 44px;
+    flex-shrink: 0;
+    overflow: hidden;
+    touch-action: none;
   }
 
   .hud-brand {
     justify-content: space-between;
     width: 100%;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 
   .hud-metrics {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .hud-metrics::-webkit-scrollbar {
-    display: none;
-  }
-
-  .metric-card {
-    min-width: 76px;
-    padding: var(--space-1) var(--space-3);
-    flex-shrink: 0;
+    display: none !important;
   }
 
   .hud-nav {
@@ -903,6 +897,7 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    flex-shrink: 0;
   }
 
   .hud-nav::-webkit-scrollbar {
@@ -942,7 +937,7 @@
 
   /* dock radar overlay bar above bottom sheet */
   .radar-overlay-bar {
-    bottom: calc(52px + var(--space-3));
+    bottom: calc(52px + max(76px, calc(52px + env(safe-area-inset-bottom, 24px))) + var(--space-2));
     left: var(--space-3);
     right: var(--space-3);
     z-index: 1200;
@@ -981,24 +976,27 @@
     z-index: 1500;
     border-left: none;
     border-top: 1px solid var(--border-default);
-    border-radius: 14px 14px 0 0;
-    background-color: rgba(14, 20, 31, 0.96);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.7);
-    padding: 0 var(--space-4) var(--space-4) var(--space-4);
+    border-radius: 16px 16px 0 0;
+    background-color: rgba(14, 20, 31, 0.98);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.75);
+    padding: 0 var(--space-4) max(76px, calc(52px + env(safe-area-inset-bottom, 24px))) var(--space-4);
     display: flex;
     flex-direction: column;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
     transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .sidebar.sheet-collapsed {
-    max-height: 52px;
+    max-height: calc(52px + max(76px, calc(52px + env(safe-area-inset-bottom, 24px))));
+    height: calc(52px + max(76px, calc(52px + env(safe-area-inset-bottom, 24px))));
     overflow: hidden;
   }
 
   .sidebar:not(.sheet-collapsed) {
-    max-height: 74vh;
+    max-height: min(78vh, calc(100dvh - 70px));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -1053,5 +1051,125 @@
   .sidebar-grid {
     gap: var(--space-2);
     padding: var(--space-3);
+  }
+}
+
+/* device-detected mobile classes */
+body.is-mobile .hud-header {
+  flex-direction: column;
+  align-items: stretch;
+  padding: var(--space-2) var(--space-3);
+  gap: var(--space-2);
+}
+
+body.is-mobile .hud-brand {
+  justify-content: space-between;
+  width: 100%;
+}
+
+body.is-mobile .hud-metrics {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+body.is-mobile .metric-card {
+  min-width: 76px;
+  padding: var(--space-1) var(--space-3);
+  flex-shrink: 0;
+}
+
+body.is-mobile .hud-nav {
+  padding: 0 var(--space-3);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+body.is-mobile #tab-radar.tab-pane.active {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body.is-mobile .hud-main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: block;
+}
+
+body.is-mobile .map-viewport {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1;
+}
+
+body.is-mobile .radar-overlay-bar {
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px) + var(--space-3));
+  left: var(--space-3);
+  right: var(--space-3);
+  z-index: 1200;
+  max-width: calc(100% - var(--space-6));
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-2);
+  gap: var(--space-2);
+}
+
+body.is-mobile .sidebar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100% !important;
+  min-width: 100% !important;
+  z-index: 1500;
+  border-left: none;
+  border-top: 1px solid var(--border-default);
+  border-radius: 16px 16px 0 0;
+  background-color: rgba(14, 20, 31, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.75);
+  padding: 0 var(--space-4) max(var(--space-3), env(safe-area-inset-bottom, 20px)) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.is-mobile .sidebar.sheet-collapsed {
+  max-height: calc(54px + env(safe-area-inset-bottom, 0px));
+  height: calc(54px + env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+}
+
+body.is-mobile .sidebar:not(.sheet-collapsed) {
+  max-height: min(76vh, calc(100dvh - 80px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.is-mobile .sheet-handle-bar {
+  display: flex;
+}
+
+/* desktop guarantee: full height sidebar, hidden mobile handle bar */
+@media (min-width: 901px) {
+  body:not(.is-mobile) .sidebar,
+  body:not(.is-mobile) .sidebar.sheet-collapsed {
+    position: static !important;
+    max-height: 100% !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+  }
+  body:not(.is-mobile) .sheet-handle-bar {
+    display: none !important;
   }
 }

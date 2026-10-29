@@ -50,36 +50,20 @@
   background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
   user-select: none;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.stream-heartbeat:hover {
-  border-color: var(--border-default);
-  background-color: var(--bg-card-hover);
+  cursor: default;
 }
 
 .heartbeat-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: var(--radius-pill);
   background-color: var(--accent-success);
-  opacity: 0.75;
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.18s ease-out,
-              box-shadow 0.18s ease-out;
-}
-
-.heartbeat-dot.pulse {
-  opacity: 1;
-  transform: scale(1.4);
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+  flex-shrink: 0;
+  transition: background-color var(--transition-fast);
 }
 
 .heartbeat-dot.stale {
   background-color: var(--accent-danger);
-  box-shadow: none;
-  opacity: 1;
 }
 
 .heartbeat-label {
@@ -89,24 +73,6 @@
   color: var(--text-muted);
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  transition: opacity var(--transition-fast);
-}
-
-/* heartbeat collapsed state */
-
-.stream-heartbeat.collapsed {
-  padding: 6px 10px;
-  gap: 0;
-}
-
-.stream-heartbeat.collapsed .heartbeat-label {
-  display: none;
-}
-
-.stream-heartbeat.collapsed .heartbeat-dot.pulse {
-  transform: none !important;
-  box-shadow: none !important;
-  opacity: 0.75 !important;
 }
 
 /* telemetry metrics ribbon */

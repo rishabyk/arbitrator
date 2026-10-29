@@ -28,6 +28,74 @@ const ANOMALY = {
   SQUAWK_EMERGENCY: ['7500', '7600', '7700'],
 };
 
+// detect mobile / phone device via touch, user agent, or screen width
+function isMobileDevice() {
+  if (typeof window === 'undefined') return false;
+  const hasTouch = Boolean(
+    (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches) ||
+    (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)
+  );
+  const isNarrow = window.innerWidth <= 900;
+  const isMobileUA = Boolean(
+    navigator.userAgent &&
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  );
+  return (isNarrow && hasTouch) || isMobileUA || isNarrow;
+}
+
+// mobile sheet controls
+function collapseSheet() {
+  const sidebar = document.getElementById('sidebar');
+  const handleBar = document.getElementById('sheet-handle-bar');
+  const btnText = document.getElementById('sheet-toggle-text');
+  if (sidebar) sidebar.classList.add('sheet-collapsed');
+  if (handleBar) handleBar.setAttribute('aria-expanded', 'false');
+  if (btnText) btnText.textContent = 'EXPAND';
+  if (map) setTimeout(() => map.invalidateSize(), 180);
+}
+
+function expandSheet() {
+  const sidebar = document.getElementById('sidebar');
+  const handleBar = document.getElementById('sheet-handle-bar');
+  const btnText = document.getElementById('sheet-toggle-text');
+  if (sidebar) sidebar.classList.remove('sheet-collapsed');
+  if (handleBar) handleBar.setAttribute('aria-expanded', 'true');
+  if (btnText) btnText.textContent = 'DISMISS';
+  if (map) setTimeout(() => map.invalidateSize(), 180);
+}
+
+function toggleMobileSheet(e) {
+  if (e) e.stopPropagation();
+  if (!isMobileDevice()) return;
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  if (sidebar.classList.contains('sheet-collapsed')) {
+    expandSheet();
+  } else {
+    collapseSheet();
+  }
+}
+
+// synchronize UI classes to current viewport / device mode
+function applyDeviceMode() {
+  const isMobile = isMobileDevice();
+  const sidebar = document.getElementById('sidebar');
+  if (isMobile) {
+    document.body.classList.add('is-mobile');
+    if (sidebar && !selectedHex) {
+      collapseSheet();
+    }
+  } else {
+    document.body.classList.remove('is-mobile');
+    if (sidebar) {
+      sidebar.classList.remove('sheet-collapsed');
+    }
+  }
+  if (map) {
+    setTimeout(() => map.invalidateSize(), 150);
+  }
+}
+
 // initialize tabular ticker slots
 function initTickerSlots() {
   document.querySelectorAll('.field-val, .stat-num, .metric-val, .tactical-stat-val, .sparkline-stat-val').forEach((el) => {
@@ -98,16 +166,13 @@ function setField(id, text, anomalyClass) {
   view.textContent = targetStr;
 }
 
-// telemetry heartbeat state
+// telemetry heartbeat state (green when online, red when offline)
 function setHeartbeatState(isOnline) {
   const dot = document.getElementById('stream-heartbeat-dot');
   if (!dot) return;
   if (isOnline) {
     dot.classList.remove('stale');
-    dot.classList.add('pulse');
-    setTimeout(() => dot.classList.remove('pulse'), 220);
   } else {
-    dot.classList.remove('pulse');
     dot.classList.add('stale');
   }
 }
@@ -473,7 +538,6 @@ async function fetchAircraft() {
     });
 
     // update overlay stats
-    setField('hud-contact-count', String(contacts.length));
     setField('hud-max-range',
       maxDist > 0 ? `${maxDist.toFixed(1)} NM` : '-- NM');
 
@@ -559,11 +623,8 @@ function selectTarget(hex) {
   if (summaryCallsign) summaryCallsign.textContent = callsignStr;
   if (summaryMeta) summaryMeta.textContent = `${altStr} • ${spdStr}`;
 
-  if (sidebar && window.innerWidth <= 900) {
-    sidebar.classList.remove('sheet-collapsed');
-    const handleBar = document.getElementById('sheet-handle-bar');
-    if (handleBar) handleBar.setAttribute('aria-expanded', 'true');
-    if (map) setTimeout(() => map.invalidateSize(), 150);
+  if (sidebar && isMobileDevice()) {
+    expandSheet();
   }
 }
 
@@ -662,6 +723,10 @@ function clearSidebar() {
   if (summaryMeta) summaryMeta.textContent = 'SELECT MAP CONTACT';
 
   clearFlightProfile();
+
+  if (isMobileDevice()) {
+    collapseSheet();
+  }
 
   const photoBox = document.getElementById('photo-box');
   if (photoBox) {
@@ -766,7 +831,7 @@ function initFlightProfileChart() {
         maintainAspectRatio: false,
         animation: false,
         layout: {
-          padding: { top: 6, bottom: 2, left: 2, right: 6 }
+          padding: { top: 3, bottom: 2, left: 2, right: 4 }
         },
         interaction: {
           intersect: false,
@@ -779,9 +844,9 @@ function initFlightProfileChart() {
             backgroundColor: 'rgba(14, 20, 31, 0.95)',
             borderColor: 'rgba(255, 255, 255, 0.15)',
             borderWidth: 1,
-            padding: 6,
-            titleFont: { family: 'JetBrains Mono', size: 10, weight: 600 },
-            bodyFont: { family: 'JetBrains Mono', size: 11, weight: 500 },
+            padding: 5,
+            titleFont: { family: 'JetBrains Mono', size: 9.5, weight: 600 },
+            bodyFont: { family: 'JetBrains Mono', size: 10, weight: 500 },
             displayColors: false,
             callbacks: {
               label: (ctx) => `${Number(ctx.parsed.y).toLocaleString()} FT`,
@@ -801,8 +866,8 @@ function initFlightProfileChart() {
             },
             ticks: {
               color: '#64748b',
-              font: { family: 'JetBrains Mono', size: 9 },
-              maxTicksLimit: 3,
+              font: { family: 'JetBrains Mono', size: 8.5 },
+              maxTicksLimit: 2,
               callback: (val) => `${Math.round(val / 1000)}k`,
             }
           }
@@ -978,7 +1043,7 @@ async function fetchHistoryStats() {
   }
 }
 
-// mobile bottom slide-up sheet controls
+// mobile bottom slide-up sheet controls & gestures
 function initMobileBottomSheet() {
   const sidebar = document.getElementById('sidebar');
   const handleBar = document.getElementById('sheet-handle-bar');
@@ -986,35 +1051,71 @@ function initMobileBottomSheet() {
 
   if (!sidebar || !handleBar) return;
 
-  const toggleSheet = (e) => {
-    if (e) e.stopPropagation();
-    const isCollapsed = sidebar.classList.contains('sheet-collapsed');
-    if (isCollapsed) {
-      sidebar.classList.remove('sheet-collapsed');
-      handleBar.setAttribute('aria-expanded', 'true');
-    } else {
-      sidebar.classList.add('sheet-collapsed');
-      handleBar.setAttribute('aria-expanded', 'false');
-    }
-    if (map) {
-      setTimeout(() => map.invalidateSize(), 180);
-    }
-  };
-
-  handleBar.addEventListener('click', toggleSheet);
+  handleBar.addEventListener('click', toggleMobileSheet);
   handleBar.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      toggleSheet();
+      toggleMobileSheet(e);
     }
   });
 
   if (toggleBtn) {
     toggleBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      toggleSheet();
+      toggleMobileSheet(e);
     });
   }
+
+  // touch swipe / scroll-down gesture handling to dismiss or expand
+  let touchStartY = 0;
+  let touchStartX = 0;
+  let isTouchingHeader = false;
+  let isScrolledTopAtTouchStart = false;
+
+  sidebar.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    touchStartY = e.touches[0].clientY;
+    touchStartX = e.touches[0].clientX;
+    isTouchingHeader = handleBar.contains(e.target);
+    isScrolledTopAtTouchStart = sidebar.scrollTop <= 2;
+  }, { passive: true });
+
+  sidebar.addEventListener('touchmove', (e) => {
+    if (e.touches.length !== 1) return;
+    const currentY = e.touches[0].clientY;
+    const currentX = e.touches[0].clientX;
+    const deltaY = currentY - touchStartY;
+    const deltaX = currentX - touchStartX;
+
+    // ensure vertical movement dominates
+    if (Math.abs(deltaX) > Math.abs(deltaY)) return;
+
+    const isCollapsed = sidebar.classList.contains('sheet-collapsed');
+
+    // pull up to expand when collapsed
+    if (isCollapsed) {
+      if (deltaY < -30) {
+        expandSheet();
+        touchStartY = currentY;
+      }
+      return;
+    }
+
+    // pull down to dismiss when expanded
+    // triggers if dragging on header bar OR dragging down from the top of the content
+    if (deltaY > 35 && (isTouchingHeader || isScrolledTopAtTouchStart)) {
+      if (e.cancelable && isTouchingHeader) {
+        e.preventDefault();
+      }
+      collapseSheet();
+      touchStartY = currentY;
+    }
+  }, { passive: false });
+
+  window.addEventListener('resize', applyDeviceMode);
+  window.addEventListener('orientationchange', applyDeviceMode);
+
+  applyDeviceMode();
 }
 
 // update transponder tables
@@ -1209,13 +1310,12 @@ function initTabNavigation() {
       tab.classList.add('active');
 
       if (targetPane) {
-        void targetPane.offsetHeight;
         targetPane.classList.add('active');
       }
 
-      // recalculate leaflet viewport
+      // recalculate leaflet viewport immediately
       if (targetId === 'tab-radar' && map) {
-        setTimeout(() => map.invalidateSize(), 120);
+        map.invalidateSize();
       } else if (targetId === 'tab-telemetry') {
         fetchHistoryStats();
       }
@@ -1223,34 +1323,16 @@ function initTabNavigation() {
   });
 }
 
-// collapsible panels and heartbeat toggle
+// collapsible panels
 function initCollapsibles() {
-  // heartbeat toggle
+  // ensure heartbeat indicator is non-collapsible and clean
   const hb = document.querySelector('.stream-heartbeat');
   if (hb) {
-    if (localStorage.getItem('heartbeat_collapsed') === '1') {
-      hb.classList.add('collapsed');
-      hb.setAttribute('aria-expanded', 'false');
-    } else {
-      hb.setAttribute('aria-expanded', 'true');
-    }
-
-    const toggleHeartbeat = () => {
-      hb.classList.toggle('collapsed');
-      const isCollapsed = hb.classList.contains('collapsed');
-      hb.setAttribute('aria-expanded', String(!isCollapsed));
-      localStorage.setItem('heartbeat_collapsed', isCollapsed ? '1' : '0');
-    };
-
-    hb.setAttribute('tabindex', '0');
-    hb.setAttribute('role', 'button');
-    hb.addEventListener('click', toggleHeartbeat);
-    hb.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggleHeartbeat();
-      }
-    });
+    hb.classList.remove('collapsed');
+    hb.removeAttribute('tabindex');
+    hb.removeAttribute('role');
+    hb.removeAttribute('aria-expanded');
+    localStorage.removeItem('heartbeat_collapsed');
   }
 
   // sidebar contacts toggle

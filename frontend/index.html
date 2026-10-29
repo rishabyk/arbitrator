@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>rishabyk // ARBITRATOR</title>
 
   <!-- fonts -->
@@ -124,28 +124,24 @@
         <!-- tactical scope overlay -->
         <div class="radar-overlay-bar">
           <div class="radar-stat">
-            <span class="stat-lbl">Tracking</span>
-            <span class="stat-num" id="hud-contact-count"><span class="skeleton-bar" style="width: 24px;"></span></span>
-          </div>
-          <div class="radar-stat">
             <span class="stat-lbl">Max Range</span>
             <span class="stat-num" id="hud-max-range"><span class="skeleton-bar" style="width: 42px;"></span></span>
           </div>
           <button class="radar-ctrl-btn active" id="toggle-trails-btn" type="button">TRAILS: ON</button>
-          <button class="radar-ctrl-btn" id="recenter-map-btn" type="button">Center Map</button>
+          <button class="radar-ctrl-btn" id="recenter-map-btn" type="button" title="Center map on station origin (Bay Area)">Hone: Bay Area</button>
         </div>
       </section>
 
       <!-- sidebar -->
-      <aside class="sidebar sheet-collapsed" id="sidebar">
+      <aside class="sidebar" id="sidebar">
         <!-- mobile slide-up sheet handle bar (visible <= 900px) -->
         <div class="sheet-handle-bar" id="sheet-handle-bar" role="button" tabindex="0" aria-label="Toggle Aircraft Inspector Sheet" aria-expanded="false">
-          <div class="sheet-handle-pill" aria-hidden="true"></div>
           <div class="sheet-handle-info">
             <span class="sheet-handle-title" id="sheet-summary-callsign">AIRCRAFT INSPECTOR</span>
             <span class="sheet-handle-meta" id="sheet-summary-meta">SELECT MAP CONTACT</span>
           </div>
           <button class="sheet-toggle-btn" id="sheet-toggle-btn" type="button" aria-label="Toggle inspector sheet height">
+            <span class="sheet-toggle-text" id="sheet-toggle-text">EXPAND</span>
             <svg class="sheet-chevron-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
             </svg>
@@ -153,10 +149,7 @@
         </div>
 
         <div class="sidebar-header">
-          <div>
-            <h3 class="sidebar-title">Selected Aircraft</h3>
-            <span class="sidebar-subtitle">Live Aircraft Details</span>
-          </div>
+          <h3 class="sidebar-title">Selected Aircraft</h3>
           <span class="target-badge" id="target-hex">NONE</span>
         </div>
 
@@ -225,7 +218,7 @@
             </div>
           </div>
           <div class="profile-chart-viewport">
-            <canvas id="altitude-profile-chart" height="96"></canvas>
+            <canvas id="altitude-profile-chart" height="52"></canvas>
             <div class="profile-chart-empty" id="profile-chart-empty">
               <span class="chart-empty-lbl">NO PROFILE ACTIVE // SELECT AIRCRAFT</span>
             </div>
@@ -583,6 +576,37 @@
               <li><span class="spec-key">Antenna Filter</span><span class="spec-val">Bandpass Cavity Filter + LNA</span></li>
               <li><span class="spec-key">Decoder Service</span><span class="spec-val">readsb Mode-S Daemon</span></li>
               <li><span class="spec-key">Supported Protocols</span><span class="spec-val">Mode-S, ADS-B, ADS-R, TIS-B</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- web platform & dashboard specs -->
+        <div class="specs-grid">
+          <div class="dossier-card">
+            <h3 class="card-heading">Web Software & Stack</h3>
+            <ul class="spec-list">
+              <li><span class="spec-key">Frontend Architecture</span><span class="spec-val">Vanilla ES6+ // Zero-Framework Overhead</span></li>
+              <li><span class="spec-key">Tactical Map Engine</span><span class="spec-val">Leaflet.js + Dark Avionics Carto Tiles</span></li>
+              <li><span class="spec-key">Profile Graph Engine</span><span class="spec-val">Chart.js 4.4 Real-Time Vector Stream</span></li>
+              <li><span class="spec-key">Backend Server</span><span class="spec-val">FastAPI (Python 3.13) + Uvicorn ASGI</span></li>
+              <li><span class="spec-key">Historical Database</span><span class="spec-val">SQLite 3 (WAL Mode, In-Memory Session Cache)</span></li>
+              <li><span class="spec-key">Photo Archive API</span><span class="spec-val">Planespotters.net REST Lookup (24-bit ICAO)</span></li>
+              <li><span class="spec-key">Telemetry Stream Cadence</span><span class="spec-val">1.0 Hz Live Polling + 8s Diurnal Analytics</span></li>
+              <li><span class="spec-key">Design System</span><span class="spec-val">4pt / 8pt Scale // Monospace Tabular Numerics</span></li>
+            </ul>
+          </div>
+
+          <div class="dossier-card">
+            <h3 class="card-heading">Dashboard Features</h3>
+            <ul class="spec-list">
+              <li><span class="spec-key">Live Radar Tracking</span><span class="spec-val">True Heading Rotations, Trails & Range Rings</span></li>
+              <li><span class="spec-key">Target Inspector</span><span class="spec-val">10-Field Avionics CDU (Callsign, Alt, V/S, Squawk)</span></li>
+              <li><span class="spec-key">Vertical Flight Profile</span><span class="spec-val">Real-Time Altitude Trend Sparkline (Cruise/Climb/Desc)</span></li>
+              <li><span class="spec-key">Spotting Photo Archive</span><span class="spec-val">Automatic High-Res Aircraft Photography</span></li>
+              <li><span class="spec-key">Active Contacts Panel</span><span class="spec-val">Range-Sorted Table // Instant Map Panning</span></li>
+              <li><span class="spec-key">Anomaly & Alert Engine</span><span class="spec-val">7500/7600/7700 Squawk Intercept & Stale Tracking</span></li>
+              <li><span class="spec-key">Historical Traffic Analytics</span><span class="spec-val">24-Hour Diurnal Histogram & Daily Ceilings</span></li>
+              <li><span class="spec-key">Hardware Telemetry</span><span class="spec-val">SoC Junction Temp, Per-Core Load, NVMe Vitals</span></li>
             </ul>
           </div>
         </div>

@@ -7,7 +7,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import psutil
-import history_logger
+try:
+    import history_logger
+except ImportError:
+    from backend import history_logger
 
 app = FastAPI(title="Node Arbitrator")
 
