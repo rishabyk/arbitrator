@@ -1056,28 +1056,26 @@
 
 /* device-detected mobile classes */
 body.is-mobile .hud-header {
-  flex-direction: column;
-  align-items: stretch;
-  padding: var(--space-2) var(--space-3);
-  gap: var(--space-2);
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4);
+  height: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+  overflow: hidden;
+  touch-action: none;
 }
 
 body.is-mobile .hud-brand {
   justify-content: space-between;
   width: 100%;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 body.is-mobile .hud-metrics {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-body.is-mobile .metric-card {
-  min-width: 76px;
-  padding: var(--space-1) var(--space-3);
-  flex-shrink: 0;
+  display: none !important;
 }
 
 body.is-mobile .hud-nav {
@@ -1085,6 +1083,7 @@ body.is-mobile .hud-nav {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  flex-shrink: 0;
 }
 
 body.is-mobile #tab-radar.tab-pane.active {
@@ -1111,7 +1110,7 @@ body.is-mobile .map-viewport {
 }
 
 body.is-mobile .radar-overlay-bar {
-  bottom: calc(56px + env(safe-area-inset-bottom, 0px) + var(--space-3));
+  bottom: calc(52px + max(76px, calc(52px + env(safe-area-inset-bottom, 24px))) + var(--space-2));
   left: var(--space-3);
   right: var(--space-3);
   z-index: 1200;
@@ -1136,7 +1135,7 @@ body.is-mobile .sidebar {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.75);
-  padding: 0 var(--space-4) max(var(--space-3), env(safe-area-inset-bottom, 20px)) var(--space-4);
+  padding: 0 var(--space-4) max(76px, calc(52px + env(safe-area-inset-bottom, 24px))) var(--space-4);
   display: flex;
   flex-direction: column;
   overscroll-behavior-y: contain;
@@ -1145,13 +1144,13 @@ body.is-mobile .sidebar {
 }
 
 body.is-mobile .sidebar.sheet-collapsed {
-  max-height: calc(54px + env(safe-area-inset-bottom, 0px));
-  height: calc(54px + env(safe-area-inset-bottom, 0px));
+  max-height: calc(52px + max(76px, calc(52px + env(safe-area-inset-bottom, 24px))));
+  height: calc(52px + max(76px, calc(52px + env(safe-area-inset-bottom, 24px))));
   overflow: hidden;
 }
 
 body.is-mobile .sidebar:not(.sheet-collapsed) {
-  max-height: min(76vh, calc(100dvh - 80px));
+  max-height: min(78vh, calc(100dvh - 70px));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }

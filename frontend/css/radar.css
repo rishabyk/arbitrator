@@ -715,7 +715,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   flex-shrink: 0;
-  transition: all var(--transition-fast);
+  transition: none;
 }
 
 .sheet-toggle-btn:hover,
@@ -733,7 +733,7 @@
   width: 14px;
   height: 14px;
   color: var(--accent-info);
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: none;
 }
 
 .sidebar.sheet-collapsed .sheet-chevron-svg {
