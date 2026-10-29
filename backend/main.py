@@ -7,8 +7,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import psutil
+import history_logger
 
 app = FastAPI(title="Node Arbitrator")
+
+@app.on_event("startup")
+def on_startup():
+    try:
+        history_logger.start_background_logger()
+    except Exception as e:
+        print(f"[startup] Error starting history logger: {e}")
 
 # cors middleware
 app.add_middleware(
@@ -226,6 +234,10 @@ def get_aircraft():
 
                     response["total_tracked"] = len(aircraft)
                     response["aircraft"] = aircraft
+                    try:
+                        history_logger.log_aircraft_batch(aircraft)
+                    except Exception as log_err:
+                        print(f"[main] history log error: {log_err}")
                     return response
             except Exception as e:
                 response["status"] = "ERROR"
@@ -233,6 +245,15 @@ def get_aircraft():
                 return response
 
     return response
+
+
+# historical sqlite stats endpoint
+@app.get("/api/history")
+def get_history():
+    try:
+        return history_logger.get_history_stats()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database query error: {str(e)}")
 
 
 # static files with no-cache headers

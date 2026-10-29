@@ -10,6 +10,10 @@ let lastSuccessfulTelemetry = null;
 let telemetryFailures = 0;
 let activeEmergencies = [];
 
+// flight profile altitude history and chart
+const altitudeHistory = {};
+let profileChart = null;
+
 const STATION_COORDS = [37.7749, -122.3194];
 const tempHistory    = [];
 const MAX_HISTORY    = 60;
@@ -389,6 +393,27 @@ async function fetchAircraft() {
       activeHexes.add(hex);
       if (ac.distance_nm && ac.distance_nm > maxDist) maxDist = ac.distance_nm;
 
+      // record live flight profile telemetry
+      if (typeof ac.alt_baro === 'number' && !isNaN(ac.alt_baro)) {
+        if (!altitudeHistory[hex]) {
+          altitudeHistory[hex] = [];
+        }
+        const hist = altitudeHistory[hex];
+        const lastPt = hist[hist.length - 1];
+        const nowTs = Date.now();
+        if (!lastPt || (nowTs - lastPt.timestamp >= 900)) {
+          const nowD = new Date();
+          const tLabel = `${String(nowD.getHours()).padStart(2, '0')}:${String(nowD.getMinutes()).padStart(2, '0')}:${String(nowD.getSeconds()).padStart(2, '0')}`;
+          hist.push({
+            alt: ac.alt_baro,
+            vrate: ac.vert_rate || 0,
+            timestamp: nowTs,
+            label: tLabel,
+          });
+          if (hist.length > 50) hist.shift();
+        }
+      }
+
       if (aircraftMarkers[hex]) {
         const entry = aircraftMarkers[hex];
         entry.marker.setLatLng([lat, lon]);
@@ -437,6 +462,13 @@ async function fetchAircraft() {
         map.removeLayer(aircraftMarkers[hex].polyline);
         delete aircraftMarkers[hex];
         if (selectedHex === hex) clearSidebar();
+      }
+    });
+
+    // purge untracked altitude histories
+    Object.keys(altitudeHistory).forEach((hex) => {
+      if (!activeHexes.has(hex) && hex !== selectedHex) {
+        delete altitudeHistory[hex];
       }
     });
 
@@ -513,6 +545,26 @@ function selectTarget(hex) {
   refreshMarkerIcons();
   updateSidebar(target);
   fetchAircraftPhoto(hex);
+
+  // update mobile sheet summary bar & auto-expand sheet on mobile
+  const sidebar = document.getElementById('sidebar');
+  const summaryCallsign = document.getElementById('sheet-summary-callsign');
+  const summaryMeta = document.getElementById('sheet-summary-meta');
+  const callsignStr = target.flight ? target.flight.trim() : String(hex).toUpperCase();
+  const altStr = (target.alt_baro !== null && target.alt_baro !== undefined && !isNaN(target.alt_baro))
+    ? `${Number(target.alt_baro).toLocaleString()} FT` : 'ALT UNK';
+  const spdStr = (target.speed !== null && target.speed !== undefined && !isNaN(target.speed))
+    ? `${Math.round(target.speed)} KT` : 'SPD UNK';
+
+  if (summaryCallsign) summaryCallsign.textContent = callsignStr;
+  if (summaryMeta) summaryMeta.textContent = `${altStr} • ${spdStr}`;
+
+  if (sidebar && window.innerWidth <= 900) {
+    sidebar.classList.remove('sheet-collapsed');
+    const handleBar = document.getElementById('sheet-handle-bar');
+    if (handleBar) handleBar.setAttribute('aria-expanded', 'true');
+    if (map) setTimeout(() => map.invalidateSize(), 150);
+  }
 }
 
 // update sidebar details
@@ -577,6 +629,9 @@ function updateSidebar(ac) {
   setField('target-rssi', rssiVal !== null ? `${rssiVal.toFixed(1)} dBFS` : '--.- dBFS');
 
   setField('target-seen', seenVal !== null ? `${seenVal.toFixed(1)} S` : '--.- S', seenClass);
+
+  // update flight profile graph
+  updateFlightProfile(ac.hex, ac);
 }
 
 // reset sidebar to empty state
@@ -600,6 +655,13 @@ function clearSidebar() {
   Object.entries(defaults).forEach(([id, text]) => {
     setField(id, text);
   });
+
+  const summaryCallsign = document.getElementById('sheet-summary-callsign');
+  const summaryMeta = document.getElementById('sheet-summary-meta');
+  if (summaryCallsign) summaryCallsign.textContent = 'AIRCRAFT INSPECTOR';
+  if (summaryMeta) summaryMeta.textContent = 'SELECT MAP CONTACT';
+
+  clearFlightProfile();
 
   const photoBox = document.getElementById('photo-box');
   if (photoBox) {
@@ -660,6 +722,298 @@ async function fetchAircraftPhoto(hex) {
         <span class="photo-status-sub">Live aircraft data active</span>
       </div>
     `;
+  }
+}
+
+// initialize flight profile altitude line chart (Chart.js)
+function initFlightProfileChart() {
+  const canvas = document.getElementById('altitude-profile-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  try {
+    const ctx = canvas.getContext('2d');
+    profileChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          data: [],
+          borderColor: '#38bdf8',
+          borderWidth: 1.75,
+          backgroundColor: (context) => {
+            const chart = context.chart;
+            const { ctx: c, chartArea } = chart;
+            if (!chartArea) return 'rgba(56, 189, 248, 0.08)';
+            const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            gradient.addColorStop(0, 'rgba(56, 189, 248, 0.22)');
+            gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+            return gradient;
+          },
+          fill: true,
+          tension: 0.22,
+          pointRadius: (ctx) => {
+            const index = ctx.dataIndex;
+            const count = ctx.dataset.data.length;
+            return index === count - 1 ? 3 : 0;
+          },
+          pointBackgroundColor: '#38bdf8',
+          pointBorderColor: '#0e141f',
+          pointBorderWidth: 1.5,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        layout: {
+          padding: { top: 6, bottom: 2, left: 2, right: 6 }
+        },
+        interaction: {
+          intersect: false,
+          mode: 'index',
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: true,
+            backgroundColor: 'rgba(14, 20, 31, 0.95)',
+            borderColor: 'rgba(255, 255, 255, 0.15)',
+            borderWidth: 1,
+            padding: 6,
+            titleFont: { family: 'JetBrains Mono', size: 10, weight: 600 },
+            bodyFont: { family: 'JetBrains Mono', size: 11, weight: 500 },
+            displayColors: false,
+            callbacks: {
+              label: (ctx) => `${Number(ctx.parsed.y).toLocaleString()} FT`,
+            }
+          }
+        },
+        scales: {
+          x: {
+            display: false,
+          },
+          y: {
+            display: true,
+            position: 'right',
+            grid: {
+              color: 'rgba(255, 255, 255, 0.05)',
+              drawBorder: false,
+            },
+            ticks: {
+              color: '#64748b',
+              font: { family: 'JetBrains Mono', size: 9 },
+              maxTicksLimit: 3,
+              callback: (val) => `${Math.round(val / 1000)}k`,
+            }
+          }
+        }
+      }
+    });
+  } catch (err) {
+    console.warn('Flight profile chart init error:', err);
+  }
+}
+
+// update active flight profile graph
+function updateFlightProfile(hex, ac) {
+  const emptyBox = document.getElementById('profile-chart-empty');
+  const badge    = document.getElementById('profile-trend-badge');
+  const minEl    = document.getElementById('profile-stat-min');
+  const maxEl    = document.getElementById('profile-stat-max');
+  const deltaEl  = document.getElementById('profile-stat-delta');
+
+  if (!hex) {
+    clearFlightProfile();
+    return;
+  }
+
+  // Ensure current altitude reading is in history
+  if (ac && typeof ac.alt_baro === 'number' && !isNaN(ac.alt_baro)) {
+    if (!altitudeHistory[hex]) {
+      altitudeHistory[hex] = [];
+    }
+    const hist = altitudeHistory[hex];
+    if (hist.length === 0) {
+      const nowD = new Date();
+      const tLabel = `${String(nowD.getHours()).padStart(2, '0')}:${String(nowD.getMinutes()).padStart(2, '0')}:${String(nowD.getSeconds()).padStart(2, '0')}`;
+      hist.push({
+        alt: ac.alt_baro,
+        vrate: ac.vert_rate || 0,
+        timestamp: Date.now(),
+        label: tLabel,
+      });
+    }
+  }
+
+  const history = altitudeHistory[hex];
+  if (!history || history.length === 0) {
+    clearFlightProfile();
+    return;
+  }
+
+  if (emptyBox) emptyBox.classList.add('hidden');
+
+  const altitudes = history.map(p => p.alt);
+  const minAlt = Math.min(...altitudes);
+  const maxAlt = Math.max(...altitudes);
+  const deltaAlt = altitudes[altitudes.length - 1] - altitudes[0];
+
+  if (minEl) minEl.textContent = `${minAlt.toLocaleString()} FT`;
+  if (maxEl) maxEl.textContent = `${maxAlt.toLocaleString()} FT`;
+  if (deltaEl) {
+    const sign = deltaAlt > 0 ? '+' : '';
+    deltaEl.textContent = `${sign}${deltaAlt.toLocaleString()} FT`;
+    deltaEl.style.color = deltaAlt > 100 ? 'var(--accent-info)' : (deltaAlt < -100 ? 'var(--accent-orange)' : 'var(--text-primary)');
+  }
+
+  // Trend detection
+  const vrate = ac ? (Number(ac.vert_rate) || 0) : 0;
+  if (badge) {
+    badge.className = 'profile-trend-badge';
+    if (vrate > 350) {
+      badge.classList.add('badge-climb');
+      badge.textContent = `CLIMB +${vrate} FPM`;
+    } else if (vrate < -350) {
+      badge.classList.add('badge-descent');
+      badge.textContent = `DESCEND ${vrate} FPM`;
+    } else {
+      badge.classList.add('badge-level');
+      badge.textContent = 'LEVEL / CRUISE';
+    }
+  }
+
+  if (!profileChart) {
+    initFlightProfileChart();
+  }
+
+  if (profileChart) {
+    profileChart.data.labels = history.map(p => p.label || '');
+    profileChart.data.datasets[0].data = altitudes;
+    profileChart.update('none');
+  }
+}
+
+// clear flight profile graph
+function clearFlightProfile() {
+  const emptyBox = document.getElementById('profile-chart-empty');
+  const badge    = document.getElementById('profile-trend-badge');
+  const minEl    = document.getElementById('profile-stat-min');
+  const maxEl    = document.getElementById('profile-stat-max');
+  const deltaEl  = document.getElementById('profile-stat-delta');
+
+  if (emptyBox) emptyBox.classList.remove('hidden');
+  if (badge) {
+    badge.className = 'profile-trend-badge badge-level';
+    badge.textContent = 'STANDBY';
+  }
+  if (minEl) minEl.textContent = '-- FT';
+  if (maxEl) maxEl.textContent = '-- FT';
+  if (deltaEl) {
+    deltaEl.textContent = '-- FT';
+    deltaEl.style.color = 'var(--text-primary)';
+  }
+
+  if (profileChart) {
+    profileChart.data.labels = [];
+    profileChart.data.datasets[0].data = [];
+    profileChart.update('none');
+  }
+}
+
+// fetch and render historical sqlite logger telemetry
+async function fetchHistoryStats() {
+  try {
+    const res = await fetch('/api/history');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    setField('hist-total-today', String(data.total_today ?? 0));
+    const uniqueSub = document.getElementById('hist-unique-sub');
+    if (uniqueSub) {
+      uniqueSub.textContent = `${data.unique_today ?? 0} unique airframes`;
+    }
+    setField('hist-peak-hour', data.peak_hour_str || '--');
+    setField('hist-max-alt', data.max_alt_today > 0 ? `${Number(data.max_alt_today).toLocaleString()} FT` : '-- FT');
+    setField('hist-all-time', String(data.all_time_total ?? 0));
+
+    // Render 24-hour diurnal histogram
+    const barsContainer = document.getElementById('hist-histogram-bars');
+    if (barsContainer && Array.isArray(data.hourly_distribution)) {
+      const maxCount = Math.max(1, ...data.hourly_distribution);
+      barsContainer.innerHTML = data.hourly_distribution.map((count, hr) => {
+        const pct = Math.max(4, Math.round((count / maxCount) * 100));
+        const hrStr = `${String(hr).padStart(2, '0')}:00`;
+        return `
+          <div class="hist-bar-col" role="img" aria-label="${hrStr}: ${count} flights">
+            <div class="hist-bar-fill" style="height: ${pct}%;"></div>
+            <div class="hist-bar-tooltip">${hrStr} : ${count} flt</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Render recent archived flights table
+    const tbody = document.getElementById('hist-recent-tbody');
+    if (tbody && Array.isArray(data.recent_flights)) {
+      if (data.recent_flights.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-table-msg">No flight sessions archived yet today</td></tr>`;
+      } else {
+        tbody.innerHTML = data.recent_flights.map(fl => {
+          const altStr = fl.max_altitude > 0 ? `${Number(fl.max_altitude).toLocaleString()} FT` : '---- FT';
+          return `
+            <tr>
+              <td class="hex-cell">${fl.hex}</td>
+              <td class="flight-callsign">${fl.callsign}</td>
+              <td>${fl.squawk}</td>
+              <td>${fl.first_seen}</td>
+              <td>${fl.last_seen}</td>
+              <td>${altStr}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+  } catch (err) {
+    console.warn('History stats fetch error:', err);
+  }
+}
+
+// mobile bottom slide-up sheet controls
+function initMobileBottomSheet() {
+  const sidebar = document.getElementById('sidebar');
+  const handleBar = document.getElementById('sheet-handle-bar');
+  const toggleBtn = document.getElementById('sheet-toggle-btn');
+
+  if (!sidebar || !handleBar) return;
+
+  const toggleSheet = (e) => {
+    if (e) e.stopPropagation();
+    const isCollapsed = sidebar.classList.contains('sheet-collapsed');
+    if (isCollapsed) {
+      sidebar.classList.remove('sheet-collapsed');
+      handleBar.setAttribute('aria-expanded', 'true');
+    } else {
+      sidebar.classList.add('sheet-collapsed');
+      handleBar.setAttribute('aria-expanded', 'false');
+    }
+    if (map) {
+      setTimeout(() => map.invalidateSize(), 180);
+    }
+  };
+
+  handleBar.addEventListener('click', toggleSheet);
+  handleBar.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleSheet();
+    }
+  });
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleSheet();
+    });
   }
 }
 
@@ -861,7 +1215,9 @@ function initTabNavigation() {
 
       // recalculate leaflet viewport
       if (targetId === 'tab-radar' && map) {
-        setTimeout(() => map.invalidateSize(), 100);
+        setTimeout(() => map.invalidateSize(), 120);
+      } else if (targetId === 'tab-telemetry') {
+        fetchHistoryStats();
       }
     });
   });
@@ -959,10 +1315,18 @@ document.addEventListener('DOMContentLoaded', () => {
   initTabNavigation();
   initRadarControls();
   initCollapsibles();
+  initMobileBottomSheet();
+  initFlightProfileChart();
 
   fetchTelemetry();
   fetchAircraft();
+  fetchHistoryStats();
 
   setInterval(fetchTelemetry, 1000);
   setInterval(fetchAircraft,  1000);
+  setInterval(fetchHistoryStats, 8000);
+
+  window.addEventListener('resize', () => {
+    if (map) map.invalidateSize();
+  });
 });

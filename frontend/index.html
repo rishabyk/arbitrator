@@ -21,6 +21,9 @@
   <!-- leaflet css -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
+  <!-- chart.js for live avionics profiles -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
   <!-- custom styling -->
   <link rel="stylesheet" href="style.css?v=20261027_clean">
 </head>
@@ -134,7 +137,21 @@
       </section>
 
       <!-- sidebar -->
-      <aside class="sidebar" id="sidebar">
+      <aside class="sidebar sheet-collapsed" id="sidebar">
+        <!-- mobile slide-up sheet handle bar (visible <= 900px) -->
+        <div class="sheet-handle-bar" id="sheet-handle-bar" role="button" tabindex="0" aria-label="Toggle Aircraft Inspector Sheet" aria-expanded="false">
+          <div class="sheet-handle-pill" aria-hidden="true"></div>
+          <div class="sheet-handle-info">
+            <span class="sheet-handle-title" id="sheet-summary-callsign">AIRCRAFT INSPECTOR</span>
+            <span class="sheet-handle-meta" id="sheet-summary-meta">SELECT MAP CONTACT</span>
+          </div>
+          <button class="sheet-toggle-btn" id="sheet-toggle-btn" type="button" aria-label="Toggle inspector sheet height">
+            <svg class="sheet-chevron-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+        </div>
+
         <div class="sidebar-header">
           <div>
             <h3 class="sidebar-title">Selected Aircraft</h3>
@@ -193,6 +210,39 @@
           <div class="field">
             <span class="field-label">Last Seen</span>
             <span class="field-val" id="target-seen"><span class="skeleton-bar" style="width: 46px;"></span></span>
+          </div>
+        </div>
+
+        <!-- live flight profile graph (Chart.js alt_baro over time) -->
+        <div class="sidebar-profile-card" id="flight-profile-box">
+          <div class="profile-card-header">
+            <div>
+              <span class="profile-card-title">Flight Profile</span>
+              <span class="profile-card-subtitle" id="profile-sub-lbl">Altitude Telemetry Stream</span>
+            </div>
+            <div class="profile-status-wrap">
+              <span class="profile-trend-badge badge-level" id="profile-trend-badge">CRUISE</span>
+            </div>
+          </div>
+          <div class="profile-chart-viewport">
+            <canvas id="altitude-profile-chart" height="96"></canvas>
+            <div class="profile-chart-empty" id="profile-chart-empty">
+              <span class="chart-empty-lbl">NO PROFILE ACTIVE // SELECT AIRCRAFT</span>
+            </div>
+          </div>
+          <div class="profile-stats-strip">
+            <div class="profile-stat-box">
+              <span class="profile-stat-k">Floor</span>
+              <span class="profile-stat-v" id="profile-stat-min">-- FT</span>
+            </div>
+            <div class="profile-stat-box">
+              <span class="profile-stat-k">Ceiling</span>
+              <span class="profile-stat-v" id="profile-stat-max">-- FT</span>
+            </div>
+            <div class="profile-stat-box">
+              <span class="profile-stat-k">Profile Δ</span>
+              <span class="profile-stat-v" id="profile-stat-delta">-- FT</span>
+            </div>
           </div>
         </div>
 
@@ -594,6 +644,93 @@
               <li><span class="spec-key">Storage Space</span><span class="spec-val" id="telem-disk"><span class="skeleton-bar" style="width: 120px;"></span></span></li>
               <li><span class="spec-key">Network Traffic</span><span class="spec-val" id="telem-net"><span class="skeleton-bar" style="width: 130px;"></span></span></li>
             </ul>
+          </div>
+        </div>
+
+        <!-- tab 4: historical sqlite logger widget -->
+        <div class="dossier-card historical-widget-card" id="historical-widget-card">
+          <div class="table-header-row hist-header-row">
+            <div>
+              <h3 class="card-heading card-heading-clean">Historical Telemetry Logs (SQLite)</h3>
+              <span class="table-subtitle">Persistent local database archiving aircraft out-of-range & diurnal traffic</span>
+            </div>
+            <div class="table-header-actions">
+              <span class="target-badge online">SQLITE WAL</span>
+            </div>
+          </div>
+
+          <!-- summary metrics row -->
+          <div class="historical-metrics-grid">
+            <div class="hist-card">
+              <span class="hist-label">Flights Tracked Today</span>
+              <span class="hist-val" id="hist-total-today"><span class="skeleton-bar" style="width: 44px;"></span></span>
+              <span class="hist-sub" id="hist-unique-sub">-- unique airframes</span>
+            </div>
+            <div class="hist-card">
+              <span class="hist-label">Peak Traffic Window</span>
+              <span class="hist-val" id="hist-peak-hour"><span class="skeleton-bar" style="width: 80px;"></span></span>
+              <span class="hist-sub">Max transponder density</span>
+            </div>
+            <div class="hist-card">
+              <span class="hist-label">Apogee Recorded Today</span>
+              <span class="hist-val" id="hist-max-alt"><span class="skeleton-bar" style="width: 60px;"></span></span>
+              <span class="hist-sub">Highest altitude captured</span>
+            </div>
+            <div class="hist-card">
+              <span class="hist-label">All-Time Database Logs</span>
+              <span class="hist-val" id="hist-all-time"><span class="skeleton-bar" style="width: 40px;"></span></span>
+              <span class="hist-sub">Stored flight sessions</span>
+            </div>
+          </div>
+
+          <!-- diurnal hourly histogram -->
+          <div class="hist-histogram-section">
+            <div class="hist-histogram-header">
+              <span class="hist-histogram-title">24-Hour Diurnal Traffic Distribution</span>
+              <span class="hist-histogram-unit">Flights / Hour (Local Time)</span>
+            </div>
+            <div class="hist-histogram-bars" id="hist-histogram-bars">
+              <!-- 24 hourly bars generated by app.js -->
+            </div>
+            <div class="hist-histogram-legend">
+              <span>00:00</span>
+              <span>06:00</span>
+              <span>12:00</span>
+              <span>18:00</span>
+              <span>23:00</span>
+            </div>
+          </div>
+
+          <!-- recent archived flights table -->
+          <div class="hist-recent-section">
+            <div class="hist-recent-header">
+              <span class="hist-histogram-title">Recently Archived Flight Sessions</span>
+              <span class="table-subtitle">Persisted out-of-range flight transponders</span>
+            </div>
+            <div class="table-scroll">
+              <table class="sidebar-contacts-table hist-table">
+                <thead>
+                  <tr>
+                    <th>ICAO Hex</th>
+                    <th>Callsign</th>
+                    <th>Squawk</th>
+                    <th>First Contact</th>
+                    <th>Last Contact</th>
+                    <th>Apogee</th>
+                  </tr>
+                </thead>
+                <tbody id="hist-recent-tbody">
+                  <tr class="skeleton-row">
+                    <td><span class="skeleton-bar" style="width: 50px;"></span></td>
+                    <td><span class="skeleton-bar" style="width: 55px;"></span></td>
+                    <td><span class="skeleton-bar" style="width: 40px;"></span></td>
+                    <td><span class="skeleton-bar" style="width: 55px;"></span></td>
+                    <td><span class="skeleton-bar" style="width: 55px;"></span></td>
+                    <td><span class="skeleton-bar" style="width: 50px;"></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 

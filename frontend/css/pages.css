@@ -688,44 +688,370 @@
   background-color: var(--accent-danger-subtle) !important;
 }
 
-/* responsive */
+/* historical sqlite widget card */
+
+.historical-widget-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.historical-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+.hist-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: border-color var(--transition-fast);
+}
+
+.hist-card:hover {
+  border-color: var(--border-default);
+}
+
+.hist-label {
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.hist-val {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+}
+
+.hist-sub {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--accent-info);
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* diurnal hourly histogram */
+
+.hist-histogram-section {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.hist-histogram-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.hist-histogram-title {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+}
+
+.hist-histogram-unit {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.hist-histogram-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 68px;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.hist-bar-col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.hist-bar-fill {
+  width: 100%;
+  min-height: 3px;
+  background-color: var(--accent-info);
+  border-radius: 2px 2px 0 0;
+  opacity: 0.8;
+  transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity var(--transition-fast), background-color var(--transition-fast);
+}
+
+.hist-bar-col:hover .hist-bar-fill {
+  opacity: 1;
+  background-color: #7dd3fc;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
+}
+
+.hist-bar-tooltip {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-fast);
+  z-index: 10;
+}
+
+.hist-bar-col:hover .hist-bar-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.hist-histogram-legend {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.hist-recent-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.hist-table th {
+  padding: var(--space-2) var(--space-3);
+}
+
+.hist-table td {
+  padding: var(--space-2) var(--space-3);
+  font-size: 11px;
+}
+
+/* responsive media queries */
 
 @media (max-width: 900px) {
   .hud-header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-3);
+    align-items: stretch;
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .hud-brand {
+    justify-content: space-between;
+    width: 100%;
   }
 
   .hud-metrics {
     width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .hud-metrics::-webkit-scrollbar {
+    display: none;
+  }
+
+  .metric-card {
+    min-width: 76px;
+    padding: var(--space-1) var(--space-3);
+    flex-shrink: 0;
+  }
+
+  .hud-nav {
+    padding: 0 var(--space-3);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .hud-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-tab {
+    padding: var(--space-2) var(--space-3);
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* full screen radar map viewport */
+  #tab-radar.tab-pane.active {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .hud-main {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: block;
+  }
+
+  .map-viewport {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 1;
+  }
+
+  /* dock radar overlay bar above bottom sheet */
+  .radar-overlay-bar {
+    bottom: calc(52px + var(--space-3));
+    left: var(--space-3);
+    right: var(--space-3);
+    z-index: 1200;
+    max-width: calc(100% - var(--space-6));
+    justify-content: space-between;
+    padding: var(--space-1) var(--space-2);
+    gap: var(--space-2);
+  }
+
+  .radar-stat {
+    padding: 0 var(--space-1);
+    gap: 4px;
+  }
+
+  .stat-lbl {
+    font-size: 9.5px;
+  }
+
+  .stat-num {
+    font-size: 11px;
+  }
+
+  .radar-ctrl-btn {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  /* tactical sidebar as bottom slide-up sheet */
+  .sidebar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    min-width: 100% !important;
+    z-index: 1500;
+    border-left: none;
+    border-top: 1px solid var(--border-default);
+    border-radius: 14px 14px 0 0;
+    background-color: rgba(14, 20, 31, 0.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.7);
+    padding: 0 var(--space-4) var(--space-4) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .sidebar.sheet-collapsed {
+    max-height: 52px;
+    overflow: hidden;
+  }
+
+  .sidebar:not(.sheet-collapsed) {
+    max-height: 74vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sheet-handle-bar {
+    display: flex;
+  }
+
+  /* dossier, specs, telemetry containers on mobile */
+  .dossier-container,
+  .resume-container,
+  .specs-container {
+    padding: var(--space-4);
   }
 
   .specs-grid,
   .skills-grid {
     grid-template-columns: 1fr;
+    gap: var(--space-4);
   }
 
-  .hud-main {
+  .historical-metrics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+
+  .dossier-header,
+  .resume-header {
     flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
   }
 
-  .sidebar {
+  .dossier-actions,
+  .resume-actions {
     width: 100%;
-    min-width: 100%;
-    height: 300px;
-    border-left: none;
-    border-top: 1px solid var(--border-subtle);
   }
 
-  .resume-pdf-container {
-    height: 520px;
+  .dossier-actions .hud-btn,
+  .resume-actions .hud-btn {
+    flex: 1;
+    text-align: center;
   }
 }
 
 @media (max-width: 640px) {
-  .resume-pdf-container {
-    height: 400px;
+  .hist-histogram-bars {
+    gap: 2px;
+    height: 56px;
+  }
+
+  .sidebar-grid {
+    gap: var(--space-2);
+    padding: var(--space-3);
   }
 }
