@@ -1,233 +1,444 @@
-/* ==========================================================================
-   HEADER // TELEMETRY RIBBON, STATUS MATRIX & TAB NAVIGATION
-   ========================================================================== */
+/* header layout */
 
 .hud-header {
-  position: relative;       /* enables z-index stacking context */
-  z-index: 3000;            /* Floats entire header & tooltips above all panels */
+  position: relative;
+  z-index: 3000;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 16px;
-  background-color: var(--bg-panel);
-  border-bottom: 1px solid var(--border-color);
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
 }
+
+/* brand */
 
 .hud-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }
 
 .hud-title {
-  font-size: 14px;
+  font-family: var(--font-sans);
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: 1.5px;
-  color: var(--accent-cyan);
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  line-height: 1.2;
 }
+
+.brand-divider {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 14px;
+  user-select: none;
+}
+
+/* heartbeat indicator */
+
+.stream-heartbeat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  user-select: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.stream-heartbeat:hover {
+  border-color: var(--border-default);
+  background-color: var(--bg-card-hover);
+}
+
+.heartbeat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent-success);
+  opacity: 0.75;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.18s ease-out,
+              box-shadow 0.18s ease-out;
+}
+
+.heartbeat-dot.pulse {
+  opacity: 1;
+  transform: scale(1.4);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+.heartbeat-dot.stale {
+  background-color: var(--accent-danger);
+  box-shadow: none;
+  opacity: 1;
+}
+
+.heartbeat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: opacity var(--transition-fast);
+}
+
+/* heartbeat collapsed state */
+
+.stream-heartbeat.collapsed {
+  padding: 6px 10px;
+  gap: 0;
+}
+
+.stream-heartbeat.collapsed .heartbeat-label {
+  display: none;
+}
+
+.stream-heartbeat.collapsed .heartbeat-dot.pulse {
+  transform: none !important;
+  box-shadow: none !important;
+  opacity: 0.75 !important;
+}
+
+/* telemetry metrics ribbon */
 
 .hud-metrics {
   display: flex;
-  gap: 16px;
+  align-items: stretch;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: visible;
 }
 
 .metric-card {
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-card);
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid var(--border-color);
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  border-right: 1px solid var(--border-subtle);
   min-width: 90px;
+  background-color: transparent;
+  transition: background-color var(--transition-fast);
+}
+
+.metric-card:last-child {
+  border-right: none;
 }
 
 .metric-label {
-  font-size: 9px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 500;
   color: var(--text-muted);
-  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
 }
 
 .metric-val {
+  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+  line-height: 1.35;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
 }
 
-/* --- Receiver State Badges & Legend Tooltip --- */
+/* receiver status popover */
+
 .receiver-metric {
   position: relative;
-  min-width: 130px;
+  min-width: 140px;
 }
 
 .metric-label-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2px;
+  gap: var(--space-2);
 }
 
 .help-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 1px solid var(--text-muted);
+  width: 15px;
+  height: 15px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-default);
   color: var(--text-muted);
-  font-size: 9px;
-  font-weight: bold;
+  font-size: 10px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
+  background: var(--bg-surface);
+  transition: color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .help-trigger:hover,
-.help-trigger:focus {
-  border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
+.help-trigger:focus-visible {
+  border-color: var(--accent-info);
+  color: var(--accent-info);
 }
 
 .status-legend-popover {
-  display: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   position: absolute;
-  top: 24px;
+  top: calc(100% + var(--space-2));
   right: 0;
-  width: 290px;
+  width: 320px;
   background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
-  border-radius: 4px;
-  padding: 12px;
-  z-index: 2000;
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  z-index: 4000;
   text-align: left;
   pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast), visibility var(--transition-fast);
 }
 
 .help-trigger:hover .status-legend-popover,
 .help-trigger:focus .status-legend-popover {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .legend-title {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--accent-cyan);
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 4px;
-  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-2);
 }
 
 .legend-item {
   display: grid;
-  grid-template-columns: 12px 90px 1fr;
-  align-items: center;
-  font-size: 9.5px;
-  line-height: 1.25;
-  gap: 6px;
+  grid-template-columns: 10px 95px 1fr;
+  align-items: baseline;
+  font-size: 11px;
+  line-height: 1.4;
+  gap: var(--space-2);
 }
 
 .legend-desc {
-  color: var(--text-muted);
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.legend-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .legend-dot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: var(--radius-pill);
   display: inline-block;
+  align-self: center;
 }
 
-.dot-online   { background-color: var(--accent-green);  box-shadow: 0 0 6px var(--accent-green); }
-.dot-standby  { background-color: var(--accent-amber);  box-shadow: 0 0 6px var(--accent-amber); }
-.dot-init     { background-color: var(--accent-cyan);   box-shadow: 0 0 6px var(--accent-cyan); }
-.dot-disc     { background-color: var(--accent-red);    box-shadow: 0 0 6px var(--accent-red); }
-.dot-degraded { background-color: var(--accent-orange); box-shadow: 0 0 6px var(--accent-orange); }
+.dot-online   { background-color: var(--status-online); }
+.dot-standby  { background-color: var(--status-standby); }
+.dot-init     { background-color: var(--status-init); }
+.dot-degraded { background-color: var(--status-degraded); }
+.dot-disc     { background-color: var(--status-disc); }
 
-/* Status Badge Dynamic Text Colors */
-.status-badge               { color: var(--accent-green); }
-.status-badge.online        { color: var(--accent-green); text-shadow: 0 0 8px rgba(0, 230, 118, 0.4); }
+/* status badge colors */
+
+.status-badge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.status-badge.online {
+  color: var(--status-online);
+}
+
 .status-badge.standby,
-.status-badge.inactive      { color: var(--accent-amber); }
-.status-badge.initializing  { color: var(--accent-cyan);  animation: pulse-init 1.5s infinite; }
-.status-badge.disconnected,
-.status-badge.error         { color: var(--accent-red);   text-shadow: 0 0 8px rgba(255, 61, 0, 0.4); }
-.status-badge.degraded      { color: var(--accent-orange); }
-
-@keyframes pulse-init {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+.status-badge.inactive {
+  color: var(--status-standby);
 }
 
-/* --- Tactical Navigation Bar --- */
+.status-badge.initializing {
+  color: var(--status-init);
+}
+
+.status-badge.degraded {
+  color: var(--status-degraded);
+}
+
+.status-badge.disconnected,
+.status-badge.error {
+  color: var(--status-disc);
+}
+
+.receiver-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+/* navigation bar */
+
 .hud-nav {
   display: flex;
-  background-color: var(--bg-panel);
-  border-bottom: 1px solid var(--border-color);
-  padding: 0 16px;
-  gap: 8px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 var(--space-6);
+  gap: var(--space-1);
   z-index: 2500;
 }
 
 .nav-tab {
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  padding: 10px 14px;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: var(--space-3) var(--space-4);
   cursor: pointer;
-  transition: all 0.2s ease;
+  position: relative;
+  user-select: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--transition-fast),
+              border-color var(--transition-fast),
+              background-color var(--transition-fast);
 }
 
 .nav-tab:hover {
   color: var(--text-primary);
-  background-color: rgba(0, 229, 255, 0.04);
+  background-color: var(--bg-subtle);
 }
 
 .nav-tab.active {
-  color: var(--accent-cyan);
-  border-bottom: 2px solid var(--accent-cyan);
-  background-color: rgba(0, 229, 255, 0.08);
+  color: var(--accent-info);
+  font-weight: 600;
+  border-bottom-color: var(--accent-info);
+  background-color: transparent;
 }
 
-/* Receiver Power Toggle Row & Button */
-.receiver-control-row {
+/* status & emergency alert banner */
+
+.hud-alert-banner {
   display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-6);
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  z-index: 2600;
+}
+
+.hud-alert-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  line-height: 1.4;
+  flex-wrap: wrap;
 }
 
-.rx-power-btn {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
-  border-radius: 3px;
-  width: 20px;
-  height: 18px;
+.alert-item-body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.alert-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.alert-tag {
+  font-family: var(--font-mono);
+  font-weight: 700;
   font-size: 11px;
-  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.alert-text {
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+
+.alert-item.alert-danger {
+  background-color: var(--accent-danger-subtle);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: #fca5a5;
+}
+
+.alert-item.alert-danger .alert-tag {
+  color: var(--accent-danger);
+}
+
+.alert-item.alert-warn {
+  background-color: var(--accent-warning-subtle);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: #fde68a;
+}
+
+.alert-item.alert-warn .alert-tag {
+  color: var(--accent-warning);
+}
+
+.alert-action-btn {
+  padding: 3px var(--space-3);
+  font-size: 11px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid currentColor;
+  color: inherit;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+  text-decoration: none;
+  transition: background-color var(--transition-fast);
 }
 
-.rx-power-btn:hover {
-  border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
-}
-
-.rx-power-btn.active-rx {
-  border-color: var(--accent-green);
-  color: var(--accent-green);
-  box-shadow: 0 0 6px rgba(0, 230, 118, 0.35);
+.alert-action-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
 }

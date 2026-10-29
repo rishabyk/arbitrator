@@ -7,10 +7,18 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import psutil
+import history_logger
 
 app = FastAPI(title="Node Arbitrator")
 
-# Allows requests from local frontend instance during development
+@app.on_event("startup")
+def on_startup():
+    try:
+        history_logger.start_background_logger()
+    except Exception as e:
+        print(f"[startup] Error starting history logger: {e}")
+
+# cors middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,21 +27,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ADS-B .json output files
+# ads-b json paths
 ADSB_FILEPATHS = [
     "/run/readsb/aircraft.json",
     "/run/dump1090-fa/aircraft.json",
     "/var/run/dump1090-mutability/aircraft.json",
 ]
 
-# Default Station Coordinates (Bay Area) for Range & Distance Calculations
+# station coordinates
 STATION_LAT = 37.7749
 STATION_LON = -122.3194
 
 
+# calculate distance in nautical miles
 def calc_distance_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    """Calculates great-circle distance in Nautical Miles (NM) using Haversine formula."""
-    r_nm = 3440.065  # Earth radius in Nautical Miles
+    r_nm = 3440.065
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
     dlambda = math.radians(lon2 - lon1)
@@ -45,8 +53,8 @@ def calc_distance_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> floa
     return round(2 * r_nm * math.atan2(math.sqrt(a), math.sqrt(1 - a)), 1)
 
 
+# read soc temperature in celsius
 def getCPUTemp() -> float:
-    """Returns Pi 5 SoC temperature in Celsius."""
     try:
         with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
             return round(int(f.read().strip()) / 1000.0, 1)
@@ -54,8 +62,8 @@ def getCPUTemp() -> float:
         return 0.0
 
 
+# check rtl-sdr usb hardware in sysfs
 def is_sdr_hardware_connected() -> bool:
-    """Checks Linux USB sysfs tree for RTL2832U tuner hardware."""
     usb_dir = "/sys/bus/usb/devices"
     if not os.path.exists(usb_dir):
         return False
@@ -76,8 +84,8 @@ def is_sdr_hardware_connected() -> bool:
     return False
 
 
+# inspect hardware, process, and frame freshness
 def check_receiver_status():
-    """Checks if USB plugged in, daemon process state, and JSON heartbeat."""
     hardware_present = is_sdr_hardware_connected()
     decoder_names = {"readsb", "dump1090", "dump1090-fa"}
 
@@ -102,9 +110,9 @@ def check_receiver_status():
     return "INITIALIZING", "RECEIVER ATTEMPTING LOCK // PLEASE WAIT"
 
 
+# telemetry vitals endpoint
 @app.get("/api/telemetry")
 def get_telemetry():
-    """Returns comprehensive system vitals: CPU cores, clock, thermals, RAM, disk, network & uptime."""
     cpu_percent = psutil.cpu_percent(interval=None)
     cpu_per_core = psutil.cpu_percent(interval=None, percpu=True)
     mem = psutil.virtual_memory()
@@ -143,9 +151,9 @@ def get_telemetry():
     }
 
 
+# toggle readsb service
 @app.post("/api/receiver/toggle")
 def toggle_receiver():
-    """Starts or stops the readsb systemd daemon to control SDR power and thermals."""
     if not is_sdr_hardware_connected():
         raise HTTPException(
             status_code=400,
@@ -161,7 +169,7 @@ def toggle_receiver():
             check=True,
             timeout=10,
         )
-        time.sleep(0.4)  # Allow systemd process table to settle
+        time.sleep(0.4)
         new_status, new_msg = check_receiver_status()
         return {
             "success": True,
@@ -176,9 +184,9 @@ def toggle_receiver():
         )
 
 
+# aircraft transponder endpoint
 @app.get("/api/aircraft")
 def get_aircraft():
-    """Returns ADS-B contacts, distance from station, and receiver status."""
     status, status_msg = check_receiver_status()
 
     response = {
@@ -191,7 +199,7 @@ def get_aircraft():
         "aircraft": [],
     }
 
-    if status != "ONLINE":
+    if status not in ("ONLINE", "DEGRADED"):
         return response
 
     for path in ADSB_FILEPATHS:
@@ -221,11 +229,15 @@ def get_aircraft():
                             "seen_sec": a.get("seen") or 0,
                         }
                         for a in data.get("aircraft", [])
-                        if a.get("lat") and a.get("lon")
+                        if a.get("lat") and a.get("lon") and (a.get("seen") is None or a.get("seen") < 30)
                     ]
 
                     response["total_tracked"] = len(aircraft)
                     response["aircraft"] = aircraft
+                    try:
+                        history_logger.log_aircraft_batch(aircraft)
+                    except Exception as log_err:
+                        print(f"[main] history log error: {log_err}")
                     return response
             except Exception as e:
                 response["status"] = "ERROR"
@@ -235,7 +247,29 @@ def get_aircraft():
     return response
 
 
-# Pointing FastAPI to the Frontend directory
+# historical sqlite stats endpoint
+@app.get("/api/history")
+def get_history():
+    try:
+        return history_logger.get_history_stats()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database query error: {str(e)}")
+
+
+# static files with no-cache headers
+class CachedStaticFiles(StaticFiles):
+    def is_not_modified(self, response_headers, request_headers) -> bool:
+        return False
+
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
+
+# mount frontend directory
 frontend_path = os.path.join(os.path.dirname(__file__), "../frontend")
 if os.path.exists(frontend_path):
-    app.mount("/", StaticFiles(directory=frontend_path, html=True), name="static")
+    app.mount("/", CachedStaticFiles(directory=frontend_path, html=True), name="static")

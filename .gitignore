@@ -8,5 +8,11 @@ __pycache__/
 Thumbs.db
 .DS_Store
 
+# Local SQLite databases
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+
 # VSCode settings
 .vscode/
