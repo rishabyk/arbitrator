@@ -3,20 +3,28 @@
 .dossier-container,
 .resume-container,
 .specs-container {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
   padding: var(--space-6);
   background-color: var(--bg-canvas);
-  width: 100%;
 }
 
 .dossier-wrapper,
 .resume-wrapper,
 .specs-wrapper {
+  width: 100%;
   max-width: 1080px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 /* dossier / resume card */
@@ -27,6 +35,10 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .card-heading {
@@ -578,11 +590,26 @@
 /* table layout */
 
 .table-scroll {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+}
+
+.table-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: var(--radius-pill);
 }
 
 .tactical-table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
   font-size: 12px;
   text-align: left;
@@ -836,13 +863,21 @@
   gap: var(--space-2);
 }
 
+.hist-table {
+  width: 100%;
+  min-width: 580px;
+  border-collapse: collapse;
+}
+
 .hist-table th {
   padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
 }
 
 .hist-table td {
   padding: var(--space-2) var(--space-3);
   font-size: 11px;
+  white-space: nowrap;
 }
 
 /* responsive media queries */
@@ -988,24 +1023,187 @@
   .dossier-container,
   .resume-container,
   .specs-container {
+    padding: var(--space-3) var(--space-3) calc(var(--space-6) + env(safe-area-inset-bottom, 24px)) var(--space-3);
+    overflow-x: hidden !important;
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  .dossier-wrapper,
+  .resume-wrapper,
+  .specs-wrapper {
+    gap: var(--space-4);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .dossier-card,
+  .resume-card {
     padding: var(--space-4);
+    border-radius: var(--radius-md);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .card-heading {
+    font-size: 12px;
+    padding-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  /* tab 3: vertical stepper pipeline on mobile */
+  .pipeline-flow {
+    flex-direction: column;
+    gap: var(--space-2);
+    overflow-x: visible;
+    padding: 0;
+  }
+
+  .pipeline-step {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: var(--space-3);
+  }
+
+  .pipeline-arrow {
+    transform: rotate(90deg);
+    padding: var(--space-1) 0;
+    font-size: 14px;
+    justify-content: center;
   }
 
   .specs-grid,
   .skills-grid {
     grid-template-columns: 1fr;
-    gap: var(--space-4);
+    gap: var(--space-3);
   }
 
+  /* tab 4: sqlite metric cards */
   .historical-metrics-grid {
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
+    gap: var(--space-2);
   }
 
   .historical-metrics-grid .hist-card:last-child {
     grid-column: span 2;
   }
 
+  .hist-card {
+    padding: var(--space-3);
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .hist-label {
+    font-size: 9.5px;
+    letter-spacing: 0.03em;
+  }
+
+  .hist-val {
+    font-size: 16px;
+    min-height: 20px;
+  }
+
+  #hist-peak-hour {
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .hist-histogram-section {
+    padding: var(--space-3);
+  }
+
+  .hist-histogram-bars {
+    gap: 2px;
+    height: 52px;
+  }
+
+  /* spec list vertical stack on mobile */
+  .spec-list li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding-bottom: var(--space-2);
+  }
+
+  .spec-key {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .spec-val {
+    font-size: 12px;
+    text-align: left;
+    justify-content: flex-start;
+    word-break: break-word;
+    min-height: auto;
+  }
+
+  /* tab 2: bio & contacts */
+  .historical-metrics-grid .hist-card:last-child {
+    grid-column: span 2;
+  }
+
+  .hist-card {
+    padding: var(--space-3);
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .hist-label {
+    font-size: 9.5px;
+    letter-spacing: 0.03em;
+  }
+
+  .hist-val {
+    font-size: 16px;
+    min-height: 20px;
+  }
+
+  #hist-peak-hour {
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .hist-histogram-section {
+    padding: var(--space-3);
+  }
+
+  .hist-histogram-bars {
+    gap: 2px;
+    height: 52px;
+  }
+
+  /* spec list vertical stack on mobile */
+  .spec-list li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding-bottom: var(--space-2);
+  }
+
+  .spec-key {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .spec-val {
+    font-size: 12px;
+    text-align: left;
+    justify-content: flex-start;
+    word-break: break-word;
+    min-height: auto;
+  }
+
+  /* tab 2: bio & contacts */
   .dossier-header,
   .resume-header {
     flex-direction: column;
@@ -1013,27 +1211,111 @@
     gap: var(--space-3);
   }
 
+  .dossier-name,
+  .resume-name {
+    font-size: 20px;
+  }
+
+  .dossier-title,
+  .resume-title {
+    font-size: 13px;
+  }
+
+  .dossier-contacts,
+  .resume-contacts {
+    gap: var(--space-2);
+  }
+
+  .dossier-contact-item,
+  .resume-contact-item {
+    font-size: 11px;
+    word-break: break-all;
+  }
+
   .dossier-actions,
   .resume-actions {
     width: 100%;
+    flex-direction: column;
+    gap: var(--space-2);
   }
 
   .dossier-actions .hud-btn,
   .resume-actions .hud-btn {
-    flex: 1;
+    width: 100%;
     text-align: center;
+    justify-content: center;
+  }
+
+  .project-entry {
+    padding: var(--space-3);
+    min-width: 0;
+  }
+
+  .project-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .project-title {
+    font-size: 13px;
+  }
+
+  .project-date {
+    font-size: 10.5px;
+  }
+
+  .bullet-item {
+    font-size: 12px;
   }
 }
 
 @media (max-width: 640px) {
   .hist-histogram-bars {
     gap: 2px;
-    height: 56px;
+    height: 50px;
   }
 
   .sidebar-grid {
     gap: var(--space-2);
     padding: var(--space-3);
+  }
+}
+
+@media (max-width: 480px) {
+  .historical-metrics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
+
+  .historical-metrics-grid .hist-card:last-child {
+    grid-column: span 2;
+  }
+
+  .hist-card {
+    padding: var(--space-2);
+  }
+
+  .hist-label {
+    font-size: 9px;
+  }
+
+  .hist-val {
+    font-size: 14.5px;
+  }
+
+  .card-heading {
+    font-size: 11.5px;
+  }
+}
+
+@media (max-width: 340px) {
+  .historical-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .historical-metrics-grid .hist-card:last-child {
+    grid-column: span 1;
   }
 }
 
@@ -1140,6 +1422,138 @@ body.is-mobile .sidebar:not(.sheet-collapsed) {
 
 body.is-mobile .sheet-handle-bar {
   display: flex;
+}
+
+body.is-mobile .dossier-container,
+body.is-mobile .resume-container,
+body.is-mobile .specs-container {
+  padding: var(--space-3) var(--space-3) calc(var(--space-6) + env(safe-area-inset-bottom, 24px)) var(--space-3);
+  overflow-x: hidden !important;
+  width: 100%;
+  max-width: 100vw;
+}
+
+body.is-mobile .dossier-wrapper,
+body.is-mobile .resume-wrapper,
+body.is-mobile .specs-wrapper {
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+body.is-mobile .dossier-card,
+body.is-mobile .resume-card {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+body.is-mobile .pipeline-flow {
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-x: visible;
+  padding: 0;
+}
+
+body.is-mobile .pipeline-step {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-3);
+}
+
+body.is-mobile .pipeline-arrow {
+  transform: rotate(90deg);
+  padding: var(--space-1) 0;
+  font-size: 14px;
+  justify-content: center;
+}
+
+body.is-mobile .specs-grid,
+body.is-mobile .skills-grid {
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+body.is-mobile .historical-metrics-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+body.is-mobile .historical-metrics-grid .hist-card:last-child {
+  grid-column: span 2;
+}
+
+body.is-mobile .hist-card {
+  padding: var(--space-3);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+body.is-mobile .hist-label {
+  font-size: 9.5px;
+}
+
+body.is-mobile .hist-val {
+  font-size: 16px;
+  min-height: 20px;
+}
+
+body.is-mobile #hist-peak-hour {
+  font-size: 12px;
+  line-height: 1.25;
+  white-space: normal;
+  word-break: break-word;
+}
+
+body.is-mobile .hist-histogram-bars {
+  gap: 2px;
+  height: 52px;
+}
+
+body.is-mobile .spec-list li {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding-bottom: var(--space-2);
+}
+
+body.is-mobile .spec-key {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+body.is-mobile .spec-val {
+  font-size: 12px;
+  text-align: left;
+  justify-content: flex-start;
+  word-break: break-word;
+  min-height: auto;
+}
+
+body.is-mobile .dossier-header,
+body.is-mobile .resume-header {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+}
+
+body.is-mobile .dossier-actions,
+body.is-mobile .resume-actions {
+  width: 100%;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+body.is-mobile .dossier-actions .hud-btn,
+body.is-mobile .resume-actions .hud-btn {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
 }
 
 /* desktop guarantee: full height sidebar, hidden mobile handle bar */

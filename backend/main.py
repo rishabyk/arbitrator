@@ -215,7 +215,7 @@ def get_aircraft():
                         {
                             "hex": str(a.get("hex") or "UNKNOWN"),
                             "flight": str(a.get("flight") or "").strip(),
-                            "squawk": str(a.get("squawk") or "----"),
+                            "squawk": (str(a.get("squawk")).strip().zfill(4) if a.get("squawk") is not None and str(a.get("squawk")).strip() not in ("", "----", "None") else "----"),
                             "alt_baro": (
                                 0 if a.get("alt_baro") == "ground" else a.get("alt_baro")
                             ),

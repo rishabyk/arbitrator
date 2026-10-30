@@ -105,8 +105,15 @@ def log_aircraft_batch(aircraft_list):
                 except (ValueError, TypeError):
                     spd_val = None
 
-            flight = (ac.get("flight") or "").strip() or None
-            squawk = ac.get("squawk") or None
+            flight = (ac.get("flight") or "").strip()
+            flight = flight if flight and flight not in ("----", "UNKNOWN", "None") else None
+
+            raw_sq = ac.get("squawk")
+            squawk = None
+            if raw_sq is not None:
+                sq_str = str(raw_sq).strip()
+                if sq_str and sq_str not in ("----", "None", "0000", "null"):
+                    squawk = sq_str.zfill(4) if sq_str.isdigit() else sq_str
 
             session = _active_sessions.get(hex_code)
 
@@ -117,19 +124,20 @@ def log_aircraft_batch(aircraft_list):
                     session["max_altitude"] = max(session["max_altitude"] or 0, alt_val)
                 if spd_val is not None:
                     session["max_speed"] = max(session["max_speed"] or 0, spd_val)
-                if flight and not session["callsign"]:
+                if flight:
                     session["callsign"] = flight
-                if squawk and not session["squawk"]:
+                if squawk:
                     session["squawk"] = squawk
 
-                db_updates.append((
-                    session["callsign"],
-                    session["squawk"],
-                    session["last_seen"],
-                    session["max_altitude"],
-                    session["max_speed"],
-                    session["id"]
-                ))
+                if session.get("id") is not None:
+                    db_updates.append((
+                        session["callsign"],
+                        session["squawk"],
+                        session["last_seen"],
+                        session["max_altitude"],
+                        session["max_speed"],
+                        session["id"]
+                    ))
             else:
                 # New flight session
                 new_session = {
@@ -226,34 +234,57 @@ def get_history_stats():
         if peak_hour is not None and peak_count > 0:
             peak_str = f"{peak_hour:02d}:00–{(peak_hour+1)%24:02d}:00 ({peak_count} flt)"
 
-        # 5 most recent flights
+        # Most recent archived flight sessions
         cur.execute("""
             SELECT hex, callsign, squawk, first_seen, last_seen, max_altitude
             FROM flight_logs
             ORDER BY last_seen DESC
-            LIMIT 5
+            LIMIT 8
         """)
         recent_rows = cur.fetchall()
         recent_flights = []
         for r in recent_rows:
+            first_seen_ts = float(r[3]) if r[3] else None
+            last_seen_ts = float(r[4]) if r[4] else None
             first_seen_str = "----"
             last_seen_str = "----"
-            if r[3]:
+            duration_str = "--"
+
+            if first_seen_ts:
                 try:
-                    first_seen_str = datetime.fromtimestamp(float(r[3])).strftime("%H:%M:%S")
+                    first_seen_str = datetime.fromtimestamp(first_seen_ts).strftime("%H:%M:%S")
                 except Exception:
                     pass
-            if r[4]:
+            if last_seen_ts:
                 try:
-                    last_seen_str = datetime.fromtimestamp(float(r[4])).strftime("%H:%M:%S")
+                    last_seen_str = datetime.fromtimestamp(last_seen_ts).strftime("%H:%M:%S")
                 except Exception:
                     pass
+
+            if first_seen_ts and last_seen_ts and last_seen_ts >= first_seen_ts:
+                dur_sec = int(round(last_seen_ts - first_seen_ts))
+                if dur_sec < 60:
+                    duration_str = f"{dur_sec}s"
+                else:
+                    mins = dur_sec // 60
+                    secs = dur_sec % 60
+                    if mins < 60:
+                        duration_str = f"{mins}m {secs:02d}s" if secs > 0 else f"{mins}m"
+                    else:
+                        hrs = mins // 60
+                        rem_m = mins % 60
+                        duration_str = f"{hrs}h {rem_m:02d}m"
+
+            callsign_val = str(r[1]).strip() if (r[1] and str(r[1]).strip() not in ("", "----", "UNKNOWN", "None")) else r[0]
+            squawk_val = str(r[2]).strip() if (r[2] and str(r[2]).strip() not in ("", "----", "None", "null")) else "----"
+
             recent_flights.append({
                 "hex": r[0],
-                "callsign": r[1] or "----",
-                "squawk": r[2] or "----",
+                "callsign": callsign_val,
+                "squawk": squawk_val,
                 "first_seen": first_seen_str,
                 "last_seen": last_seen_str,
+                "duration": duration_str,
                 "max_altitude": r[5] or 0,
             })
 

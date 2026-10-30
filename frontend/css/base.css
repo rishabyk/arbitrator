@@ -133,6 +133,12 @@ body {
   z-index: 1;
 }
 
+.tab-pane.dossier-container.active,
+.tab-pane.specs-container.active,
+.tab-pane.resume-container.active {
+  display: block;
+}
+
 /* buttons */
 
 .hud-btn {

@@ -1025,7 +1025,7 @@ async function fetchHistoryStats() {
     const data = await res.json();
     if (dbBadge) {
       dbBadge.className = 'target-badge online';
-      dbBadge.textContent = 'SQLITE WAL';
+      dbBadge.textContent = 'DATABASE ACTIVE';
     }
 
     setField('hist-total-today', String(data.total_today ?? 0));
@@ -1034,7 +1034,7 @@ async function fetchHistoryStats() {
     setField('hist-max-alt', data.max_alt_today > 0 ? `${Number(data.max_alt_today).toLocaleString()} FT` : '-- FT');
     setField('hist-all-time', String(data.all_time_total ?? 0));
 
-    // Render 24-hour diurnal histogram
+    // Render 24-hour hourly traffic histogram
     const barsContainer = document.getElementById('hist-histogram-bars');
     if (barsContainer && Array.isArray(data.hourly_distribution)) {
       const maxCount = Math.max(1, ...data.hourly_distribution);
@@ -1045,7 +1045,7 @@ async function fetchHistoryStats() {
         return `
           <div class="hist-bar-col ${activeClass}" role="img" aria-label="${hrStr}: ${count} flights">
             <div class="hist-bar-fill" style="height: ${pct}%;"></div>
-            <div class="hist-bar-tooltip">${hrStr} : ${count} flt</div>
+            <div class="hist-bar-tooltip">${hrStr} : ${count} flights</div>
           </div>
         `;
       }).join('');
@@ -1055,17 +1055,22 @@ async function fetchHistoryStats() {
     const tbody = document.getElementById('hist-recent-tbody');
     if (tbody && Array.isArray(data.recent_flights)) {
       if (data.recent_flights.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-table-msg">No flight sessions archived yet today</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-table-msg">No flights recorded yet today</td></tr>`;
       } else {
         tbody.innerHTML = data.recent_flights.map(fl => {
           const altStr = fl.max_altitude > 0 ? `${Number(fl.max_altitude).toLocaleString()} FT` : '---- FT';
+          const squawkStr = (fl.squawk && fl.squawk !== '----') ? fl.squawk : '----';
+          const isEmergency = ANOMALY.SQUAWK_EMERGENCY.includes(String(squawkStr));
+          const squawkClass = isEmergency ? 'cell-anomaly' : '';
+          const durationStr = fl.duration || '--';
           return `
             <tr>
               <td class="flight-callsign">${(fl.callsign && fl.callsign !== '----') ? fl.callsign : fl.hex}</td>
               <td class="hex-cell">${fl.hex}</td>
-              <td>${fl.squawk}</td>
+              <td class="${squawkClass}">${squawkStr}</td>
               <td>${fl.first_seen}</td>
               <td>${fl.last_seen}</td>
+              <td>${durationStr}</td>
               <td>${altStr}</td>
             </tr>
           `;
@@ -1082,7 +1087,7 @@ function handleHistoryError(status) {
   const dbBadge = document.getElementById('hist-db-badge');
   if (dbBadge) {
     dbBadge.className = 'target-badge standby';
-    dbBadge.textContent = `SQLITE ${status}`;
+    dbBadge.textContent = `DATABASE ${status}`;
   }
   setField('hist-total-today', '0');
   setField('hist-unique-today', '0');
@@ -1092,7 +1097,7 @@ function handleHistoryError(status) {
 
   const tbody = document.getElementById('hist-recent-tbody');
   if (tbody && tbody.querySelector('.skeleton-row')) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty-table-msg">Database connecting / in standby</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-table-msg">Database connecting / in standby</td></tr>`;
   }
 }
 
