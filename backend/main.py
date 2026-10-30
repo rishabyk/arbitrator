@@ -1,27 +1,34 @@
+# import standard libraries
 import json
 import math
 import os
 import subprocess
 import time
+
+# import web framework and utilities
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import psutil
+
+# import history logger module
 try:
     import history_logger
 except ImportError:
     from backend import history_logger
 
+# initialize fastapi app
 app = FastAPI(title="Node Arbitrator")
 
+# start sqlite background logger on app startup
 @app.on_event("startup")
 def on_startup():
     try:
         history_logger.start_background_logger()
     except Exception as e:
-        print(f"[startup] Error starting history logger: {e}")
+        print(f"[startup] error starting history logger: {e}")
 
-# cors middleware
+# enable cross-origin resource sharing
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,25 +37,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ads-b json paths
+# candidate paths for decoder aircraft json output
 ADSB_FILEPATHS = [
     "/run/readsb/aircraft.json",
     "/run/dump1090-fa/aircraft.json",
     "/var/run/dump1090-mutability/aircraft.json",
 ]
 
-# station coordinates
+# ground station coordinates (latitude, longitude)
 STATION_LAT = 37.7749
 STATION_LON = -122.3194
 
 
-# calculate distance in nautical miles
+# calculate haversine distance between two points in nautical miles
 def calc_distance_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    # earth radius in nautical miles
     r_nm = 3440.065
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
     dlambda = math.radians(lon2 - lon1)
 
+    # haversine formula
     a = (
         math.sin(dphi / 2.0) ** 2
         + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2.0) ** 2
@@ -56,7 +65,7 @@ def calc_distance_nm(lat1: float, lon1: float, lat2: float, lon2: float) -> floa
     return round(2 * r_nm * math.atan2(math.sqrt(a), math.sqrt(1 - a)), 1)
 
 
-# read soc temperature in celsius
+# read cpu temperature from linux thermal zone in celsius
 def getCPUTemp() -> float:
     try:
         with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
@@ -65,12 +74,13 @@ def getCPUTemp() -> float:
         return 0.0
 
 
-# check rtl-sdr usb hardware in sysfs
+# check if rtl-sdr usb tuner is connected via sysfs
 def is_sdr_hardware_connected() -> bool:
     usb_dir = "/sys/bus/usb/devices"
     if not os.path.exists(usb_dir):
         return False
 
+    # scan usb devices for realtek rtl2832u/2838 vendor and product ids
     for dev in os.listdir(usb_dir):
         vendor_file = os.path.join(usb_dir, dev, "idVendor")
         product_file = os.path.join(usb_dir, dev, "idProduct")
@@ -87,22 +97,26 @@ def is_sdr_hardware_connected() -> bool:
     return False
 
 
-# inspect hardware, process, and frame freshness
+# inspect hardware presence, decoder process, and json freshness
 def check_receiver_status():
     hardware_present = is_sdr_hardware_connected()
     decoder_names = {"readsb", "dump1090", "dump1090-fa"}
 
+    # check if any supported decoder process is running
     process_running = any(
         p.info["name"] in decoder_names
         for p in psutil.process_iter(["name"])
     )
 
+    # tuner hardware is missing
     if not hardware_present:
         return "DISCONNECTED", "RECEIVER MISSING // HARDWARE UNPLUGGED"
 
+    # decoder process is not running
     if not process_running:
         return "STANDBY", "RECEIVER PARKED // LOW POWER STANDBY"
 
+    # check freshness of decoded aircraft json buffer
     for path in ADSB_FILEPATHS:
         if os.path.exists(path):
             file_age_sec = time.time() - os.path.getmtime(path)
@@ -110,12 +124,14 @@ def check_receiver_status():
                 return "ONLINE", "RECEIVER ACTIVE // NO ISSUES"
             return "DEGRADED", "RECEIVER STALE // NO RECENT FRAMES"
 
+    # decoder is running but file has not yet been written
     return "INITIALIZING", "RECEIVER ATTEMPTING LOCK // PLEASE WAIT"
 
 
-# telemetry vitals endpoint
+# telemetry vitals endpoint for host metrics
 @app.get("/api/telemetry")
 def get_telemetry():
+    # sample cpu, memory, disk, network, and uptime
     cpu_percent = psutil.cpu_percent(interval=None)
     cpu_per_core = psutil.cpu_percent(interval=None, percpu=True)
     mem = psutil.virtual_memory()
@@ -123,12 +139,14 @@ def get_telemetry():
     net = psutil.net_io_counters()
     uptime_sec = time.time() - psutil.boot_time()
 
+    # read current cpu frequency
     try:
         freq = psutil.cpu_freq()
         cpu_freq_mhz = round(freq.current) if freq else 0
     except Exception:
         cpu_freq_mhz = 0
 
+    # read system 1m, 5m, 15m load averages
     try:
         load_1m, load_5m, load_15m = [round(x, 2) for x in os.getloadavg()]
     except Exception:
@@ -154,9 +172,10 @@ def get_telemetry():
     }
 
 
-# toggle readsb service
+# toggle readsb systemd service on or off
 @app.post("/api/receiver/toggle")
 def toggle_receiver():
+    # abort if sdr dongle is not plugged in
     if not is_sdr_hardware_connected():
         raise HTTPException(
             status_code=400,
@@ -166,6 +185,7 @@ def toggle_receiver():
     status, _ = check_receiver_status()
     target_action = "stop" if status in ("ONLINE", "INITIALIZING", "DEGRADED") else "start"
 
+    # execute systemctl command
     try:
         subprocess.run(
             ["sudo", "systemctl", target_action, "readsb"],
@@ -187,7 +207,7 @@ def toggle_receiver():
         )
 
 
-# aircraft transponder endpoint
+# live aircraft transponder telemetry endpoint
 @app.get("/api/aircraft")
 def get_aircraft():
     status, status_msg = check_receiver_status()
@@ -202,15 +222,18 @@ def get_aircraft():
         "aircraft": [],
     }
 
+    # do not read json files if receiver is offline or standby
     if status not in ("ONLINE", "DEGRADED"):
         return response
 
+    # locate and read the freshest aircraft json file
     for path in ADSB_FILEPATHS:
         if os.path.exists(path):
             try:
                 with open(path, "r") as f:
                     data = json.load(f)
 
+                    # parse and filter active aircraft with coordinates
                     aircraft = [
                         {
                             "hex": str(a.get("hex") or "UNKNOWN"),
@@ -237,6 +260,7 @@ def get_aircraft():
 
                     response["total_tracked"] = len(aircraft)
                     response["aircraft"] = aircraft
+                    # record aircraft batch to sqlite database
                     try:
                         history_logger.log_aircraft_batch(aircraft)
                     except Exception as log_err:
@@ -250,7 +274,7 @@ def get_aircraft():
     return response
 
 
-# historical sqlite stats endpoint
+# historical sqlite database statistics endpoint
 @app.get("/api/history")
 def get_history():
     try:
@@ -259,20 +283,21 @@ def get_history():
         raise HTTPException(status_code=500, detail=f"Database query error: {str(e)}")
 
 
-# static files with no-cache headers
+# static files handler with cache-busting headers
 class CachedStaticFiles(StaticFiles):
     def is_not_modified(self, response_headers, request_headers) -> bool:
         return False
 
     async def get_response(self, path: str, scope):
         response = await super().get_response(path, scope)
+        # disable client caching so ui updates immediately
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
         return response
 
 
-# mount frontend directory
+# mount frontend directory for static html/js/css assets
 frontend_path = os.path.join(os.path.dirname(__file__), "../frontend")
 if os.path.exists(frontend_path):
     app.mount("/", CachedStaticFiles(directory=frontend_path, html=True), name="static")

@@ -1,43 +1,46 @@
 // application bootstrap and state controllers
 
 // state and config
-let map;
-let aircraftMarkers = {};
-let selectedHex     = null;
-let isFollowing     = false;
-let showTrails      = true;
+let map; // leaflet map instance
+let aircraftMarkers = {}; // active aircraft marker map: hex -> { marker, polyline, trail, data }
+let selectedHex     = null; // currently selected aircraft hex identifier
+let isFollowing     = false; // flag indicating if map is locked to selected target
+let showTrails      = true; // flag controlling breadcrumb trail visibility
 
-let lastSuccessfulTelemetry = null;
-let telemetryFailures = 0;
-let activeEmergencies = [];
+let lastSuccessfulTelemetry = null; // timestamp of last successful telemetry ping
+let telemetryFailures = 0; // consecutive failed telemetry pings
+let activeEmergencies = []; // list of aircraft squawking emergency codes
 
 // flight profile altitude history and chart
-const altitudeHistory = {};
-let profileChart = null;
+const altitudeHistory = {}; // historical altitude points: hex -> array of readings
+let profileChart = null; // chart.js instance for altitude profile sparkline
 
-const STATION_COORDS = [37.7749, -122.3194];
-const FOLLOW_ZOOM_LEVEL = 13;
-const tempHistory    = [];
-const MAX_HISTORY    = 60;
+const STATION_COORDS = [37.7749, -122.3194]; // station receiver latitude and longitude
+const FOLLOW_ZOOM_LEVEL = 13; // default zoom level when following a target
+const tempHistory    = []; // temperature reading ring buffer for thermal sparkline
+const MAX_HISTORY    = 60; // maximum points stored in temperature history buffer
 
 // anomaly thresholds
 const ANOMALY = {
-  ALT_FLOOR:        0,
-  VRATE_EXTREME:    4000,
-  SEEN_WARN_SEC:    5,
-  SEEN_CRITICAL_SEC: 20,
-  SEEN_PURGE_SEC:   40,
-  SQUAWK_EMERGENCY: ['7500', '7600', '7700'],
+  ALT_FLOOR:        0, // minimum realistic altitude in feet
+  VRATE_EXTREME:    4000, // vertical rate warning threshold in feet per minute
+  SEEN_WARN_SEC:    5, // yellow warning threshold for stale contacts
+  SEEN_CRITICAL_SEC: 10, // red critical alert threshold for stale contacts
+  SEEN_PURGE_SEC:   40, // maximum age in seconds before purging contact from map
+  SQUAWK_EMERGENCY: ['7500', '7600', '7700'], // special icao emergency squawk codes
 };
 
 // detect mobile / phone device via touch, user agent, or screen width
 function isMobileDevice() {
   if (typeof window === 'undefined') return false;
+  // check for coarse pointer or touch screen
   const hasTouch = Boolean(
     (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches) ||
     (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)
   );
+  // check if viewport width is 900px or less
   const isNarrow = window.innerWidth <= 900;
+  // check user agent string for mobile indicators
   const isMobileUA = Boolean(
     navigator.userAgent &&
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -50,9 +53,12 @@ function collapseSheet() {
   const sidebar = document.getElementById('sidebar');
   const handleBar = document.getElementById('sheet-handle-bar');
   const btnText = document.getElementById('sheet-toggle-text');
+  // add collapsed css class
   if (sidebar) sidebar.classList.add('sheet-collapsed');
+  // update accessibility attributes
   if (handleBar) handleBar.setAttribute('aria-expanded', 'false');
   if (btnText) btnText.textContent = 'EXPAND';
+  // trigger map resize to adjust viewport
   if (map) setTimeout(() => map.invalidateSize(), 180);
 }
 
@@ -60,17 +66,22 @@ function expandSheet() {
   const sidebar = document.getElementById('sidebar');
   const handleBar = document.getElementById('sheet-handle-bar');
   const btnText = document.getElementById('sheet-toggle-text');
+  // remove collapsed css class
   if (sidebar) sidebar.classList.remove('sheet-collapsed');
+  // update accessibility attributes
   if (handleBar) handleBar.setAttribute('aria-expanded', 'true');
   if (btnText) btnText.textContent = 'DISMISS';
+  // trigger map resize to adjust viewport
   if (map) setTimeout(() => map.invalidateSize(), 180);
 }
 
 function toggleMobileSheet(e) {
   if (e) e.stopPropagation();
+  // ignore toggle on desktop screens
   if (!isMobileDevice()) return;
   const sidebar = document.getElementById('sidebar');
   if (!sidebar) return;
+  // toggle between collapsed and expanded states
   if (sidebar.classList.contains('sheet-collapsed')) {
     expandSheet();
   } else {
@@ -78,21 +89,24 @@ function toggleMobileSheet(e) {
   }
 }
 
-// synchronize UI classes to current viewport / device mode
+// synchronize ui classes to current viewport / device mode
 function applyDeviceMode() {
   const isMobile = isMobileDevice();
   const sidebar = document.getElementById('sidebar');
   if (isMobile) {
+    // apply mobile styling and auto-collapse sheet if no plane is selected
     document.body.classList.add('is-mobile');
     if (sidebar && !selectedHex) {
       collapseSheet();
     }
   } else {
+    // restore desktop layout and remove collapsed state
     document.body.classList.remove('is-mobile');
     if (sidebar) {
       sidebar.classList.remove('sheet-collapsed');
     }
   }
+  // recalculate map dimensions
   if (map) {
     setTimeout(() => map.invalidateSize(), 150);
   }
@@ -100,6 +114,7 @@ function applyDeviceMode() {
 
 // initialize tabular ticker slots
 function initTickerSlots() {
+  // wrap numeric and metric text elements in ticker views for smooth tabular rendering
   document.querySelectorAll('.field-val, .stat-num, .metric-val, .tactical-stat-val, .sparkline-stat-val').forEach((el) => {
     el.classList.add('ticker-slot');
     const txt = el.textContent.trim();
@@ -127,7 +142,7 @@ function setField(id, text, anomalyClass) {
     if (anomalyClass) el.classList.add(anomalyClass);
   }
 
-  // update container alert state
+  // update parent container alert styling
   const cardParent = el.closest('.field, .metric-card, .radar-stat');
   if (cardParent) {
     const currentCardAlert = cardParent.classList.contains('field-alert-anomaly') ? 'field-alert-anomaly'
@@ -149,11 +164,13 @@ function setField(id, text, anomalyClass) {
     }
   }
 
+  // skip update if text value has not changed
   if (el._animTarget === targetStr) return;
   el._animTarget = targetStr;
 
   el.classList.add('ticker-slot');
 
+  // get or create ticker view span
   let view = el.querySelector('.ticker-view');
   if (!view) {
     el.innerHTML = '';
@@ -173,8 +190,10 @@ function setHeartbeatState(isOnline) {
   const dot = document.getElementById('stream-heartbeat-dot');
   if (!dot) return;
   if (isOnline) {
+    // live telemetry active
     dot.classList.remove('stale');
   } else {
+    // connection lost
     dot.classList.add('stale');
   }
 }
@@ -187,7 +206,7 @@ function updateAlertBanner() {
 
   const alerts = [];
 
-  // 1. Station Disconnect alert: Pi offline / heartbeat lost
+  // check if telemetry heartbeat is lost (3 consecutive failures or >4s elapsed)
   const isDisconnected = (lastSuccessfulTelemetry !== null && (telemetryFailures >= 3 || Date.now() - lastSuccessfulTelemetry > 4000))
                       || (lastSuccessfulTelemetry === null && telemetryFailures >= 4);
 
@@ -207,10 +226,11 @@ function updateAlertBanner() {
     `);
   }
 
-  // 2. Active Aircraft Squawk Emergencies
+  // check active aircraft squawk emergencies
   if (activeEmergencies && activeEmergencies.length > 0) {
     activeEmergencies.forEach((ac) => {
       const sq = String(ac.squawk);
+      // map squawk to standard icao emergency label
       const emergencyLabel = sq === '7700' ? 'General Emergency'
                            : sq === '7600' ? 'Radio Failure (NORDO)'
                            : sq === '7500' ? 'Unlawful Interference (Hijack)'
@@ -238,10 +258,12 @@ function updateAlertBanner() {
     });
   }
 
+  // display banner if alerts exist, otherwise hide
   if (alerts.length > 0) {
     container.innerHTML = alerts.join('');
     banner.style.display = 'flex';
 
+    // attach track on radar click listeners
     container.querySelectorAll('button[data-focus-hex]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const hex = btn.getAttribute('data-focus-hex');
@@ -262,11 +284,13 @@ function updateAlertBanner() {
 
 // initialize leaflet map
 function initMap() {
+  // center map on station coordinates at zoom level 9
   map = L.map('map', {
     zoomControl: true,
     attributionControl: false,
   }).setView(STATION_COORDS, 9);
 
+  // add dark tile layer
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     className: 'dark-tiles',
@@ -276,6 +300,7 @@ function initMap() {
   map.on('click', (e) => {
     if (e && e.originalEvent && e.originalEvent.target) {
       const target = e.originalEvent.target;
+      // prevent deselect if clicking interactive overlay elements
       if (target.closest('.radar-overlay-bar, .leaflet-control, .sidebar, button, input, a, [role="button"]')) {
         return;
       }
@@ -294,8 +319,9 @@ function initMap() {
   });
 }
 
-// create plane marker icon
+// create plane marker icon with heading rotation and status styling
 function createPlaneIcon(heading = 0, isSelected = false, squawk = '----', isStale = false, isWarn = false) {
+  // check if squawk indicates an emergency
   const isEmergency = ANOMALY.SQUAWK_EMERGENCY.includes(String(squawk));
   let statusClass = '';
   if (isSelected) {
@@ -308,6 +334,7 @@ function createPlaneIcon(heading = 0, isSelected = false, squawk = '----', isSta
     statusClass = 'warn';
   }
 
+  // construct 48x48 rotated svg airplane icon (1.5x scale)
   const html = `
     <div style="transform: rotate(${heading}deg); width: 48px; height: 48px;
                 display: flex; align-items: center; justify-content: center;">
@@ -343,6 +370,7 @@ function createPlaneIcon(heading = 0, isSelected = false, squawk = '----', isSta
     </div>
   `;
 
+  // return leaflet div icon with centered anchor
   return L.divIcon({
     html,
     className: 'plane-icon-wrapper',
@@ -351,7 +379,7 @@ function createPlaneIcon(heading = 0, isSelected = false, squawk = '----', isSta
   });
 }
 
-// poll hardware telemetry
+// poll hardware telemetry from fastapi endpoint
 async function fetchTelemetry() {
   try {
     const res = await fetch('/api/telemetry');
@@ -367,7 +395,7 @@ async function fetchTelemetry() {
     setHeartbeatState(true);
     updateAlertBanner();
 
-    // header ribbon
+    // update header ribbon fields
     if (typeof d.cpu_temp_c === 'number' && !isNaN(d.cpu_temp_c)) {
       setField('cpu-temp', `${d.cpu_temp_c.toFixed(1)}°C`);
       updateThermalSparkline(d.cpu_temp_c);
@@ -382,7 +410,7 @@ async function fetchTelemetry() {
       setField('node-uptime', `${d.uptime_hours.toFixed(1)}H`);
     }
 
-    // per-core load bars
+    // update per-core load progress bars
     if (Array.isArray(d.cpu_per_core)) {
       d.cpu_per_core.forEach((pct, i) => {
         const bar = document.getElementById(`core-bar-${i}`);
@@ -393,7 +421,7 @@ async function fetchTelemetry() {
       });
     }
 
-    // system vitals
+    // update system vitals fields in tab 2
     setField('telem-freq',  `${d.cpu_freq_mhz || '----'} MHz`);
     setField('telem-procs', String(d.process_count || '---'));
     setField('telem-mem',
@@ -414,9 +442,10 @@ async function fetchTelemetry() {
   }
 }
 
-// update thermal history sparkline
+// update thermal history sparkline svg polyline
 function updateThermalSparkline(temp) {
   if (typeof temp !== 'number' || isNaN(temp)) return;
+  // push temperature reading and maintain buffer size
   tempHistory.push(temp);
   if (tempHistory.length > MAX_HISTORY) tempHistory.shift();
 
@@ -425,8 +454,10 @@ function updateThermalSparkline(temp) {
 
   setField('sparkline-current', `${temp.toFixed(1)}°C`);
 
+  // dimensions and temperature bounds
   const W = 300, H = 65, MIN_T = 30, MAX_T = 85;
 
+  // convert temperature values to svg coordinate points
   const points = tempHistory.map((t, i) => {
     const x       = (i / Math.max(1, MAX_HISTORY - 1)) * W;
     const clamped = Math.max(MIN_T, Math.min(MAX_T, t));
@@ -437,7 +468,7 @@ function updateThermalSparkline(temp) {
   poly.setAttribute('points', points);
 }
 
-// poll ads-b contacts
+// poll live ads-b transponder contacts from receiver api
 async function fetchAircraft() {
   try {
     const res = await fetch('/api/aircraft');
@@ -446,15 +477,17 @@ async function fetchAircraft() {
 
     const status      = (data.status || 'UNKNOWN').toUpperCase();
     const rawContacts = data.aircraft || [];
+    // purge contacts that have not been seen within threshold
     const contacts    = rawContacts.filter((ac) =>
       typeof ac.seen_sec !== 'number' || isNaN(ac.seen_sec) || ac.seen_sec < ANOMALY.SEEN_PURGE_SEC
     );
     const activeHexes = new Set();
     let   maxDist     = 0;
 
+    // update receiver status badge indicator
     updateReceiverBadge(status);
 
-    // update map contacts
+    // update map contacts and markers
     contacts.forEach((ac) => {
       const hex   = ac.hex;
       const lat   = ac.lat;
@@ -467,7 +500,7 @@ async function fetchAircraft() {
       activeHexes.add(hex);
       if (ac.distance_nm && ac.distance_nm > maxDist) maxDist = ac.distance_nm;
 
-      // record live flight profile telemetry
+      // record live flight profile altitude telemetry
       if (typeof ac.alt_baro === 'number' && !isNaN(ac.alt_baro)) {
         if (!altitudeHistory[hex]) {
           altitudeHistory[hex] = [];
@@ -475,6 +508,7 @@ async function fetchAircraft() {
         const hist = altitudeHistory[hex];
         const lastPt = hist[hist.length - 1];
         const nowTs = Date.now();
+        // throttle points to one reading every 900ms
         if (!lastPt || (nowTs - lastPt.timestamp >= 900)) {
           const nowD = new Date();
           const tLabel = `${String(nowD.getHours()).padStart(2, '0')}:${String(nowD.getMinutes()).padStart(2, '0')}:${String(nowD.getSeconds()).padStart(2, '0')}`;
@@ -488,13 +522,14 @@ async function fetchAircraft() {
         }
       }
 
+      // update existing marker or create a new one
       if (aircraftMarkers[hex]) {
         const entry = aircraftMarkers[hex];
         entry.marker.setLatLng([lat, lon]);
         entry.marker.setIcon(createPlaneIcon(track, isSel, ac.squawk, isStale, isWarn));
         entry.data = ac;
 
-        // append trail coordinates
+        // append breadcrumb trail coordinates if position moved
         const last = entry.trail[entry.trail.length - 1];
         if (!last || last[0] !== lat || last[1] !== lon) {
           entry.trail.push([lat, lon]);
@@ -502,6 +537,7 @@ async function fetchAircraft() {
           entry.polyline.setLatLngs(entry.trail);
         }
 
+        // if this aircraft is currently selected update sidebar and follow view
         if (isSel) {
           updateSidebar(ac);
           if (isFollowing && typeof lat === 'number' && typeof lon === 'number') {
@@ -509,6 +545,7 @@ async function fetchAircraft() {
           }
         }
       } else {
+        // create new marker and polyline trail for newly detected aircraft
         const marker = L.marker([lat, lon], {
           icon: createPlaneIcon(track, isSel, ac.squawk, isStale, isWarn),
         }).addTo(map);
@@ -538,7 +575,7 @@ async function fetchAircraft() {
       }
     });
 
-    // purge inactive contacts
+    // purge inactive contacts from map layers
     Object.keys(aircraftMarkers).forEach((hex) => {
       if (!activeHexes.has(hex)) {
         map.removeLayer(aircraftMarkers[hex].marker);
@@ -548,21 +585,21 @@ async function fetchAircraft() {
       }
     });
 
-    // purge untracked altitude histories
+    // purge untracked altitude histories for aircraft out of range
     Object.keys(altitudeHistory).forEach((hex) => {
       if (!activeHexes.has(hex) && hex !== selectedHex) {
         delete altitudeHistory[hex];
       }
     });
 
-    // update overlay stats
+    // update max range statistic on radar overlay
     setField('hud-max-range',
       maxDist > 0 ? `${maxDist.toFixed(1)} NM` : '-- NM');
 
-    // update table feeds
+    // update aircraft transponder tables in tab 4 and tab 1 sidebar
     updateAircraftTable(contacts, status);
 
-    // detect squawk emergencies (7500, 7600, 7700)
+    // detect emergency squawks (7500, 7600, 7700)
     activeEmergencies = contacts.filter((ac) =>
       ANOMALY.SQUAWK_EMERGENCY.includes(String(ac.squawk))
     );
@@ -572,7 +609,7 @@ async function fetchAircraft() {
   }
 }
 
-// update receiver status badge
+// update receiver status badge styling and text
 function updateReceiverBadge(status) {
   const badge      = document.getElementById('receiver-status');
   const tableBadge = document.getElementById('table-status-badge');
@@ -599,7 +636,7 @@ function updateReceiverBadge(status) {
   }
 }
 
-// refresh markers and breadcrumb trails
+// refresh marker icons and trail visibility
 function refreshMarkerIcons() {
   Object.keys(aircraftMarkers).forEach((h) => {
     const entry = aircraftMarkers[h];
@@ -608,9 +645,11 @@ function refreshMarkerIcons() {
     const isStale = (typeof seen === 'number' && !isNaN(seen) && seen >= ANOMALY.SEEN_CRITICAL_SEC);
     const isWarn  = (!isStale && typeof seen === 'number' && !isNaN(seen) && seen >= ANOMALY.SEEN_WARN_SEC);
 
+    // update icon svg and status colors
     entry.marker.setIcon(
       createPlaneIcon(entry.data.track || 0, isSel, entry.data.squawk, isStale, isWarn));
 
+    // update polyline trail colors and opacity
     entry.polyline.setStyle({
       color:   isSel ? '#ffb300' : '#00e5ff',
       opacity: showTrails ? (isSel ? 0.85 : 0.45) : 0,
@@ -618,7 +657,7 @@ function refreshMarkerIcons() {
   });
 }
 
-// select target aircraft
+// select target aircraft by hex identifier
 function selectTarget(hex) {
   selectedHex = hex;
   const target = aircraftMarkers[hex]?.data;
@@ -628,7 +667,7 @@ function selectTarget(hex) {
   updateSidebar(target);
   fetchAircraftPhoto(hex);
 
-  // update mobile sheet summary bar & auto-expand sheet on mobile
+  // update mobile sheet summary bar and auto-expand sheet on mobile
   const sidebar = document.getElementById('sidebar');
   const summaryCallsign = document.getElementById('sheet-summary-callsign');
   const summaryMeta = document.getElementById('sheet-summary-meta');
@@ -645,12 +684,13 @@ function selectTarget(hex) {
     expandSheet();
   }
 
+  // center map if follow mode is active
   if (isFollowing && typeof target.lat === 'number' && typeof target.lon === 'number') {
     map.setView([target.lat, target.lon], (map && map.getZoom()) ? map.getZoom() : FOLLOW_ZOOM_LEVEL, { animate: false });
   }
 }
 
-// update sidebar details
+// update sidebar cdu inspector details
 function updateSidebar(ac) {
   if (!ac) return;
 
@@ -660,6 +700,7 @@ function updateSidebar(ac) {
   const seen    = ac.seen_sec;
   const squawk  = ac.squawk || '----';
 
+  // determine stale or warn class for last seen metric
   const seenVal = (seen !== null && seen !== undefined && !isNaN(Number(seen)))
     ? Number(seen) : null;
   let seenClass = null;
@@ -668,6 +709,7 @@ function updateSidebar(ac) {
     else if (seenVal >= ANOMALY.SEEN_WARN_SEC)     seenClass = 'val-warn';
   }
 
+  // check if hex needs anomaly highlighting
   let hexAnomaly = null;
   if (ANOMALY.SQUAWK_EMERGENCY.includes(String(squawk))) {
     hexAnomaly = 'val-anomaly';
@@ -682,40 +724,49 @@ function updateSidebar(ac) {
   setField('target-callsign', callsign, hexAnomaly);
   setField('target-hex', hexAddress);
 
+  // format altitude in feet
   const altVal = (alt !== null && alt !== undefined && !isNaN(Number(alt)))
     ? Number(alt) : null;
   const altText = altVal !== null ? `${altVal.toLocaleString()} FT` : '---- FT';
   setField('target-alt', altText,
     (altVal !== null && altVal < ANOMALY.ALT_FLOOR) ? 'val-anomaly' : null);
 
+  // format vertical climb/descent rate
   const vrateNum = Number(vrate) || 0;
   const vratePrefix = vrateNum > 0 ? `▲ +${vrateNum}` : (vrateNum < 0 ? `▼ ${vrateNum}` : '0');
   setField('target-vrate', `${vratePrefix} FPM`,
     Math.abs(vrateNum) > ANOMALY.VRATE_EXTREME ? 'val-warn' : null);
 
+  // format speed in knots
   const speedVal = (speed !== null && speed !== undefined && !isNaN(Number(speed)))
     ? Number(speed) : null;
   setField('target-speed', speedVal !== null ? `${Math.round(speedVal)} KT` : '--- KT');
 
+  // format track heading in degrees
   const trackVal = (ac.track !== null && ac.track !== undefined && !isNaN(Number(ac.track)))
     ? Number(ac.track) : null;
   setField('target-track', trackVal !== null ? `${Math.round(trackVal)}°` : '---°');
 
+  // format squawk code with emergency anomaly check
   setField('target-squawk', squawk,
     ANOMALY.SQUAWK_EMERGENCY.includes(String(squawk)) ? 'val-anomaly' : null);
 
+  // format selected mcp altitude
   const selAltVal = (ac.selected_alt !== null && ac.selected_alt !== undefined && !isNaN(Number(ac.selected_alt)))
     ? Number(ac.selected_alt) : null;
   setField('target-sel-alt', selAltVal !== null ? `${selAltVal.toLocaleString()} FT` : '---- FT');
 
+  // format distance from station in nautical miles
   const distVal = (ac.distance_nm !== null && ac.distance_nm !== undefined && !isNaN(Number(ac.distance_nm)))
     ? Number(ac.distance_nm) : null;
   setField('target-dist', distVal !== null ? `${distVal.toFixed(1)} NM` : '--.- NM');
 
+  // format signal strength in dbfs
   const rssiVal = (ac.rssi !== null && ac.rssi !== undefined && !isNaN(Number(ac.rssi)))
     ? Number(ac.rssi) : null;
   setField('target-rssi', rssiVal !== null ? `${rssiVal.toFixed(1)} dBFS` : '--.- dBFS');
 
+  // format seconds since last seen
   setField('target-seen', seenVal !== null ? `${seenVal.toFixed(1)} S` : '--.- S', seenClass);
 
   // update flight profile graph
@@ -727,6 +778,7 @@ function clearSidebar() {
   selectedHex = null;
   setFollowMode(false);
 
+  // reset field defaults
   const defaults = {
     'target-callsign': 'NONE',
     'target-hex':      '------',
@@ -756,6 +808,7 @@ function clearSidebar() {
     collapseSheet();
   }
 
+  // render default empty photo placeholder
   const photoBox = document.getElementById('photo-box');
   if (photoBox) {
     photoBox.innerHTML = `
@@ -775,6 +828,7 @@ async function fetchAircraftPhoto(hex) {
   const photoBox = document.getElementById('photo-box');
   if (!photoBox) return;
 
+  // display loading spinner
   photoBox.innerHTML = `
     <div class="photo-placeholder scanning">
       <div class="radar-scan-spinner" aria-hidden="true"></div>
@@ -784,10 +838,12 @@ async function fetchAircraftPhoto(hex) {
   `;
 
   try {
+    // query planespotters api with icao hex
     const res = await fetch(`https://api.planespotters.net/pub/photos/hex/${hex}`);
     if (!res.ok) throw new Error('Photo lookup failed');
     const data = await res.json();
 
+    // render photo thumbnail and photographer credit if found
     if (data.photos && data.photos.length > 0) {
       const photo = data.photos[0];
       photoBox.innerHTML = `
@@ -818,7 +874,7 @@ async function fetchAircraftPhoto(hex) {
   }
 }
 
-// initialize flight profile altitude line chart (Chart.js)
+// initialize flight profile altitude line chart using chart.js
 function initFlightProfileChart() {
   const canvas = document.getElementById('altitude-profile-chart');
   if (!canvas || typeof Chart === 'undefined') return;
@@ -833,6 +889,7 @@ function initFlightProfileChart() {
           data: [],
           borderColor: '#38bdf8',
           borderWidth: 1.75,
+          // create subtle vertical area fill gradient
           backgroundColor: (context) => {
             const chart = context.chart;
             const { ctx: c, chartArea } = chart;
@@ -844,6 +901,7 @@ function initFlightProfileChart() {
           },
           fill: true,
           tension: 0.22,
+          // highlight latest data point with a visible dot
           pointRadius: (ctx) => {
             const index = ctx.dataIndex;
             const count = ctx.dataset.data.length;
@@ -907,7 +965,7 @@ function initFlightProfileChart() {
   }
 }
 
-// update active flight profile graph
+// update active flight profile graph with latest altitude telemetry
 function updateFlightProfile(hex, ac) {
   const emptyBox = document.getElementById('profile-chart-empty');
   const badge    = document.getElementById('profile-trend-badge');
@@ -920,7 +978,7 @@ function updateFlightProfile(hex, ac) {
     return;
   }
 
-  // Ensure current altitude reading is in history
+  // ensure current altitude reading is in history
   if (ac && typeof ac.alt_baro === 'number' && !isNaN(ac.alt_baro)) {
     if (!altitudeHistory[hex]) {
       altitudeHistory[hex] = [];
@@ -946,6 +1004,7 @@ function updateFlightProfile(hex, ac) {
 
   if (emptyBox) emptyBox.classList.add('hidden');
 
+  // calculate min, max, and net delta altitude
   const altitudes = history.map(p => p.alt);
   const minAlt = Math.min(...altitudes);
   const maxAlt = Math.max(...altitudes);
@@ -959,7 +1018,7 @@ function updateFlightProfile(hex, ac) {
     deltaEl.style.color = deltaAlt > 100 ? 'var(--accent-info)' : (deltaAlt < -100 ? 'var(--accent-orange)' : 'var(--text-primary)');
   }
 
-  // Trend detection
+  // detect climb, descent, or level flight trend
   const vrate = ac ? (Number(ac.vert_rate) || 0) : 0;
   if (badge) {
     badge.className = 'profile-trend-badge';
@@ -979,6 +1038,7 @@ function updateFlightProfile(hex, ac) {
     initFlightProfileChart();
   }
 
+  // push altitude data to chart without re-running animations
   if (profileChart) {
     profileChart.data.labels = history.map(p => p.label || '');
     profileChart.data.datasets[0].data = altitudes;
@@ -986,7 +1046,7 @@ function updateFlightProfile(hex, ac) {
   }
 }
 
-// clear flight profile graph
+// clear flight profile graph back to standby state
 function clearFlightProfile() {
   const emptyBox = document.getElementById('profile-chart-empty');
   const badge    = document.getElementById('profile-trend-badge');
@@ -1028,13 +1088,14 @@ async function fetchHistoryStats() {
       dbBadge.textContent = 'DATABASE ACTIVE';
     }
 
+    // populate summary cards for today and all-time traffic
     setField('hist-total-today', String(data.total_today ?? 0));
     setField('hist-unique-today', String(data.unique_today ?? 0));
     setField('hist-peak-hour', data.peak_hour_str || '--');
     setField('hist-max-alt', data.max_alt_today > 0 ? `${Number(data.max_alt_today).toLocaleString()} FT` : '-- FT');
     setField('hist-all-time', String(data.all_time_total ?? 0));
 
-    // Render 24-hour hourly traffic histogram
+    // render 24-hour hourly traffic histogram bars
     const barsContainer = document.getElementById('hist-histogram-bars');
     if (barsContainer && Array.isArray(data.hourly_distribution)) {
       const maxCount = Math.max(1, ...data.hourly_distribution);
@@ -1051,7 +1112,7 @@ async function fetchHistoryStats() {
       }).join('');
     }
 
-    // Render recent archived flights table
+    // render recent archived flights table
     const tbody = document.getElementById('hist-recent-tbody');
     if (tbody && Array.isArray(data.recent_flights)) {
       if (data.recent_flights.length === 0) {
@@ -1083,6 +1144,7 @@ async function fetchHistoryStats() {
   }
 }
 
+// handle history database error or offline fallback state
 function handleHistoryError(status) {
   const dbBadge = document.getElementById('hist-db-badge');
   if (dbBadge) {
@@ -1109,6 +1171,7 @@ function initMobileBottomSheet() {
 
   if (!sidebar || !handleBar) return;
 
+  // bind tap and keyboard enter/space on the handle bar
   handleBar.addEventListener('click', toggleMobileSheet);
   handleBar.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -1160,7 +1223,7 @@ function initMobileBottomSheet() {
     }
 
     // pull down to dismiss when expanded
-    // triggers if dragging on header bar OR dragging down from the top of the content
+    // triggers if dragging on header bar or dragging down from the top of the content
     if (deltaY > 35 && (isTouchingHeader || isScrolledTopAtTouchStart)) {
       if (e.cancelable && isTouchingHeader) {
         e.preventDefault();
@@ -1170,13 +1233,14 @@ function initMobileBottomSheet() {
     }
   }, { passive: false });
 
+  // listen for window resizing and orientation changes
   window.addEventListener('resize', applyDeviceMode);
   window.addEventListener('orientationchange', applyDeviceMode);
 
   applyDeviceMode();
 }
 
-// update transponder tables
+// update transponder tables in tab 4 and tab 1 sidebar
 function updateAircraftTable(aircraftList, status) {
   const tbody = document.getElementById('aircraft-table-body');
   const sidebarTbody = document.getElementById('sidebar-aircraft-table-body');
@@ -1185,6 +1249,7 @@ function updateAircraftTable(aircraftList, status) {
   const count = aircraftList ? aircraftList.length : 0;
   if (countBadge) countBadge.textContent = String(count);
 
+  // handle empty contact list
   if (!aircraftList || aircraftList.length === 0) {
     if (tbody) {
       tbody.innerHTML =
@@ -1197,7 +1262,7 @@ function updateAircraftTable(aircraftList, status) {
     return;
   }
 
-  // sort closest first
+  // sort closest first by distance in nautical miles
   const sorted = [...aircraftList].sort(
     (a, b) => (a.distance_nm || 999) - (b.distance_nm || 999));
 
@@ -1263,6 +1328,7 @@ function updateAircraftTable(aircraftList, status) {
         </tr>`;
     }).join('');
 
+    // click row in tab 4 to jump to radar tab and track target
     tbody.querySelectorAll('.table-row-clickable').forEach((row) => {
       row.addEventListener('click', () => {
         const hex = row.getAttribute('data-hex');
@@ -1278,7 +1344,7 @@ function updateAircraftTable(aircraftList, status) {
     });
   }
 
-  // sidebar compact contacts table
+  // sidebar compact contacts table in tab 1
   if (sidebarTbody) {
     sidebarTbody.innerHTML = sorted.map((ac) => {
       const isSel = ac.hex === selectedHex;
@@ -1314,6 +1380,7 @@ function updateAircraftTable(aircraftList, status) {
       `;
     }).join('');
 
+    // click compact row in sidebar to select and pan to target
     sidebarTbody.querySelectorAll('.table-row-clickable').forEach((row) => {
       row.addEventListener('click', () => {
         const hex = row.getAttribute('data-hex');
@@ -1331,6 +1398,7 @@ function setFollowMode(enable) {
   const followBtn = document.getElementById('follow-target-btn');
   if (!followBtn) return;
 
+  // toggle button active state and labels
   followBtn.classList.toggle('active', isFollowing);
   const fullLabel = followBtn.querySelector('.btn-label-full');
   const shortLabel = followBtn.querySelector('.btn-label-short');
@@ -1344,7 +1412,7 @@ function toggleFollowMode() {
     return;
   }
 
-  // If no aircraft selected yet, auto-select nearest active contact
+  // if no aircraft selected yet auto-select nearest active contact
   if (!selectedHex) {
     const activeHexes = Object.keys(aircraftMarkers);
     if (activeHexes.length > 0) {
@@ -1363,11 +1431,11 @@ function toggleFollowMode() {
     const target = aircraftMarkers[selectedHex].data;
     if (typeof target.lat === 'number' && typeof target.lon === 'number') {
       setFollowMode(true);
-      // Zoom to comfortable tactical tracking level (zoom 13)
+      // zoom to comfortable tactical tracking level
       map?.setView([target.lat, target.lon], FOLLOW_ZOOM_LEVEL, { animate: false });
     }
   } else {
-    // Notify user no contact is currently available to follow
+    // notify user no contact is currently available to follow
     const followBtn = document.getElementById('follow-target-btn');
     if (followBtn) {
       const fullLabel = followBtn.querySelector('.btn-label-full');
@@ -1399,6 +1467,7 @@ function initRadarControls() {
     L.DomEvent.disableScrollPropagation(overlayBar);
   }
 
+  // toggle flight trails
   trailsBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
     if (typeof L !== 'undefined' && L.DomEvent) L.DomEvent.stopPropagation(e);
@@ -1408,12 +1477,14 @@ function initRadarControls() {
     refreshMarkerIcons();
   });
 
+  // toggle target follow lock
   followBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
     if (typeof L !== 'undefined' && L.DomEvent) L.DomEvent.stopPropagation(e);
     toggleFollowMode();
   });
 
+  // recenter map to station coordinates
   centerBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
     if (typeof L !== 'undefined' && L.DomEvent) L.DomEvent.stopPropagation(e);
@@ -1421,7 +1492,7 @@ function initRadarControls() {
     map?.setView(STATION_COORDS, 9);
   });
 
-  // keyboard navigation (WASD, Arrows, +, -, H, F, T, Esc)
+  // keyboard navigation (wasd, arrows, +, -, h, f, t, esc)
   window.addEventListener('keydown', (e) => {
     // ignore if typing inside inputs or holding modifiers
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) return;
@@ -1437,52 +1508,62 @@ function initRadarControls() {
     switch (key) {
       case 'w':
       case 'arrowup':
+        // pan map north
         e.preventDefault();
         if (isFollowing) setFollowMode(false);
         map.panBy([0, -panStep], { animate: false });
         break;
       case 's':
       case 'arrowdown':
+        // pan map south
         e.preventDefault();
         if (isFollowing) setFollowMode(false);
         map.panBy([0, panStep], { animate: false });
         break;
       case 'a':
       case 'arrowleft':
+        // pan map west
         e.preventDefault();
         if (isFollowing) setFollowMode(false);
         map.panBy([-panStep, 0], { animate: false });
         break;
       case 'd':
       case 'arrowright':
+        // pan map east
         e.preventDefault();
         if (isFollowing) setFollowMode(false);
         map.panBy([panStep, 0], { animate: false });
         break;
       case '+':
       case '=':
+        // zoom map in
         e.preventDefault();
         map.zoomIn();
         break;
       case '-':
       case '_':
+        // zoom map out
         e.preventDefault();
         map.zoomOut();
         break;
       case 'h':
+        // return home to station coordinates
         e.preventDefault();
         setFollowMode(false);
         map.setView(STATION_COORDS, 9);
         break;
       case 'f':
+        // toggle target follow mode
         e.preventDefault();
         toggleFollowMode();
         break;
       case 't':
+        // toggle breadcrumb trails
         e.preventDefault();
         trailsBtn?.click();
         break;
       case 'escape':
+        // clear selected target
         if (selectedHex) {
           clearSidebar();
           refreshMarkerIcons();
@@ -1504,9 +1585,11 @@ function initTabNavigation() {
 
       if (targetPane && targetPane.classList.contains('active')) return;
 
+      // deactivate previous tab and pane
       tabs.forEach((t)  => t.classList.remove('active'));
       panes.forEach((p) => p.classList.remove('active'));
 
+      // activate selected tab and pane
       tab.classList.add('active');
 
       if (targetPane) {
@@ -1539,6 +1622,7 @@ function initCollapsibles() {
   const scToggle = document.getElementById('sidebar-contacts-toggle');
   const scPanel = document.getElementById('sidebar-contacts-panel');
   if (scToggle && scPanel) {
+    // restore persisted collapsed state from localstorage
     if (localStorage.getItem('sidebar_contacts_collapsed') === '1') {
       scPanel.classList.add('collapsed');
       scToggle.setAttribute('aria-expanded', 'false');
@@ -1572,6 +1656,7 @@ function initCollapsibles() {
 
 // application bootstrap
 document.addEventListener('DOMContentLoaded', () => {
+  // initialize components
   initTickerSlots();
   initMap();
   initTabNavigation();
@@ -1580,14 +1665,17 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileBottomSheet();
   initFlightProfileChart();
 
+  // initial polling passes
   fetchTelemetry();
   fetchAircraft();
   fetchHistoryStats();
 
+  // schedule recurring polling intervals
   setInterval(fetchTelemetry, 1000);
   setInterval(fetchAircraft,  1000);
   setInterval(fetchHistoryStats, 8000);
 
+  // handle window resize events for leaflet
   window.addEventListener('resize', () => {
     if (map) map.invalidateSize();
   });

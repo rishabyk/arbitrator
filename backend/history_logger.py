@@ -1,3 +1,4 @@
+# import standard libraries
 import os
 import json
 import time
@@ -5,30 +6,36 @@ import sqlite3
 import threading
 from datetime import datetime, date
 
+# path to sqlite history database file
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arbitrator_history.db")
 
+# paths where readsb / dump1090 dumps active aircraft json
 ADSB_FILEPATHS = [
     "/run/readsb/aircraft.json",
     "/run/dump1090-fa/aircraft.json",
     "/var/run/dump1090-mutability/aircraft.json",
 ]
 
-# In-memory flight sessions tracking: hex -> session_dict
+# in-memory flight sessions tracking: hex -> session dict
 _active_sessions = {}
 _lock = threading.Lock()
 _bg_thread = None
 _stop_event = threading.Event()
 
+# open sqlite database connection with wal journal mode
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH, timeout=10)
+    # enable write-ahead logging for concurrent reads and writes
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.row_factory = sqlite3.Row
     return conn
 
+# initialize database schema and indices
 def init_db():
     conn = get_db_connection()
     with conn:
+        # create flight logs table
         conn.execute("""
             CREATE TABLE IF NOT EXISTS flight_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,11 +49,12 @@ def init_db():
                 date_str TEXT NOT NULL
             );
         """)
+        # create lookup indices for fast querying
         conn.execute("CREATE INDEX IF NOT EXISTS idx_flight_hex_date ON flight_logs(hex, date_str);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_flight_date ON flight_logs(date_str);")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_flight_last_seen ON flight_logs(last_seen);")
 
-        # Check if table is empty; if so, populate baseline local traffic for initial load
+        # if table is empty populate baseline traffic for initial display
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM flight_logs")
         count = cur.fetchone()[0]
@@ -54,8 +62,8 @@ def init_db():
             seed_baseline_data(conn)
     conn.close()
 
+# seed initial bay area flight logs so stats show meaningful data immediately
 def seed_baseline_data(conn):
-    """Seed initial realistic Bay Area Mode-S logs so stats show meaningful telemetry immediately."""
     now = time.time()
     today_str = date.today().isoformat()
     baseline = [
@@ -72,8 +80,8 @@ def seed_baseline_data(conn):
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, baseline)
 
+# update active sessions and persist batch records to sqlite
 def log_aircraft_batch(aircraft_list):
-    """Update or insert aircraft records into SQLite database."""
     if not aircraft_list:
         return
 
@@ -84,11 +92,13 @@ def log_aircraft_batch(aircraft_list):
 
     with _lock:
         for ac in aircraft_list:
+            # validate hex identifier
             raw_hex = ac.get("hex")
             if not raw_hex or raw_hex == "UNKNOWN":
                 continue
             hex_code = str(raw_hex).strip().upper()
 
+            # extract barometric altitude
             alt = ac.get("alt_baro")
             alt_val = None
             if alt is not None and alt != "ground":
@@ -97,6 +107,7 @@ def log_aircraft_batch(aircraft_list):
                 except (ValueError, TypeError):
                     alt_val = None
 
+            # extract ground speed
             spd = ac.get("speed") or ac.get("gs")
             spd_val = None
             if spd is not None:
@@ -105,9 +116,11 @@ def log_aircraft_batch(aircraft_list):
                 except (ValueError, TypeError):
                     spd_val = None
 
+            # sanitize flight callsign
             flight = (ac.get("flight") or "").strip()
             flight = flight if flight and flight not in ("----", "UNKNOWN", "None") else None
 
+            # sanitize 4-digit squawk transponder code
             raw_sq = ac.get("squawk")
             squawk = None
             if raw_sq is not None:
@@ -115,9 +128,10 @@ def log_aircraft_batch(aircraft_list):
                 if sq_str and sq_str not in ("----", "None", "0000", "null"):
                     squawk = sq_str.zfill(4) if sq_str.isdigit() else sq_str
 
+            # check for active in-memory session
             session = _active_sessions.get(hex_code)
 
-            # If existing session active within last 15 mins (900 sec), update it
+            # if session was seen within the last 15 minutes (900 seconds) update it
             if session and (now - session["last_seen"] < 900):
                 session["last_seen"] = now
                 if alt_val is not None:
@@ -129,6 +143,7 @@ def log_aircraft_batch(aircraft_list):
                 if squawk:
                     session["squawk"] = squawk
 
+                # queue database update
                 if session.get("id") is not None:
                     db_updates.append((
                         session["callsign"],
@@ -139,7 +154,7 @@ def log_aircraft_batch(aircraft_list):
                         session["id"]
                     ))
             else:
-                # New flight session
+                # initialize new flight session
                 new_session = {
                     "hex": hex_code,
                     "callsign": flight,
@@ -154,7 +169,7 @@ def log_aircraft_batch(aircraft_list):
                 _active_sessions[hex_code] = new_session
                 db_inserts.append(new_session)
 
-        # Evict inactive sessions from in-memory cache (> 15 minutes without contact)
+        # purge sessions inactive for more than 15 minutes
         expired_hexes = [
             h for h, s in _active_sessions.items()
             if (now - s["last_seen"] >= 900)
@@ -162,7 +177,7 @@ def log_aircraft_batch(aircraft_list):
         for h in expired_hexes:
             del _active_sessions[h]
 
-    # Commit batch to SQLite
+    # commit batched inserts and updates to sqlite
     if db_inserts or db_updates:
         try:
             conn = get_db_connection()
@@ -186,16 +201,16 @@ def log_aircraft_batch(aircraft_list):
                     """, db_updates)
             conn.close()
         except Exception as e:
-            print(f"[history_logger] DB write error: {e}")
+            print(f"[history_logger] db write error: {e}")
 
+# aggregate statistics for tab 4 history panel
 def get_history_stats():
-    """Retrieve historical statistics for Tab 04 telemetry widget."""
     today_str = date.today().isoformat()
     conn = get_db_connection()
     try:
         cur = conn.cursor()
 
-        # Total flights today and unique airframes
+        # query total flights, unique airframes, and max altitude for today
         cur.execute("""
             SELECT COUNT(*), COUNT(DISTINCT hex), MAX(max_altitude)
             FROM flight_logs
@@ -206,11 +221,11 @@ def get_history_stats():
         unique_today = row[1] or 0
         max_alt_today = row[2] or 0
 
-        # All-time total
+        # query all-time total recorded flights
         cur.execute("SELECT COUNT(*) FROM flight_logs")
         all_time_total = cur.fetchone()[0] or 0
 
-        # Hourly distribution for today (0-23 hours)
+        # group today flights into 24-hour histogram buckets
         cur.execute("""
             SELECT CAST(strftime('%H', datetime(first_seen, 'unixepoch', 'localtime')) AS INTEGER) as hr, COUNT(*)
             FROM flight_logs
@@ -218,6 +233,7 @@ def get_history_stats():
             GROUP BY hr
         """, (today_str,))
         hourly_rows = cur.fetchall()
+
         hourly_map = {i: 0 for i in range(24)}
         peak_hour = None
         peak_count = 0
@@ -230,11 +246,12 @@ def get_history_stats():
                     peak_count = cnt
                     peak_hour = hr
 
+        # format peak traffic time window string
         peak_str = "--"
         if peak_hour is not None and peak_count > 0:
             peak_str = f"{peak_hour:02d}:00–{(peak_hour+1)%24:02d}:00 ({peak_count} flt)"
 
-        # Most recent archived flight sessions
+        # fetch most recently tracked flight sessions
         cur.execute("""
             SELECT hex, callsign, squawk, first_seen, last_seen, max_altitude
             FROM flight_logs
@@ -250,17 +267,21 @@ def get_history_stats():
             last_seen_str = "----"
             duration_str = "--"
 
+            # format first seen timestamp
             if first_seen_ts:
                 try:
                     first_seen_str = datetime.fromtimestamp(first_seen_ts).strftime("%H:%M:%S")
                 except Exception:
                     pass
+
+            # format last seen timestamp
             if last_seen_ts:
                 try:
                     last_seen_str = datetime.fromtimestamp(last_seen_ts).strftime("%H:%M:%S")
                 except Exception:
                     pass
 
+            # calculate total duration in seconds or minutes
             if first_seen_ts and last_seen_ts and last_seen_ts >= first_seen_ts:
                 dur_sec = int(round(last_seen_ts - first_seen_ts))
                 if dur_sec < 60:
@@ -301,8 +322,8 @@ def get_history_stats():
     finally:
         conn.close()
 
+# single pass checking ads-b daemon output files and recording aircraft
 def poll_and_log_adsb():
-    """Single pass checking ADS-B daemon output files and recording aircraft."""
     for path in ADSB_FILEPATHS:
         if os.path.exists(path):
             try:
@@ -315,32 +336,32 @@ def poll_and_log_adsb():
             except Exception:
                 continue
 
+# background worker loop polling decoder files every 2.5 seconds
 def _logger_worker():
-    """Background loop polling aircraft files every 2.5 seconds."""
     while not _stop_event.is_set():
         try:
             poll_and_log_adsb()
         except Exception as e:
-            print(f"[history_logger] Worker loop exception: {e}")
+            print(f"[history_logger] worker loop exception: {e}")
         time.sleep(2.5)
 
+# start background daemon thread for sqlite logging
 def start_background_logger():
-    """Start daemon thread for automated background logging."""
     global _bg_thread
     init_db()
     if _bg_thread is None or not _bg_thread.is_alive():
         _stop_event.clear()
         _bg_thread = threading.Thread(target=_logger_worker, daemon=True, name="ADSBHistoryLogger")
         _bg_thread.start()
-        print("[history_logger] Background SQLite ADS-B logger started.")
+        print("[history_logger] background sqlite ads-b logger started.")
 
+# standalone cli runner for testing
 if __name__ == "__main__":
-    print("[history_logger] Running standalone ADS-B logger daemon...")
+    print("[history_logger] running standalone ads-b logger daemon...")
     init_db()
     try:
         while True:
             poll_and_log_adsb()
             time.sleep(2.0)
     except KeyboardInterrupt:
-        print("[history_logger] Stopped.")
-
+        print("[history_logger] stopped.")

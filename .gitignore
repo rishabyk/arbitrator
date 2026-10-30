@@ -1,18 +1,21 @@
-# Python environments and cache
+# python environments and cache
 venv/
 .venv/
 __pycache__/
 *.pyc
 
-# Operating system files
+# operating system files
 Thumbs.db
 .DS_Store
 
-# Local SQLite databases
+# local sqlite databases
 *.db
 *.db-wal
 *.db-shm
 *.sqlite
+*.sqlite3
+backend/arbitrator_history.db*
+arbitrator_history.db*
 
-# VSCode settings
+# vscode settings
 .vscode/
