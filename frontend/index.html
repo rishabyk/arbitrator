@@ -10,10 +10,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- open graph -->
+  <meta name="description" content="rishabyk // ARBITRATOR">
+
+  <!-- open graph / link preview -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Arbitrator — 1090 MHz ADS-B Telemetry Station">
-  <meta property="og:description" content="Real-time Mode-S edge demodulation, tactical aircraft tracking, and hardware telemetry.">
+  <meta property="og:site_name" content="rishabyk // ARBITRATOR">
+  <meta property="og:title" content="rishabyk // ARBITRATOR">
+  <meta property="og:description" content="rishabyk // ARBITRATOR">
+
+  <!-- twitter / messaging cards -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="rishabyk // ARBITRATOR">
+  <meta name="twitter:description" content="rishabyk // ARBITRATOR">
 
   <!-- favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'><g transform='rotate(-45, 7, 7)'><path fill='%2338bdf8' d='M 11.2,6.4 8.8,6.1 7.9,5.8 7.45,5.8 5.2592125,3.025 l 0.7407937,0 C 6.2187438,3.025 6.4,2.97578 6.4,2.9125 6.4,2.84922 6.2187438,2.8 6.0000062,2.8 L 3.85,2.8 l 0,0.225 0.3,0 0,3.075 -0.9,0 L 1.9999937,4.6 1.3500062,4.6 1.15,4.80001 1.15,6.1 l 0.15,0 0,0.3 0.9,0 0,0.05 -1.2,0.15 0,0.8 1.2,0.15 0,0.05 -0.9,0 0,0.3 -0.15,0 0,1.29999 L 1.3500062,9.4 2.0000125,9.4 3.25,7.9 l 0.9,0 0,3.075 -0.3,0 0,0.225 2.1500062,0 C 6.2187625,11.2 6.4,11.15078 6.4,11.0875 6.4,11.0242 6.2187438,10.975 6.0000062,10.975 l -0.7407937,0 L 7.45,8.2 7.9,8.2 8.8,7.9 11.2,7.6 C 13,7.20001 13,7.10157 13,7 13,6.89843 13,6.79999 11.2,6.4 Z'/></g></svg>">
@@ -49,46 +57,46 @@
         <span class="metric-val" id="cpu-usage"><span class="skeleton-bar" style="width: 38px;"></span></span>
       </div>
       <div class="metric-card">
-        <span class="metric-label">RAM Active</span>
+        <span class="metric-label">RAM</span>
         <span class="metric-val" id="ram-usage"><span class="skeleton-bar" style="width: 38px;"></span></span>
       </div>
       <div class="metric-card">
-        <span class="metric-label">Node Uptime</span>
+        <span class="metric-label">Uptime</span>
         <span class="metric-val" id="node-uptime"><span class="skeleton-bar" style="width: 42px;"></span></span>
       </div>
       
       <!-- receiver status metric -->
       <div class="metric-card receiver-metric">
         <div class="metric-label-row">
-          <span class="metric-label">1090 MHz SDR</span>
+          <span class="metric-label">Receiver</span>
           <span class="help-trigger" tabindex="0" role="button" aria-label="Receiver Status Information">
             ?
             <div class="status-legend-popover">
-              <span class="legend-title">Receiver Status Guide</span>
+              <span class="legend-title">Receiver Status</span>
               <div class="legend-item">
                 <span class="legend-dot dot-online"></span>
                 <span class="legend-name">ONLINE</span>
-                <span class="legend-desc">Receiver active, receiving live signals</span>
+                <span class="legend-desc">Active, receiving live signals</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-standby"></span>
                 <span class="legend-name">STANDBY</span>
-                <span class="legend-desc">Receiver plugged in, currently paused</span>
+                <span class="legend-desc">Connected, currently paused</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-init"></span>
                 <span class="legend-name">INITIALIZING</span>
-                <span class="legend-desc">Receiver starting up, waiting for signal</span>
+                <span class="legend-desc">Starting up, searching for signal</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-degraded"></span>
                 <span class="legend-name">DEGRADED</span>
-                <span class="legend-desc">Receiver running, but no recent signals</span>
+                <span class="legend-desc">Running, no recent signals</span>
               </div>
               <div class="legend-item">
                 <span class="legend-dot dot-disc"></span>
                 <span class="legend-name">DISCONNECTED</span>
-                <span class="legend-desc">USB tuner unplugged or not detected</span>
+                <span class="legend-desc">Tuner unplugged or not detected</span>
               </div>
             </div>
           </span>
@@ -127,8 +135,24 @@
             <span class="stat-lbl">Max Range</span>
             <span class="stat-num" id="hud-max-range"><span class="skeleton-bar" style="width: 42px;"></span></span>
           </div>
-          <button class="radar-ctrl-btn active" id="toggle-trails-btn" type="button">TRAILS: ON</button>
-          <button class="radar-ctrl-btn" id="recenter-map-btn" type="button" title="Center map on station origin (Bay Area)">Hone: Bay Area</button>
+          <button class="radar-ctrl-btn active" id="toggle-trails-btn" type="button" title="Toggle transponder breadcrumb trails">TRAILS: ON</button>
+          <button class="radar-ctrl-btn" id="follow-target-btn" type="button" title="Lock camera onto selected aircraft and follow movement">
+            <span class="btn-label-full">FOLLOW</span>
+            <span class="btn-label-short">FOLLOW</span>
+          </button>
+          <button class="radar-ctrl-btn" id="recenter-map-btn" type="button" title="Center map on station origin (Bay Area)">HOME</button>
+          <div class="radar-keybinds-wrap">
+            <button class="radar-ctrl-btn keybinds-btn" id="radar-keybinds-btn" type="button" title="Keyboard Controls" aria-label="Keyboard Controls">KEYS</button>
+            <div class="keybinds-popover" id="keybinds-popover">
+              <span class="legend-title">Keyboard Controls</span>
+              <div class="keybind-row"><span class="key-combo">W A S D / Arrows</span><span class="key-desc">Pan map</span></div>
+              <div class="keybind-row"><span class="key-combo">+ / -</span><span class="key-desc">Zoom in / out</span></div>
+              <div class="keybind-row"><span class="key-combo">H</span><span class="key-desc">Home (Bay Area)</span></div>
+              <div class="keybind-row"><span class="key-combo">F</span><span class="key-desc">Follow aircraft</span></div>
+              <div class="keybind-row"><span class="key-combo">T</span><span class="key-desc">Toggle trails</span></div>
+              <div class="keybind-row"><span class="key-combo">Esc</span><span class="key-desc">Deselect contact</span></div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -137,8 +161,8 @@
         <!-- mobile slide-up sheet handle bar (visible <= 900px) -->
         <div class="sheet-handle-bar" id="sheet-handle-bar" role="button" tabindex="0" aria-label="Toggle Aircraft Inspector Sheet" aria-expanded="false">
           <div class="sheet-handle-info">
-            <span class="sheet-handle-title" id="sheet-summary-callsign">AIRCRAFT INSPECTOR</span>
-            <span class="sheet-handle-meta" id="sheet-summary-meta">SELECT MAP CONTACT</span>
+            <span class="sheet-handle-title" id="sheet-summary-callsign">AIRCRAFT</span>
+            <span class="sheet-handle-meta" id="sheet-summary-meta">SELECT AIRCRAFT</span>
           </div>
           <button class="sheet-toggle-btn" id="sheet-toggle-btn" type="button" aria-label="Toggle inspector sheet height">
             <span class="sheet-toggle-text" id="sheet-toggle-text">EXPAND</span>
@@ -150,7 +174,7 @@
 
         <div class="sidebar-header">
           <h3 class="sidebar-title">Selected Aircraft</h3>
-          <span class="target-badge" id="target-hex">NONE</span>
+          <span class="target-badge" id="target-callsign">NONE</span>
         </div>
 
         <div class="photo-container" id="photo-box">
@@ -158,26 +182,26 @@
             <svg class="flight-prompt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
             </svg>
-            <p class="flight-prompt-title">No aircraft selected</p>
-            <p class="flight-prompt-desc">Click any aircraft on the map to view live aircraft data and photos.</p>
+            <p class="flight-prompt-title">No Aircraft Selected</p>
+            <p class="flight-prompt-desc">Click an aircraft on the map to view live details and photos.</p>
           </div>
         </div>
 
         <div class="sidebar-grid">
           <div class="field">
-            <span class="field-label">Callsign</span>
-            <span class="field-val" id="target-callsign"><span class="skeleton-bar" style="width: 52px;"></span></span>
+            <span class="field-label">Address</span>
+            <span class="field-val" id="target-hex"><span class="skeleton-bar" style="width: 52px;"></span></span>
           </div>
           <div class="field">
             <span class="field-label">Altitude</span>
             <span class="field-val" id="target-alt"><span class="skeleton-bar" style="width: 60px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">Vertical Rate</span>
+            <span class="field-label">V-Rate</span>
             <span class="field-val" id="target-vrate"><span class="skeleton-bar" style="width: 65px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">Ground Speed</span>
+            <span class="field-label">Speed</span>
             <span class="field-val" id="target-speed"><span class="skeleton-bar" style="width: 48px;"></span></span>
           </div>
           <div class="field">
@@ -189,7 +213,7 @@
             <span class="field-val" id="target-squawk"><span class="skeleton-bar" style="width: 40px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">Selected Alt</span>
+            <span class="field-label">Target Alt</span>
             <span class="field-val" id="target-sel-alt"><span class="skeleton-bar" style="width: 60px;"></span></span>
           </div>
           <div class="field">
@@ -197,7 +221,7 @@
             <span class="field-val" id="target-dist"><span class="skeleton-bar" style="width: 54px;"></span></span>
           </div>
           <div class="field">
-            <span class="field-label">RSSI Signal</span>
+            <span class="field-label">Signal</span>
             <span class="field-val" id="target-rssi"><span class="skeleton-bar" style="width: 58px;"></span></span>
           </div>
           <div class="field">
@@ -211,16 +235,16 @@
           <div class="profile-card-header">
             <div>
               <span class="profile-card-title">Flight Profile</span>
-              <span class="profile-card-subtitle" id="profile-sub-lbl">Altitude Telemetry Stream</span>
+              <span class="profile-card-subtitle" id="profile-sub-lbl">Altitude History</span>
             </div>
             <div class="profile-status-wrap">
-              <span class="profile-trend-badge badge-level" id="profile-trend-badge">CRUISE</span>
+              <span class="profile-trend-badge badge-level" id="profile-trend-badge">LEVEL</span>
             </div>
           </div>
           <div class="profile-chart-viewport">
             <canvas id="altitude-profile-chart" height="52"></canvas>
             <div class="profile-chart-empty" id="profile-chart-empty">
-              <span class="chart-empty-lbl">NO PROFILE ACTIVE // SELECT AIRCRAFT</span>
+              <span class="chart-empty-lbl">SELECT AIRCRAFT</span>
             </div>
           </div>
           <div class="profile-stats-strip">
@@ -233,7 +257,7 @@
               <span class="profile-stat-v" id="profile-stat-max">-- FT</span>
             </div>
             <div class="profile-stat-box">
-              <span class="profile-stat-k">Profile Δ</span>
+              <span class="profile-stat-k">Delta</span>
               <span class="profile-stat-v" id="profile-stat-delta">-- FT</span>
             </div>
           </div>
@@ -257,7 +281,7 @@
               <table class="sidebar-contacts-table">
                 <thead>
                   <tr>
-                    <th>Aircraft / Hex</th>
+                    <th>Callsign / Address</th>
                     <th>Altitude</th>
                     <th>Speed</th>
                     <th>Distance</th>
@@ -280,6 +304,7 @@
               </table>
             </div>
           </div>
+
         </div>
 
       </aside>
@@ -601,7 +626,7 @@
             <ul class="spec-list">
               <li><span class="spec-key">Live Radar Tracking</span><span class="spec-val">True Heading Rotations, Trails & Range Rings</span></li>
               <li><span class="spec-key">Target Inspector</span><span class="spec-val">10-Field Avionics CDU (Callsign, Alt, V/S, Squawk)</span></li>
-              <li><span class="spec-key">Vertical Flight Profile</span><span class="spec-val">Real-Time Altitude Trend Sparkline (Cruise/Climb/Desc)</span></li>
+              <li><span class="spec-key">Vertical Flight Profile</span><span class="spec-val">Real-Time Altitude Trend Sparkline (Level/Climb/Desc)</span></li>
               <li><span class="spec-key">Spotting Photo Archive</span><span class="spec-val">Automatic High-Res Aircraft Photography</span></li>
               <li><span class="spec-key">Active Contacts Panel</span><span class="spec-val">Range-Sorted Table // Instant Map Panning</span></li>
               <li><span class="spec-key">Anomaly & Alert Engine</span><span class="spec-val">7500/7600/7700 Squawk Intercept & Stale Tracking</span></li>
@@ -676,10 +701,9 @@
           <div class="table-header-row hist-header-row">
             <div>
               <h3 class="card-heading card-heading-clean">Historical Telemetry Logs (SQLite)</h3>
-              <span class="table-subtitle">Persistent local database archiving aircraft out-of-range & diurnal traffic</span>
             </div>
             <div class="table-header-actions">
-              <span class="target-badge online">SQLITE WAL</span>
+              <span class="target-badge online" id="hist-db-badge">SQLITE WAL</span>
             </div>
           </div>
 
@@ -688,22 +712,22 @@
             <div class="hist-card">
               <span class="hist-label">Flights Tracked Today</span>
               <span class="hist-val" id="hist-total-today"><span class="skeleton-bar" style="width: 44px;"></span></span>
-              <span class="hist-sub" id="hist-unique-sub">-- unique airframes</span>
+            </div>
+            <div class="hist-card">
+              <span class="hist-label">Unique Airframes</span>
+              <span class="hist-val" id="hist-unique-today"><span class="skeleton-bar" style="width: 44px;"></span></span>
             </div>
             <div class="hist-card">
               <span class="hist-label">Peak Traffic Window</span>
               <span class="hist-val" id="hist-peak-hour"><span class="skeleton-bar" style="width: 80px;"></span></span>
-              <span class="hist-sub">Max transponder density</span>
             </div>
             <div class="hist-card">
               <span class="hist-label">Apogee Recorded Today</span>
               <span class="hist-val" id="hist-max-alt"><span class="skeleton-bar" style="width: 60px;"></span></span>
-              <span class="hist-sub">Highest altitude captured</span>
             </div>
             <div class="hist-card">
               <span class="hist-label">All-Time Database Logs</span>
               <span class="hist-val" id="hist-all-time"><span class="skeleton-bar" style="width: 40px;"></span></span>
-              <span class="hist-sub">Stored flight sessions</span>
             </div>
           </div>
 
@@ -735,8 +759,8 @@
               <table class="sidebar-contacts-table hist-table">
                 <thead>
                   <tr>
-                    <th>ICAO Hex</th>
                     <th>Callsign</th>
+                    <th>ICAO Address</th>
                     <th>Squawk</th>
                     <th>First Contact</th>
                     <th>Last Contact</th>
@@ -756,31 +780,25 @@
               </table>
             </div>
           </div>
+
         </div>
 
         <!-- live transponder table -->
-        <div class="dossier-card collapsible-card" id="telemetry-table-card">
-          <div class="table-header-row" id="telemetry-table-toggle" role="button" tabindex="0" aria-expanded="true" title="Click to collapse / expand live contacts table">
+        <div class="dossier-card" id="telemetry-table-card">
+          <div class="table-header-row">
             <div>
               <h3 class="card-heading card-heading-clean">Live Transponder Contacts</h3>
-              <span class="table-subtitle">Real-time Mode-S aircraft data feed</span>
             </div>
             <div class="table-header-actions">
               <span class="target-badge" id="table-status-badge">STANDBY</span>
-              <button class="contacts-collapse-btn" type="button" aria-label="Toggle contact table">
-                <svg class="chevron-svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                </svg>
-              </button>
             </div>
           </div>
-          <div class="table-collapse-wrapper" id="telemetry-table-collapse">
-            <div class="table-scroll">
+          <div class="table-scroll">
               <table class="tactical-table">
                 <thead>
                   <tr>
-                    <th>ICAO Hex</th>
                     <th>Callsign</th>
+                    <th>ICAO Address</th>
                     <th>Squawk</th>
                     <th>Altitude</th>
                     <th>V-Rate</th>
@@ -819,7 +837,6 @@
                 </tbody>
               </table>
             </div>
-          </div>
         </div>
 
       </div>

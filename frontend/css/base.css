@@ -95,6 +95,7 @@ body {
   font-size: 13px;
   line-height: 1.5;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;

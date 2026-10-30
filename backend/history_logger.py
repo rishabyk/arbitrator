@@ -236,12 +236,24 @@ def get_history_stats():
         recent_rows = cur.fetchall()
         recent_flights = []
         for r in recent_rows:
+            first_seen_str = "----"
+            last_seen_str = "----"
+            if r[3]:
+                try:
+                    first_seen_str = datetime.fromtimestamp(float(r[3])).strftime("%H:%M:%S")
+                except Exception:
+                    pass
+            if r[4]:
+                try:
+                    last_seen_str = datetime.fromtimestamp(float(r[4])).strftime("%H:%M:%S")
+                except Exception:
+                    pass
             recent_flights.append({
                 "hex": r[0],
                 "callsign": r[1] or "----",
                 "squawk": r[2] or "----",
-                "first_seen": datetime.fromtimestamp(r[3]).strftime("%H:%M:%S"),
-                "last_seen": datetime.fromtimestamp(r[4]).strftime("%H:%M:%S"),
+                "first_seen": first_seen_str,
+                "last_seen": last_seen_str,
                 "max_altitude": r[5] or 0,
             })
 

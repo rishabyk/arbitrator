@@ -558,37 +558,14 @@
   padding-bottom: var(--space-3);
   margin-bottom: var(--space-4);
   gap: var(--space-3);
-  user-select: none;
-  cursor: pointer;
+  user-select: default;
+  cursor: default;
 }
 
 .table-header-actions {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-}
-
-.table-collapse-wrapper {
-  max-height: 800px;
-  overflow: hidden;
-  transition: max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
-  opacity: 1;
-}
-
-.collapsible-card.collapsed .table-collapse-wrapper {
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.collapsible-card.collapsed .chevron-svg {
-  transform: rotate(-90deg);
-}
-
-.collapsible-card.collapsed .table-header-row {
-  border-bottom-color: transparent;
-  margin-bottom: 0;
-  padding-bottom: 0;
 }
 
 .table-subtitle {
@@ -698,7 +675,7 @@
 
 .historical-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--space-4);
 }
 
@@ -740,12 +717,9 @@
   min-height: 24px;
 }
 
-.hist-sub {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  color: var(--accent-info);
-  margin-top: 2px;
-  white-space: nowrap;
+#hist-peak-hour {
+  font-size: 13.5px;
+  letter-spacing: -0.02em;
 }
 
 /* diurnal hourly histogram */
@@ -807,8 +781,13 @@
   min-height: 3px;
   background-color: var(--accent-info);
   border-radius: 2px 2px 0 0;
-  opacity: 0.8;
-  transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity var(--transition-fast), background-color var(--transition-fast);
+  opacity: 0.85;
+  transition: none;
+}
+
+.hist-bar-col.is-empty .hist-bar-fill {
+  opacity: 0.2;
+  background-color: var(--border-default);
 }
 
 .hist-bar-col:hover .hist-bar-fill {
@@ -1021,6 +1000,10 @@
   .historical-metrics-grid {
     grid-template-columns: 1fr 1fr;
     gap: var(--space-3);
+  }
+
+  .historical-metrics-grid .hist-card:last-child {
+    grid-column: span 2;
   }
 
   .dossier-header,

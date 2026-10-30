@@ -4,6 +4,7 @@
 let map;
 let aircraftMarkers = {};
 let selectedHex     = null;
+let isFollowing     = false;
 let showTrails      = true;
 
 let lastSuccessfulTelemetry = null;
@@ -15,6 +16,7 @@ const altitudeHistory = {};
 let profileChart = null;
 
 const STATION_COORDS = [37.7749, -122.3194];
+const FOLLOW_ZOOM_LEVEL = 13;
 const tempHistory    = [];
 const MAX_HISTORY    = 60;
 
@@ -283,6 +285,13 @@ function initMap() {
       refreshMarkerIcons();
     }
   });
+
+  // disengage follow mode if user manually drags map
+  map.on('dragstart', () => {
+    if (isFollowing) {
+      setFollowMode(false);
+    }
+  });
 }
 
 // create plane marker icon
@@ -300,7 +309,7 @@ function createPlaneIcon(heading = 0, isSelected = false, squawk = '----', isSta
   }
 
   const html = `
-    <div style="transform: rotate(${heading}deg); width: 32px; height: 32px;
+    <div style="transform: rotate(${heading}deg); width: 48px; height: 48px;
                 display: flex; align-items: center; justify-content: center;">
       <svg class="plane-svg ${statusClass}" viewBox="-4 -4 40 40"
            style="overflow: visible;" xmlns="http://www.w3.org/2000/svg">
@@ -337,8 +346,8 @@ function createPlaneIcon(heading = 0, isSelected = false, squawk = '----', isSta
   return L.divIcon({
     html,
     className: 'plane-icon-wrapper',
-    iconSize:   [24, 24],
-    iconAnchor: [16, 16],
+    iconSize:   [48, 48],
+    iconAnchor: [24, 24],
   });
 }
 
@@ -493,7 +502,12 @@ async function fetchAircraft() {
           entry.polyline.setLatLngs(entry.trail);
         }
 
-        if (isSel) updateSidebar(ac);
+        if (isSel) {
+          updateSidebar(ac);
+          if (isFollowing && typeof lat === 'number' && typeof lon === 'number') {
+            map.setView([lat, lon], map.getZoom(), { animate: false });
+          }
+        }
       } else {
         const marker = L.marker([lat, lon], {
           icon: createPlaneIcon(track, isSel, ac.squawk, isStale, isWarn),
@@ -517,6 +531,10 @@ async function fetchAircraft() {
         });
 
         aircraftMarkers[hex] = { marker, polyline, trail: [[lat, lon]], data: ac };
+
+        if (isSel && isFollowing && typeof lat === 'number' && typeof lon === 'number') {
+          map.setView([lat, lon], map.getZoom(), { animate: false });
+        }
       }
     });
 
@@ -626,6 +644,10 @@ function selectTarget(hex) {
   if (sidebar && isMobileDevice()) {
     expandSheet();
   }
+
+  if (isFollowing && typeof target.lat === 'number' && typeof target.lon === 'number') {
+    map.setView([target.lat, target.lon], (map && map.getZoom()) ? map.getZoom() : FOLLOW_ZOOM_LEVEL, { animate: false });
+  }
 }
 
 // update sidebar details
@@ -652,8 +674,13 @@ function updateSidebar(ac) {
   } else if (seenClass) {
     hexAnomaly = seenClass;
   }
-  setField('target-hex', String(ac.hex || 'NONE').toUpperCase(), hexAnomaly);
-  setField('target-callsign', ac.flight || 'NO CALLSIGN');
+  const callsign = (ac.flight && ac.flight.trim())
+    ? ac.flight.trim()
+    : String(ac.hex || 'NONE').toUpperCase();
+  const hexAddress = String(ac.hex || '------').toUpperCase();
+
+  setField('target-callsign', callsign, hexAnomaly);
+  setField('target-hex', hexAddress);
 
   const altVal = (alt !== null && alt !== undefined && !isNaN(Number(alt)))
     ? Number(alt) : null;
@@ -698,10 +725,11 @@ function updateSidebar(ac) {
 // reset sidebar to empty state
 function clearSidebar() {
   selectedHex = null;
+  setFollowMode(false);
 
   const defaults = {
-    'target-hex':      'NONE',
-    'target-callsign': '----',
+    'target-callsign': 'NONE',
+    'target-hex':      '------',
     'target-alt':      '---- FT',
     'target-vrate':    '---- FPM',
     'target-speed':    '--- KT',
@@ -719,8 +747,8 @@ function clearSidebar() {
 
   const summaryCallsign = document.getElementById('sheet-summary-callsign');
   const summaryMeta = document.getElementById('sheet-summary-meta');
-  if (summaryCallsign) summaryCallsign.textContent = 'AIRCRAFT INSPECTOR';
-  if (summaryMeta) summaryMeta.textContent = 'SELECT MAP CONTACT';
+  if (summaryCallsign) summaryCallsign.textContent = 'AIRCRAFT';
+  if (summaryMeta) summaryMeta.textContent = 'SELECT AIRCRAFT';
 
   clearFlightProfile();
 
@@ -943,7 +971,7 @@ function updateFlightProfile(hex, ac) {
       badge.textContent = `DESCEND ${vrate} FPM`;
     } else {
       badge.classList.add('badge-level');
-      badge.textContent = 'LEVEL / CRUISE';
+      badge.textContent = 'LEVEL';
     }
   }
 
@@ -987,16 +1015,21 @@ function clearFlightProfile() {
 
 // fetch and render historical sqlite logger telemetry
 async function fetchHistoryStats() {
+  const dbBadge = document.getElementById('hist-db-badge');
   try {
     const res = await fetch('/api/history');
-    if (!res.ok) return;
+    if (!res.ok) {
+      handleHistoryError('STANDBY');
+      return;
+    }
     const data = await res.json();
+    if (dbBadge) {
+      dbBadge.className = 'target-badge online';
+      dbBadge.textContent = 'SQLITE WAL';
+    }
 
     setField('hist-total-today', String(data.total_today ?? 0));
-    const uniqueSub = document.getElementById('hist-unique-sub');
-    if (uniqueSub) {
-      uniqueSub.textContent = `${data.unique_today ?? 0} unique airframes`;
-    }
+    setField('hist-unique-today', String(data.unique_today ?? 0));
     setField('hist-peak-hour', data.peak_hour_str || '--');
     setField('hist-max-alt', data.max_alt_today > 0 ? `${Number(data.max_alt_today).toLocaleString()} FT` : '-- FT');
     setField('hist-all-time', String(data.all_time_total ?? 0));
@@ -1006,10 +1039,11 @@ async function fetchHistoryStats() {
     if (barsContainer && Array.isArray(data.hourly_distribution)) {
       const maxCount = Math.max(1, ...data.hourly_distribution);
       barsContainer.innerHTML = data.hourly_distribution.map((count, hr) => {
-        const pct = Math.max(4, Math.round((count / maxCount) * 100));
+        const pct = count > 0 ? Math.max(8, Math.round((count / maxCount) * 100)) : 3;
         const hrStr = `${String(hr).padStart(2, '0')}:00`;
+        const activeClass = count > 0 ? 'has-traffic' : 'is-empty';
         return `
-          <div class="hist-bar-col" role="img" aria-label="${hrStr}: ${count} flights">
+          <div class="hist-bar-col ${activeClass}" role="img" aria-label="${hrStr}: ${count} flights">
             <div class="hist-bar-fill" style="height: ${pct}%;"></div>
             <div class="hist-bar-tooltip">${hrStr} : ${count} flt</div>
           </div>
@@ -1027,8 +1061,8 @@ async function fetchHistoryStats() {
           const altStr = fl.max_altitude > 0 ? `${Number(fl.max_altitude).toLocaleString()} FT` : '---- FT';
           return `
             <tr>
+              <td class="flight-callsign">${(fl.callsign && fl.callsign !== '----') ? fl.callsign : fl.hex}</td>
               <td class="hex-cell">${fl.hex}</td>
-              <td class="flight-callsign">${fl.callsign}</td>
               <td>${fl.squawk}</td>
               <td>${fl.first_seen}</td>
               <td>${fl.last_seen}</td>
@@ -1040,6 +1074,25 @@ async function fetchHistoryStats() {
     }
   } catch (err) {
     console.warn('History stats fetch error:', err);
+    handleHistoryError('OFFLINE');
+  }
+}
+
+function handleHistoryError(status) {
+  const dbBadge = document.getElementById('hist-db-badge');
+  if (dbBadge) {
+    dbBadge.className = 'target-badge standby';
+    dbBadge.textContent = `SQLITE ${status}`;
+  }
+  setField('hist-total-today', '0');
+  setField('hist-unique-today', '0');
+  setField('hist-peak-hour', '--');
+  setField('hist-max-alt', '-- FT');
+  setField('hist-all-time', '--');
+
+  const tbody = document.getElementById('hist-recent-tbody');
+  if (tbody && tbody.querySelector('.skeleton-row')) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-table-msg">Database connecting / in standby</td></tr>`;
   }
 }
 
@@ -1187,10 +1240,13 @@ function updateAircraftTable(aircraftList, status) {
       const seenStr = seenVal !== null ? `${seenVal.toFixed(1)} S` : '--.- S';
       const seenClass = isStale ? 'cell-stale' : (isWarn ? 'cell-warn' : '');
 
+      const flightCallsign = (ac.flight && ac.flight.trim()) ? ac.flight.trim() : String(ac.hex || '----').toUpperCase();
+      const hexAddr = String(ac.hex || '').toUpperCase();
+
       return `
         <tr class="${rowClass}" data-hex="${ac.hex}">
-          <td class="hex-cell">${String(ac.hex || '').toUpperCase()}</td>
-          <td>${ac.flight || '----'}</td>
+          <td class="flight-callsign">${flightCallsign}</td>
+          <td class="hex-cell">${hexAddr}</td>
           <td class="${squawkClass}">${squawkStr}</td>
           <td class="${altClass}">${altStr}</td>
           <td>${vrateStr} FPM</td>
@@ -1264,9 +1320,71 @@ function updateAircraftTable(aircraftList, status) {
   }
 }
 
+// follow selected target controller
+function setFollowMode(enable) {
+  isFollowing = Boolean(enable);
+  const followBtn = document.getElementById('follow-target-btn');
+  if (!followBtn) return;
+
+  followBtn.classList.toggle('active', isFollowing);
+  const fullLabel = followBtn.querySelector('.btn-label-full');
+  const shortLabel = followBtn.querySelector('.btn-label-short');
+  if (fullLabel) fullLabel.textContent = isFollowing ? 'FOLLOWING' : 'FOLLOW';
+  if (shortLabel) shortLabel.textContent = isFollowing ? 'LOCK' : 'FOLLOW';
+}
+
+function toggleFollowMode() {
+  if (isFollowing) {
+    setFollowMode(false);
+    return;
+  }
+
+  // If no aircraft selected yet, auto-select nearest active contact
+  if (!selectedHex) {
+    const activeHexes = Object.keys(aircraftMarkers);
+    if (activeHexes.length > 0) {
+      const sorted = activeHexes
+        .map((h) => aircraftMarkers[h]?.data)
+        .filter((d) => d && typeof d.lat === 'number' && typeof d.lon === 'number')
+        .sort((a, b) => (a.distance_nm || 999) - (b.distance_nm || 999));
+
+      if (sorted.length > 0) {
+        selectTarget(sorted[0].hex);
+      }
+    }
+  }
+
+  if (selectedHex && aircraftMarkers[selectedHex]?.data) {
+    const target = aircraftMarkers[selectedHex].data;
+    if (typeof target.lat === 'number' && typeof target.lon === 'number') {
+      setFollowMode(true);
+      // Zoom to comfortable tactical tracking level (zoom 13)
+      map?.setView([target.lat, target.lon], FOLLOW_ZOOM_LEVEL, { animate: false });
+    }
+  } else {
+    // Notify user no contact is currently available to follow
+    const followBtn = document.getElementById('follow-target-btn');
+    if (followBtn) {
+      const fullLabel = followBtn.querySelector('.btn-label-full');
+      const shortLabel = followBtn.querySelector('.btn-label-short');
+      const origFull = fullLabel ? fullLabel.textContent : 'FOLLOW';
+      const origShort = shortLabel ? shortLabel.textContent : 'FOLLOW';
+      if (fullLabel) fullLabel.textContent = 'NO CONTACT';
+      if (shortLabel) shortLabel.textContent = 'NONE';
+      setTimeout(() => {
+        if (!isFollowing) {
+          if (fullLabel) fullLabel.textContent = origFull;
+          if (shortLabel) shortLabel.textContent = origShort;
+        }
+      }, 1200);
+    }
+  }
+}
+
 // radar dock overlay controls
 function initRadarControls() {
   const trailsBtn = document.getElementById('toggle-trails-btn');
+  const followBtn = document.getElementById('follow-target-btn');
   const centerBtn = document.getElementById('recenter-map-btn');
   const overlayBar = document.querySelector('.radar-overlay-bar');
 
@@ -1285,10 +1403,87 @@ function initRadarControls() {
     refreshMarkerIcons();
   });
 
+  followBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (typeof L !== 'undefined' && L.DomEvent) L.DomEvent.stopPropagation(e);
+    toggleFollowMode();
+  });
+
   centerBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
     if (typeof L !== 'undefined' && L.DomEvent) L.DomEvent.stopPropagation(e);
+    setFollowMode(false);
     map?.setView(STATION_COORDS, 9);
+  });
+
+  // keyboard navigation (WASD, Arrows, +, -, H, F, T, Esc)
+  window.addEventListener('keydown', (e) => {
+    // ignore if typing inside inputs or holding modifiers
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    // only handle when radar map tab is active
+    const radarTab = document.getElementById('tab-radar');
+    if (!radarTab || !radarTab.classList.contains('active') || !map) return;
+
+    const panStep = 90;
+    const key = e.key.toLowerCase();
+
+    switch (key) {
+      case 'w':
+      case 'arrowup':
+        e.preventDefault();
+        if (isFollowing) setFollowMode(false);
+        map.panBy([0, -panStep], { animate: false });
+        break;
+      case 's':
+      case 'arrowdown':
+        e.preventDefault();
+        if (isFollowing) setFollowMode(false);
+        map.panBy([0, panStep], { animate: false });
+        break;
+      case 'a':
+      case 'arrowleft':
+        e.preventDefault();
+        if (isFollowing) setFollowMode(false);
+        map.panBy([-panStep, 0], { animate: false });
+        break;
+      case 'd':
+      case 'arrowright':
+        e.preventDefault();
+        if (isFollowing) setFollowMode(false);
+        map.panBy([panStep, 0], { animate: false });
+        break;
+      case '+':
+      case '=':
+        e.preventDefault();
+        map.zoomIn();
+        break;
+      case '-':
+      case '_':
+        e.preventDefault();
+        map.zoomOut();
+        break;
+      case 'h':
+        e.preventDefault();
+        setFollowMode(false);
+        map.setView(STATION_COORDS, 9);
+        break;
+      case 'f':
+        e.preventDefault();
+        toggleFollowMode();
+        break;
+      case 't':
+        e.preventDefault();
+        trailsBtn?.click();
+        break;
+      case 'escape':
+        if (selectedHex) {
+          clearSidebar();
+          refreshMarkerIcons();
+        }
+        break;
+    }
   });
 }
 
@@ -1362,31 +1557,11 @@ function initCollapsibles() {
     });
   }
 
-  // telemetry table toggle
-  const ttToggle = document.getElementById('telemetry-table-toggle');
+  // telemetry table is non-collapsible in tab 4
   const ttCard = document.getElementById('telemetry-table-card');
-  if (ttToggle && ttCard) {
-    if (localStorage.getItem('telem_table_collapsed') === '1') {
-      ttCard.classList.add('collapsed');
-      ttToggle.setAttribute('aria-expanded', 'false');
-    } else {
-      ttToggle.setAttribute('aria-expanded', 'true');
-    }
-
-    const toggleTelemetryTable = () => {
-      ttCard.classList.toggle('collapsed');
-      const isCollapsed = ttCard.classList.contains('collapsed');
-      ttToggle.setAttribute('aria-expanded', String(!isCollapsed));
-      localStorage.setItem('telem_table_collapsed', isCollapsed ? '1' : '0');
-    };
-
-    ttToggle.addEventListener('click', toggleTelemetryTable);
-    ttToggle.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggleTelemetryTable();
-      }
-    });
+  if (ttCard) {
+    ttCard.classList.remove('collapsed');
+    localStorage.removeItem('telem_table_collapsed');
   }
 }
 

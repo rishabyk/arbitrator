@@ -367,8 +367,8 @@
 }
 
 .plane-svg {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   overflow: visible !important;
   fill: var(--accent-info);
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
@@ -459,7 +459,21 @@
   align-items: center;
   justify-content: center;
   user-select: none;
+  white-space: nowrap;
   transition: none;
+}
+
+.radar-ctrl-btn .btn-label-short {
+  display: none;
+}
+
+@media (max-width: 500px) {
+  .radar-ctrl-btn .btn-label-full {
+    display: none;
+  }
+  .radar-ctrl-btn .btn-label-short {
+    display: inline;
+  }
 }
 
 .radar-ctrl-btn:hover {
@@ -472,6 +486,74 @@
   border-color: var(--accent-info-border);
   color: var(--accent-info);
   background: var(--accent-info-subtle);
+}
+
+/* keyboard controls popover tooltip */
+
+.radar-keybinds-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.keybinds-popover {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+  right: 0;
+  width: 240px;
+  background-color: rgba(14, 20, 31, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  z-index: 4000;
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
+}
+
+.radar-keybinds-wrap:hover .keybinds-popover,
+.radar-keybinds-wrap:focus-within .keybinds-popover {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.keybind-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.key-combo {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent-info);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+.key-desc {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .radar-keybinds-wrap {
+    display: none !important;
+  }
 }
 
 /* sidebar contacts panel */
